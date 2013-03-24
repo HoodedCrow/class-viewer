@@ -95,6 +95,8 @@ public class XmlModelAdapter {
 				node = node.getNextSibling();
 			}
 		}
+		
+		model.fireModelReloaded();
 	}
 
 	private CourseRec parseCourse(Node item, CourseModel model)

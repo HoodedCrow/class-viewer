@@ -42,15 +42,15 @@ public class CourseViewer extends JFrame {
 		JMenu windowMenu = new JMenu("Window");
 		topMenu.add(windowMenu);
 
-		courseFilterFrame = new CourseFilterFrame();
+		model = new CourseModel();
+		courseFilterFrame = new CourseFilterFrame(model);
 		windowMenu.add(courseFilterFrame.makeCheckBoxMenuItem());
 		desktop.add(courseFilterFrame);
 	}
 
 	/** Load settings and existing data */
 	private void load() {
-		// Load main model, if present
-		model = new CourseModel();
+		// Load main model, if file is present
 		File file = settings.getStaticFile();
 		try {
 			FileInputStream reader = new FileInputStream(file);
@@ -58,8 +58,7 @@ public class CourseViewer extends JFrame {
 			xml.readModel(reader, model);
 			reader.close();
 			
-			
-			xml.writeModel(System.out, model); // TODO Kill once works
+			// xml.writeModel(System.out, model); // TODO Kill once works
 		} catch (FileNotFoundException e) {
 			System.err.println("Initial data file " + file
 					+ " is not found. Starting empty.");

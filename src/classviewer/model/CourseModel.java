@@ -1,7 +1,12 @@
 package classviewer.model;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+
+import classviewer.filters.CategoryCourseFilter;
+import classviewer.filters.CourseFilter;
+import classviewer.filters.UniversityCourseFilter;
 
 /**
  * Main model file. Contains a bunch of hashes for universities, languages,
@@ -13,6 +18,13 @@ public class CourseModel {
 	private HashMap<String, DescRec> categories = new HashMap<String, DescRec>();
 	private HashMap<String, DescRec> universities = new HashMap<String, DescRec>();
 	private HashMap<Integer, CourseRec> courses = new HashMap<Integer, CourseRec>();
+	private ArrayList<CourseFilter> filters = new ArrayList<CourseFilter>();
+	private ArrayList<CourseModelListener> listeners = new ArrayList<CourseModelListener>();
+
+	public CourseModel() {
+		filters.add(new CategoryCourseFilter(this));
+		filters.add(new UniversityCourseFilter(this));
+	}
 
 	public void addCategory(DescRec desc) {
 		if (desc == null)
@@ -57,5 +69,22 @@ public class CourseModel {
 
 	public Collection<CourseRec> getCourses() {
 		return courses.values();
+	}
+
+	public ArrayList<CourseFilter> getFilters() {
+		return filters;
+	}
+
+	public void fireModelReloaded() {
+		for (CourseModelListener lnr : listeners)
+			lnr.modelUpdated();
+	}
+
+	public void addListener(CourseModelListener lnr) {
+		this.listeners.add(lnr);
+	}
+
+	public void removeListener(CourseModelListener lnr) {
+		this.listeners.remove(lnr);
 	}
 }
