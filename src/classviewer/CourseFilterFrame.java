@@ -32,11 +32,9 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 	private DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
 	private JTree tree;
 	private FilterTreeModel treeModel;
-	private CourseModel courseModel;
 
 	public CourseFilterFrame(CourseModel model) {
-		super("Filter");
-		this.courseModel = model;
+		super("Filter", model);
 
 		Dimension dim = new Dimension(50, 50);
 		this.setMinimumSize(dim);
@@ -60,6 +58,7 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 		tree.setCellRenderer(new FilterTreeRenderer());
 		tree.setCellEditor(new FilterCellEditor());
 		tree.setEditable(true);
+		tree.setRootVisible(false);
 		this.add(new JScrollPane(tree));
 	}
 

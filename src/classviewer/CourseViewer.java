@@ -25,6 +25,10 @@ public class CourseViewer extends JFrame {
 	private Settings settings;
 	private CourseModel model;
 	private CourseFilterFrame courseFilterFrame;
+	private CourseListFrame courseListFrame;
+	private CalendarFrame calendarFrame;
+	private DetailsFrame detailsFrame;
+	private ChangesFrame changesFrame;
 
 	private CourseViewer(Settings settings) {
 		super("Course Viewer/Chooser");
@@ -35,8 +39,6 @@ public class CourseViewer extends JFrame {
 
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-		this.setSize(800, 600);
-
 		JMenuBar topMenu = new JMenuBar();
 		this.setJMenuBar(topMenu);
 		JMenu windowMenu = new JMenu("Window");
@@ -46,6 +48,28 @@ public class CourseViewer extends JFrame {
 		courseFilterFrame = new CourseFilterFrame(model);
 		windowMenu.add(courseFilterFrame.makeCheckBoxMenuItem());
 		desktop.add(courseFilterFrame);
+
+		courseListFrame = new CourseListFrame(model);
+		windowMenu.add(courseListFrame.makeCheckBoxMenuItem());
+		desktop.add(courseListFrame);
+
+		calendarFrame = new CalendarFrame(model);
+		windowMenu.add(calendarFrame.makeCheckBoxMenuItem());
+		desktop.add(calendarFrame);
+
+		detailsFrame = new DetailsFrame(model);
+		windowMenu.add(detailsFrame.makeCheckBoxMenuItem());
+		desktop.add(detailsFrame);
+
+		changesFrame = new ChangesFrame(model);
+		windowMenu.add(changesFrame.makeCheckBoxMenuItem());
+		desktop.add(changesFrame);
+
+		desktop.setLayout(new MainWindowLayout(courseFilterFrame,
+				courseListFrame, calendarFrame, detailsFrame, changesFrame));
+
+		this.setSize(800, 600); // so it's not a dot when un-maximized
+		this.setExtendedState(this.getExtendedState() | JFrame.MAXIMIZED_BOTH);
 	}
 
 	/** Load settings and existing data */
@@ -57,7 +81,7 @@ public class CourseViewer extends JFrame {
 			XmlModelAdapter xml = new XmlModelAdapter();
 			xml.readModel(reader, model);
 			reader.close();
-			
+
 			// xml.writeModel(System.out, model); // TODO Kill once works
 		} catch (FileNotFoundException e) {
 			System.err.println("Initial data file " + file

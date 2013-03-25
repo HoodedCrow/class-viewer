@@ -8,6 +8,8 @@ import javax.swing.JInternalFrame;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 
+import classviewer.model.CourseModel;
+
 /**
  * A derivation of the basic internal frame with hooks for frame name and
  * manipulation.
@@ -15,13 +17,17 @@ import javax.swing.event.InternalFrameEvent;
  * @author TK
  */
 public class NamedInternalFrame extends JInternalFrame {
-	public NamedInternalFrame(String name) {
-		super(name, true, // resizable
+	protected CourseModel courseModel;
+
+	public NamedInternalFrame(String name, CourseModel model) {
+		super(name, false, // resizable
 				true, // closable
-				true, // maximizable
-				true);// iconifiable);
+				false, // maximizable
+				false);// iconifiable);
 		this.setName(name);
 		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
+		this.setVisible(true);
+		this.courseModel = model;
 	}
 
 	/**
