@@ -4,15 +4,14 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import classviewer.model.CourseModel;
+import classviewer.model.CourseRec;
 import classviewer.model.DescRec;
 
 public class CategoryCourseFilter extends CourseFilter {
-
-	private CourseModel model;
 	private HashSet<DescRec> selected = new HashSet<DescRec>();
 
 	public CategoryCourseFilter(CourseModel courseModel) {
-		this.model = courseModel;
+		super(courseModel);
 	}
 
 	@Override
@@ -41,5 +40,16 @@ public class CategoryCourseFilter extends CourseFilter {
 			this.selected.add((DescRec) option);
 		else
 			this.selected.remove(option);
+		model.fireFiltersChanged(this);
+	}
+
+	@Override
+	public boolean accept(CourseRec rec) {
+		if (!this.active || rec.getCategories().isEmpty())
+			return true;
+		for (DescRec r : rec.getCategories())
+			if (selected.contains(r))
+				return true;
+		return false;
 	}
 }

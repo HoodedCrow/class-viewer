@@ -199,7 +199,7 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 				treeModel.nodeStructureChanged(node);
 				// TODO Want to also open the node. The following does it, but
 				// prints a stack trace. Need a better approach.
-				// if (editor.isSelected()) 
+				// if (editor.isSelected())
 				// tree.expandPath(new TreePath(node.getPath()));
 				return filter;
 			}
@@ -215,5 +215,10 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 	public void modelUpdated() {
 		initTree();
 		treeModel.reload();
+	}
+
+	@Override
+	public void filtersUpdated() {
+		// Noop, we probably caused this event anyway
 	}
 }

@@ -38,7 +38,7 @@ public class MainWindowLayout implements LayoutManager {
 		// Width of the filter frame
 		int x1 = 300;
 		// Width of the course list frame + x1
-		int x2 = 300 + x1;
+		int x2 = 400 + x1;
 		// Start of the details/changes frames
 		int y1 = pH - 300;
 

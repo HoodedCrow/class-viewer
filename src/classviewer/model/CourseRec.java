@@ -16,20 +16,19 @@ public class CourseRec implements Named, Linked {
 	private String description;
 	private String instructor;
 	private String link;
-	private int status;
+	private Status status = Status.UNKNOWN;
 	private ArrayList<DescRec> categories = new ArrayList<DescRec>();
 	private ArrayList<DescRec> universities = new ArrayList<DescRec>();
 	private ArrayList<OffRec> offerings = new ArrayList<OffRec>();
 
 	public CourseRec(int id, String shortName, String name, String description,
-			String instructor, String link, int status) {
+			String instructor, String link) {
 		this.id = id;
 		this.shortName = shortName;
 		this.name = name == null ? "" : name;
 		this.description = description == null ? "" : description;
 		this.instructor = instructor == null ? "" : instructor;
 		this.link = link == null ? "" : link;
-		this.status = status;
 	}
 
 	@Override
@@ -63,7 +62,7 @@ public class CourseRec implements Named, Linked {
 		return id;
 	}
 
-	public int getStatus() {
+	public Status getStatus() {
 		return status;
 	}
 
@@ -71,13 +70,14 @@ public class CourseRec implements Named, Linked {
 	 * If a course set to no, all offerings set to no, unless already done or
 	 * registered.
 	 */
-	public void setStatus(int status) {
+	public void setStatus(Status status) {
 		this.status = status;
-		if (status != 3)
-			return; // only for no
-		for (OffRec o : offerings)
-			if (o.getStatus() < 5)
-				o.setStatus(3);
+		// TODO
+//		if (status != 3)
+//			return; // only for no
+//		for (OffRec o : offerings)
+//			if (o.getStatus() < 5)
+//				o.setStatus(3);
 	}
 
 	public String getShortName() {
@@ -148,9 +148,9 @@ public class CourseRec implements Named, Linked {
 		return null;
 	}
 
-	public void setStatusDirect(int stat) {
-		this.status = stat;
-	}
+//	public void setStatusDirect(int stat) {
+//		this.status = stat;
+//	}
 /*
 	public void diff(CourseRec other, ArrayList<Change> changes) {
 		assert (this.id == other.id);
@@ -221,5 +221,19 @@ public class CourseRec implements Named, Linked {
 			set.add(r.getId());
 		}
 		return set;
+	}
+
+	public boolean hasUnknown() {
+		for (OffRec r : offerings)
+			if (r.getStatus() == Status.UNKNOWN)
+				return true;
+		return false;
+	}
+
+	public boolean hasDateless() {
+		for (OffRec r : offerings)
+			if (r.getStart() == null)
+				return true;
+		return false;
 	}
 }

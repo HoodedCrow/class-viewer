@@ -13,26 +13,26 @@ public class OffRec implements Linked {
 	private static SimpleDateFormat dformat = new SimpleDateFormat(
 			"dd MMM yyyy");
 
-	private int id, duration, spread, status;
+	private int id, duration, spread;
+	private Status status;
 	private Date start;
 	private String home, startStr, durStr;
 	private boolean active;
 	private CourseRec course;
 
-	public OffRec(int id, Date start, int duration, int spread, int status,
+	public OffRec(int id, Date start, int duration, int spread, 
 			String home, boolean active, String startStr, String durStr) {
 		this.id = id;
 		this.start = start;
 		this.duration = duration;
 		this.spread = spread;
-		this.status = status;
 		this.home = home == null ? "" : home;
 		this.active = active;
 		this.startStr = startStr == null ? "" : startStr;
 		this.durStr = durStr == null ? "" : durStr;
 	}
 
-	public int getStatus() {
+	public Status getStatus() {
 		return status;
 	}
 
@@ -41,7 +41,7 @@ public class OffRec implements Linked {
 	 * S, unless higher, all other offerings that are dunno or maybe are set to
 	 * no
 	 */
-	public void setStatus(int status) {
+	public void setStatus(Status status) {
 		this.status = status;
 		/*
 		// dunno, no, and maybe have nothing else to do
@@ -146,9 +146,9 @@ public class OffRec implements Linked {
 		return id + ":" + course.getId() + ":" + status;
 	}
 
-	public void setStatusDirect(int stat) {
-		this.status = stat;
-	}
+//	public void setStatusDirect(int stat) {
+//		this.status = stat;
+//	}
 /*
 	public void diff(OffRec other, ArrayList<Change> changes) {
 		assert (this.id == other.id);

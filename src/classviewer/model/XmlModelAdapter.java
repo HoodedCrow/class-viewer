@@ -120,8 +120,7 @@ public class XmlModelAdapter {
 		String prof = valueOrNull(item, "Prof");
 		String link = valueOrNull(item, "Link");
 
-		// Pass status -1 until overridden later from another file
-		CourseRec res = new CourseRec(id, shortName, name, desc, prof, link, -1);
+		CourseRec res = new CourseRec(id, shortName, name, desc, prof, link);
 
 		// Dereference categories and universities
 		if (categories != null && !categories.isEmpty()) {
@@ -170,8 +169,7 @@ public class XmlModelAdapter {
 		String durStr = valueOrNull(item, "DurS");
 		String link = valueOrNull(item, "Home");
 
-		// status -1 until overridden from another file
-		return new OffRec(id, start, duration, spread, -1, link, active > 0,
+		return new OffRec(id, start, duration, spread, link, active > 0,
 				startStr, durStr);
 	}
 

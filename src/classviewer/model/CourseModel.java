@@ -20,6 +20,8 @@ public class CourseModel {
 	private HashMap<Integer, CourseRec> courses = new HashMap<Integer, CourseRec>();
 	private ArrayList<CourseFilter> filters = new ArrayList<CourseFilter>();
 	private ArrayList<CourseModelListener> listeners = new ArrayList<CourseModelListener>();
+	/** Chached list of courses after filters have been applied */
+	private ArrayList<CourseRec> filteredCourses = new ArrayList<CourseRec>();
 
 	public CourseModel() {
 		filters.add(new CategoryCourseFilter(this));
@@ -76,8 +78,15 @@ public class CourseModel {
 	}
 
 	public void fireModelReloaded() {
+		applyCourseFilters();
 		for (CourseModelListener lnr : listeners)
 			lnr.modelUpdated();
+	}
+
+	public void fireFiltersChanged(CourseFilter filter) {
+		applyCourseFilters();
+		for (CourseModelListener lnr : listeners)
+			lnr.filtersUpdated();
 	}
 
 	public void addListener(CourseModelListener lnr) {
@@ -86,5 +95,20 @@ public class CourseModel {
 
 	public void removeListener(CourseModelListener lnr) {
 		this.listeners.remove(lnr);
+	}
+
+	private void applyCourseFilters() {
+		filteredCourses.clear();
+		for (CourseRec rec : courses.values()) {
+			boolean passed = true;
+			for (int i = 0; i < filters.size() && passed; i++)
+				passed = filters.get(i).accept(rec);
+			if (passed)
+				filteredCourses.add(rec);
+		}
+	}
+
+	public ArrayList<CourseRec> getFilteredCourses() {
+		return filteredCourses;
 	}
 }
