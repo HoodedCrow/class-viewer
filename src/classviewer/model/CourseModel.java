@@ -111,4 +111,8 @@ public class CourseModel {
 	public ArrayList<CourseRec> getFilteredCourses() {
 		return filteredCourses;
 	}
+
+	public CourseRec getClassById(int id) {
+		return courses.get(id);
+	}
 }

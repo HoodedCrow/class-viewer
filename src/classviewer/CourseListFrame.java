@@ -1,9 +1,5 @@
 package classviewer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -23,18 +19,13 @@ public class CourseListFrame extends NamedInternalFrame implements
 
 	private final String[] columnNames = { "", "", "Name" };
 	private JTable table;
-	private ArrayList<CourseRec> cachedCourses = new ArrayList<CourseRec>();
-
-	private static final int SORT_BY_NAME = 1;
-	private static final int SORT_BY_STATUS = 2;
-
-	private int sortMode = SORT_BY_NAME;
 
 	public CourseListFrame(CourseModel model) {
 		super("Courses", model);
 		model.addListener(this);
 
 		table = new JTable(new CourseTableModel());
+		table.setAutoCreateRowSorter(true);
 		this.add(new JScrollPane(table));
 
 		setColumnWidth();
@@ -71,20 +62,6 @@ public class CourseListFrame extends NamedInternalFrame implements
 	}
 
 	private void reloadModel() {
-		cachedCourses.clear();
-		cachedCourses.addAll(courseModel.getFilteredCourses());
-
-		// Sort
-		if (sortMode == SORT_BY_NAME) {
-			Collections.sort(cachedCourses, new Comparator<CourseRec>() {
-				@Override
-				public int compare(CourseRec o1, CourseRec o2) {
-					return o1.getName().compareTo(o2.getName());
-				}
-			});
-		}
-		// TODO Sort by status
-
 		((CourseTableModel) table.getModel()).fireTableChanged(null);
 		setColumnWidth();
 	}
@@ -93,7 +70,7 @@ public class CourseListFrame extends NamedInternalFrame implements
 
 		@Override
 		public int getRowCount() {
-			return cachedCourses.size();
+			return courseModel.getFilteredCourses().size();
 		}
 
 		@Override
@@ -120,12 +97,13 @@ public class CourseListFrame extends NamedInternalFrame implements
 
 		@Override
 		public Object getValueAt(int rowIndex, int columnIndex) {
-			CourseRec rec = cachedCourses.get(rowIndex);
+			CourseRec rec = courseModel.getFilteredCourses().get(rowIndex);
 			switch (columnIndex) {
 			case 0:
 				return rec.getStatus();
-			case 1: 
-				return (rec.hasDateless()?"?":"") + (rec.hasUnknown()?"+":"");
+			case 1:
+				return (rec.hasDateless() ? "?" : "")
+						+ (rec.hasUnknown() ? "+" : "");
 			case 2:
 				return rec.getName();
 			}

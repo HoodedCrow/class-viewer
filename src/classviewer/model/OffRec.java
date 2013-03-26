@@ -146,9 +146,9 @@ public class OffRec implements Linked {
 		return id + ":" + course.getId() + ":" + status;
 	}
 
-//	public void setStatusDirect(int stat) {
-//		this.status = stat;
-//	}
+	public void setStatusDirect(Status stat) {
+		this.status = stat;
+	}
 /*
 	public void diff(OffRec other, ArrayList<Change> changes) {
 		assert (this.id == other.id);

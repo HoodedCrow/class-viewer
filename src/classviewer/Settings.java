@@ -58,6 +58,11 @@ public class Settings {
 		return new File(dir, settings.get(STATIC_DATA_FNAME));
 	}
 
+	public File getStatusFile() {
+		File dir = new File(settings.get(BASE_DIR));
+		return new File(dir, settings.get(STATUS_DATA_FNAME));
+	}
+
 	public String getString(String key) {
 		return settings.get(key);
 	}

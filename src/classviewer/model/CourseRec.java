@@ -148,9 +148,9 @@ public class CourseRec implements Named, Linked {
 		return null;
 	}
 
-//	public void setStatusDirect(int stat) {
-//		this.status = stat;
-//	}
+	public void setStatusDirect(Status stat) {
+		this.status = stat;
+	}
 /*
 	public void diff(CourseRec other, ArrayList<Change> changes) {
 		assert (this.id == other.id);

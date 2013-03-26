@@ -3,6 +3,7 @@ package classviewer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 
 import javax.swing.JDesktopPane;
@@ -12,6 +13,7 @@ import javax.swing.JMenuBar;
 import javax.swing.UIManager;
 
 import classviewer.model.CourseModel;
+import classviewer.model.StatusFileModelAdapter;
 import classviewer.model.XmlModelAdapter;
 
 /**
@@ -75,23 +77,38 @@ public class CourseViewer extends JFrame {
 	/** Load settings and existing data */
 	private void load() {
 		// Load main model, if file is present
+		boolean haveOldData = false;
 		File file = settings.getStaticFile();
 		try {
 			FileInputStream reader = new FileInputStream(file);
 			XmlModelAdapter xml = new XmlModelAdapter();
 			xml.readModel(reader, model);
 			reader.close();
-
+			haveOldData = true;
 			// xml.writeModel(System.out, model); // TODO Kill once works
 		} catch (FileNotFoundException e) {
 			System.err.println("Initial data file " + file
 					+ " is not found. Starting empty.");
-			// TODO Check/clean up status data (?)
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// TODO Load statuses
+
+		if (haveOldData) {
+			file = settings.getStatusFile();
+			try {
+				FileReader reader = new FileReader(file);
+				StatusFileModelAdapter adap = new StatusFileModelAdapter();
+				adap.updateStatuses(reader, model);
+				reader.close();
+			} catch (FileNotFoundException e) {
+				System.err.println("Status file " + file
+						+ " is not found. Assuming UNKNOWN for everything.");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+
 		// TODO somewhere load JSON
 	}
 
