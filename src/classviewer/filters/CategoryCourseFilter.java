@@ -1,6 +1,8 @@
 package classviewer.filters;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 import classviewer.model.CourseModel;
@@ -21,7 +23,9 @@ public class CategoryCourseFilter extends CourseFilter {
 
 	@Override
 	public Collection<? extends Object> getOptions() {
-		return model.getCategories();
+		ArrayList<DescRec> options = new ArrayList<DescRec>(model.getCategories());
+		Collections.sort(options);
+		return options;
 	}
 
 	@Override

@@ -7,7 +7,7 @@ import java.util.ArrayList;
  * 
  * @author TK
  */
-public class DescRec implements Named {
+public class DescRec implements Named, Comparable<DescRec> {
 	String id, name, description;
 
 	public DescRec(String id, String name, String desc) {
@@ -59,4 +59,10 @@ public class DescRec implements Named {
 			changes.add(Change.changed("Description changed",
 					Change.Type.DESCRIPTION, this, other.description));
 	}*/
+
+	/** Compare by name. Used for sorting in GUI */
+	@Override
+	public int compareTo(DescRec o) {
+		return this.name.compareTo(o.getName());
+	}
 }
