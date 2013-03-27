@@ -55,7 +55,7 @@ public class CourseViewer extends JFrame {
 		windowMenu.add(courseListFrame.makeCheckBoxMenuItem());
 		desktop.add(courseListFrame);
 
-		calendarFrame = new CalendarFrame(model);
+		calendarFrame = new CalendarFrame(model, settings);
 		windowMenu.add(calendarFrame.makeCheckBoxMenuItem());
 		desktop.add(calendarFrame);
 
@@ -66,7 +66,7 @@ public class CourseViewer extends JFrame {
 		changesFrame = new ChangesFrame(model);
 		windowMenu.add(changesFrame.makeCheckBoxMenuItem());
 		desktop.add(changesFrame);
-		
+
 		courseListFrame.addSelectionListener(detailsFrame);
 
 		desktop.setLayout(new MainWindowLayout(courseFilterFrame,
@@ -108,7 +108,8 @@ public class CourseViewer extends JFrame {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
+			
+			model.fireModelReloaded();
 		}
 
 		// TODO somewhere load JSON

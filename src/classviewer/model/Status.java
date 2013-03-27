@@ -6,19 +6,21 @@ package classviewer.model;
  * @author TK
  */
 public class Status {
-	public static final Status UNKNOWN = new Status('U', "unknown");
-	public static final Status YES = new Status('Y', "yes");
-	public static final Status NO = new Status('N', "no");
-	public static final Status MAYBE = new Status('M', "maybe");
-	public static final Status REGISTERED = new Status('R', "registered");
-	public static final Status DONE = new Status('D', "done");
+	public static final Status UNKNOWN = new Status('U', "unknown", 4);
+	public static final Status YES = new Status('Y', "yes", 2);
+	public static final Status NO = new Status('N', "no", 5);
+	public static final Status MAYBE = new Status('M', "maybe", 3);
+	public static final Status REGISTERED = new Status('R', "registered", 0);
+	public static final Status DONE = new Status('D', "done", 1);
 
 	private char value;
 	private String name;
+	private int calendarOrder;
 
-	private Status(char value, String name) {
+	private Status(char value, String name, int calendarOrder) {
 		this.value = value;
 		this.name = name;
+		this.calendarOrder = calendarOrder;
 	}
 
 	public String toString() {
@@ -44,5 +46,9 @@ public class Status {
 			return REGISTERED;
 		System.err.println("Unknown status value: " + str);
 		return UNKNOWN;
+	}
+	
+	public int getCalendarOrder() {
+		return calendarOrder;
 	}
 }

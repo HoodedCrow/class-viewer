@@ -1,5 +1,6 @@
 package classviewer;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.HashMap;
 
@@ -13,10 +14,16 @@ public class Settings {
 	public static String BASE_DIR = "BaseDirectory";
 	public static String STATIC_DATA_FNAME = "DataFile";
 	public static String STATUS_DATA_FNAME = "StatusFile";
+	
+	// Prefix for colors
+	public static String COLOR = "Color";
 
 	/** Name of the settings file. Not part of the settings themselves */
 	private String settingsFilename;
 	public static final String DEFAULT_SETTINGS_FILENAME = "courseviewer.ini";
+
+	/** Cached colors */
+	private HashMap<String, Color> cachedColors = new HashMap<String, Color>();
 
 	/**
 	 * The main hash containing all the values. Note that numbers are stored as
@@ -39,6 +46,21 @@ public class Settings {
 		settings.put(BASE_DIR, "./data");
 		settings.put(STATIC_DATA_FNAME, "static-data.xml");
 		settings.put(STATUS_DATA_FNAME, "statuses.txt");
+		
+		// Calendar colors
+		settings.put(COLOR+"UCalBg", "B0B0B0");
+		settings.put(COLOR+"YCalBg", "78FAFA");
+		settings.put(COLOR+"NCalBg", "FF0000");
+		settings.put(COLOR+"MCalBg", "F0F000");
+		settings.put(COLOR+"DCalBg", "005000");
+		settings.put(COLOR+"RCalBg", "00FF00");
+		
+		settings.put(COLOR+"UCalFg", "000000");
+		settings.put(COLOR+"YCalFg", "001478");
+		settings.put(COLOR+"NCalFg", "780000");
+		settings.put(COLOR+"MCalFg", "007800");
+		settings.put(COLOR+"DCalFg", "00FF00");
+		settings.put(COLOR+"RCalFg", "005000");
 	}
 
 	private void load() {
@@ -65,6 +87,26 @@ public class Settings {
 
 	public String getString(String key) {
 		return settings.get(key);
+	}
+
+	public Color getColor(String name) {
+		Color clr = cachedColors.get(name);
+		if (clr != null)
+			return clr;
+		String str = settings.get(COLOR + name);
+		if (str == null) {
+			System.err.println("No color defined: " + name);
+			return Color.gray;
+		}
+		try {
+			clr = new Color(Integer.parseInt(str, 16));
+		} catch (NumberFormatException e) {
+			System.err.println("Cannot parse hex RGB " + str + ": " + e);
+			return Color.gray;
+		}
+
+		cachedColors.put(name, clr);
+		return clr;
 	}
 
 }

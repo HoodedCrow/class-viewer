@@ -14,7 +14,7 @@ public class OffRec implements Linked {
 			"dd MMM yyyy");
 
 	private int id, duration, spread;
-	private Status status;
+	private Status status = Status.UNKNOWN;
 	private Date start;
 	private String home, startStr, durStr;
 	private boolean active;
