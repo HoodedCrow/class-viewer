@@ -170,4 +170,19 @@ public class OffRec implements Linked {
 			changes.add(Change.changed("Duration string changed",
 	}
 */
+
+	public String getLongHtml() {
+		String str = "Offering <b>" + id + "</b>, start ";
+		if (start != null)
+			str = str + "<b>" + dformat.format(start) + "</b>";
+		else
+			str = str + "tba";
+		if (durStr != null)
+			str = str + ", duration: <b>" + durStr + "</b>";
+		if (active)
+			str = str + ", active";
+		if (home != null)
+			str += "<br/><a href=\"" + home + "\">" + home + "</a>";
+		return str;
+	}
 }

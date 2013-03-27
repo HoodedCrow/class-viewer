@@ -1,7 +1,12 @@
 package classviewer;
 
+import java.util.ArrayList;
+
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
@@ -19,14 +24,34 @@ public class CourseListFrame extends NamedInternalFrame implements
 
 	private final String[] columnNames = { "", "", "Name" };
 	private JTable table;
+	private ArrayList<CourseSelectionListener> courseListeners = new ArrayList<CourseSelectionListener>();
 
 	public CourseListFrame(CourseModel model) {
 		super("Courses", model);
 		model.addListener(this);
 
-		table = new JTable(new CourseTableModel());
+		final CourseTableModel tableModel = new CourseTableModel();
+		table = new JTable(tableModel);
 		table.setAutoCreateRowSorter(true);
+		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		this.add(new JScrollPane(table));
+
+		table.getSelectionModel().addListSelectionListener(
+				new ListSelectionListener() {
+					@Override
+					public void valueChanged(ListSelectionEvent e) {
+						if (e.getValueIsAdjusting())
+							return;
+						CourseRec selection = null;
+						if (table.getSelectedRow() >= 0)
+							// Assume column -1 return the whole object
+							selection = (CourseRec) tableModel.getValueAt(table
+									.convertRowIndexToModel(table
+											.getSelectedRow()), -1);
+						for (CourseSelectionListener lnr : courseListeners)
+							lnr.courseSelected(selection);
+					}
+				});
 
 		setColumnWidth();
 	}
@@ -66,6 +91,10 @@ public class CourseListFrame extends NamedInternalFrame implements
 		setColumnWidth();
 	}
 
+	public void addSelectionListener(CourseSelectionListener listener) {
+		this.courseListeners.add(listener);
+	}
+
 	private class CourseTableModel extends DefaultTableModel {
 
 		@Override
@@ -99,6 +128,9 @@ public class CourseListFrame extends NamedInternalFrame implements
 		public Object getValueAt(int rowIndex, int columnIndex) {
 			CourseRec rec = courseModel.getFilteredCourses().get(rowIndex);
 			switch (columnIndex) {
+			// This is used to get the whole object
+			case -1:
+				return rec;
 			case 0:
 				return rec.getStatus();
 			case 1:

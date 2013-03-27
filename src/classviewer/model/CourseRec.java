@@ -73,11 +73,11 @@ public class CourseRec implements Named, Linked {
 	public void setStatus(Status status) {
 		this.status = status;
 		// TODO
-//		if (status != 3)
-//			return; // only for no
-//		for (OffRec o : offerings)
-//			if (o.getStatus() < 5)
-//				o.setStatus(3);
+		// if (status != 3)
+		// return; // only for no
+		// for (OffRec o : offerings)
+		// if (o.getStatus() < 5)
+		// o.setStatus(3);
 	}
 
 	public String getShortName() {
@@ -133,12 +133,22 @@ public class CourseRec implements Named, Linked {
 	}
 
 	public String getLongHtml() {
-		String str = "<html><b>" + name + "</b> (" + id + ")<br/>\n";
+		String str = "<html><b>" + name + "</b> (" + id + ", " + status.getName() + ")<br/>\n";
+		str += "<b>Instructor(s):</b> " + instructor + "<br/>";
+		str += "<b>Categories:</b> " + recNames(categories) + "<br/>";
+		str += "<b>University:</b> " + recNames(universities) + "<br/>";
 		str += description + "<br/>\n";
 		str += "<a href=\"" + link + "\">" + link + "</a><br/>\n";
-		str += instructor + ",";
-		str += categories + ", " + universities;
 		return str;
+	}
+
+	private String recNames(ArrayList<DescRec> recs) {
+		if (recs.isEmpty())
+			return "";
+		String res = recs.get(0).getName();
+		for (int i = 1; i < recs.size(); i++)
+			res = res + ", " + recs.get(i).getName();
+		return res;
 	}
 
 	public OffRec getOffering(int id) {
@@ -151,70 +161,45 @@ public class CourseRec implements Named, Linked {
 	public void setStatusDirect(Status stat) {
 		this.status = stat;
 	}
-/*
-	public void diff(CourseRec other, ArrayList<Change> changes) {
-		assert (this.id == other.id);
-		if (!this.name.equals(other.name))
-			changes.add(Change.changed("Name changed", Change.Type.NAME, this,
-					other.name));
-		if (!this.description.equals(other.description))
-			changes.add(Change.changed("Description changed",
-					Change.Type.DESCRIPTION, this, other.description));
-		if (!this.shortName.equals(other.shortName))
-			changes.add(Change.changed("Short name changed",
-					Change.Type.SHORT_NAME, this, other.shortName));
-		if (!this.instructor.equals(other.instructor))
-			changes.add(Change.changed("Instructor changed",
-					Change.Type.INSTRUCTOR, this, other.instructor));
-		if (!this.link.equals(other.link))
-			changes.add(Change.changed("Link changed", Change.Type.LINK, this,
-					other.link));
 
-		// Categories
-		HashSet<String> oldIds = getIdSet(this.categories);
-		HashSet<String> newIds = getIdSet(other.categories);
-		if (!oldIds.equals(newIds)) {
-			changes.add(Change.changed("Categories for class " + name,
-					Change.Type.CATEGORIES, this, newIds));
-		}
-
-		// Universities
-		oldIds = getIdSet(this.universities);
-		newIds = getIdSet(other.universities);
-		if (!oldIds.equals(newIds)) {
-			changes.add(Change.changed("Universities for class " + name,
-					Change.Type.UNIVERSITIES, this, newIds));
-		}
-
-		// Offerings
-		HashSet<Object> ioldIds = new HashSet<Object>();
-		for (OffRec r : this.offerings) {
-			ioldIds.add(r.getId());
-		}
-		HashSet<Object> inewIds = new HashSet<Object>();
-		for (OffRec r : other.offerings) {
-			inewIds.add(r.getId());
-		}
-		HashSet<Object> ids = new HashSet<Object>(ioldIds);
-		ids.removeAll(inewIds);
-		for (Object o : ids) {
-			changes.add(Change.remove("Offering removed",
-					this.getOffering((Integer) o)));
-		}
-		ids = new HashSet<Object>(inewIds);
-		ids.removeAll(ioldIds);
-		for (Object o : ids) {
-			changes.add(Change.add("Offering added",
-					other.getOffering((Integer) o)));
-		}
-		ids = new HashSet<Object>(inewIds);
-		ids.retainAll(ioldIds);
-		for (Object o : ids) {
-			this.getOffering((Integer) o).diff(other.getOffering((Integer) o),
-					changes);
-		}
-	}
-*/
+	/*
+	 * public void diff(CourseRec other, ArrayList<Change> changes) { assert
+	 * (this.id == other.id); if (!this.name.equals(other.name))
+	 * changes.add(Change.changed("Name changed", Change.Type.NAME, this,
+	 * other.name)); if (!this.description.equals(other.description))
+	 * changes.add(Change.changed("Description changed",
+	 * Change.Type.DESCRIPTION, this, other.description)); if
+	 * (!this.shortName.equals(other.shortName))
+	 * changes.add(Change.changed("Short name changed", Change.Type.SHORT_NAME,
+	 * this, other.shortName)); if (!this.instructor.equals(other.instructor))
+	 * changes.add(Change.changed("Instructor changed", Change.Type.INSTRUCTOR,
+	 * this, other.instructor)); if (!this.link.equals(other.link))
+	 * changes.add(Change.changed("Link changed", Change.Type.LINK, this,
+	 * other.link));
+	 * 
+	 * // Categories HashSet<String> oldIds = getIdSet(this.categories);
+	 * HashSet<String> newIds = getIdSet(other.categories); if
+	 * (!oldIds.equals(newIds)) {
+	 * changes.add(Change.changed("Categories for class " + name,
+	 * Change.Type.CATEGORIES, this, newIds)); }
+	 * 
+	 * // Universities oldIds = getIdSet(this.universities); newIds =
+	 * getIdSet(other.universities); if (!oldIds.equals(newIds)) {
+	 * changes.add(Change.changed("Universities for class " + name,
+	 * Change.Type.UNIVERSITIES, this, newIds)); }
+	 * 
+	 * // Offerings HashSet<Object> ioldIds = new HashSet<Object>(); for (OffRec
+	 * r : this.offerings) { ioldIds.add(r.getId()); } HashSet<Object> inewIds =
+	 * new HashSet<Object>(); for (OffRec r : other.offerings) {
+	 * inewIds.add(r.getId()); } HashSet<Object> ids = new
+	 * HashSet<Object>(ioldIds); ids.removeAll(inewIds); for (Object o : ids) {
+	 * changes.add(Change.remove("Offering removed", this.getOffering((Integer)
+	 * o))); } ids = new HashSet<Object>(inewIds); ids.removeAll(ioldIds); for
+	 * (Object o : ids) { changes.add(Change.add("Offering added",
+	 * other.getOffering((Integer) o))); } ids = new HashSet<Object>(inewIds);
+	 * ids.retainAll(ioldIds); for (Object o : ids) { this.getOffering((Integer)
+	 * o).diff(other.getOffering((Integer) o), changes); } }
+	 */
 	public static HashSet<String> getIdSet(ArrayList<DescRec> list) {
 		HashSet<String> set = new HashSet<String>();
 		for (DescRec r : list) {

@@ -66,6 +66,8 @@ public class CourseViewer extends JFrame {
 		changesFrame = new ChangesFrame(model);
 		windowMenu.add(changesFrame.makeCheckBoxMenuItem());
 		desktop.add(changesFrame);
+		
+		courseListFrame.addSelectionListener(detailsFrame);
 
 		desktop.setLayout(new MainWindowLayout(courseFilterFrame,
 				courseListFrame, calendarFrame, detailsFrame, changesFrame));
