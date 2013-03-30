@@ -89,7 +89,7 @@ public class CalendarFrame extends NamedInternalFrame implements
 		this.add(new JScrollPane(drawingPanel), BorderLayout.CENTER);
 
 		today = toWeekStart(new Date());
-		this.addMouseListener(new MouseAdapter() {
+		this.drawingPanel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent event) {
 				processClick(event.getX(), event.getY());

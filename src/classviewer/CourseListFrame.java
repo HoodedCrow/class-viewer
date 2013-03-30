@@ -13,6 +13,7 @@ import javax.swing.table.TableColumn;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseModelListener;
 import classviewer.model.CourseRec;
+import classviewer.model.OffRec;
 
 /**
  * Filtered list of courses.
@@ -20,7 +21,7 @@ import classviewer.model.CourseRec;
  * @author TK
  */
 public class CourseListFrame extends NamedInternalFrame implements
-		CourseModelListener {
+		CourseModelListener, GraphicSelectionListener {
 
 	private final String[] columnNames = { "", "", "Name" };
 	private JTable table;
@@ -68,6 +69,15 @@ public class CourseListFrame extends NamedInternalFrame implements
 		column.setPreferredWidth(cw);
 		column.setWidth(cw);
 		column.setMaxWidth(cw);
+	}
+
+	@Override
+	public void offeringClicked(OffRec offering) {
+		CourseRec course = offering.getCourse();
+		int idx = courseModel.getFilteredCourses().indexOf(course);
+		idx = table.convertRowIndexToView(idx);
+		table.getSelectionModel().setSelectionInterval(idx, idx);
+		table.scrollRectToVisible(table.getCellRect(idx, 0, true));
 	}
 
 	@Override
