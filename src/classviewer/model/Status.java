@@ -1,5 +1,7 @@
 package classviewer.model;
 
+import java.util.ArrayList;
+
 /**
  * Enum for class status.
  * 
@@ -12,6 +14,16 @@ public class Status {
 	public static final Status MAYBE = new Status('M', "maybe", 3);
 	public static final Status REGISTERED = new Status('R', "registered", 0);
 	public static final Status DONE = new Status('D', "done", 1);
+
+	private static final ArrayList<Status> allValues = new ArrayList<Status>();
+	static {
+		allValues.add(UNKNOWN);
+		allValues.add(YES);
+		allValues.add(NO);
+		allValues.add(MAYBE);
+		allValues.add(REGISTERED);
+		allValues.add(DONE);
+	}
 
 	private char value;
 	private String name;
@@ -47,8 +59,12 @@ public class Status {
 		System.err.println("Unknown status value: " + str);
 		return UNKNOWN;
 	}
-	
+
 	public int getCalendarOrder() {
 		return calendarOrder;
+	}
+
+	public static ArrayList<Status> getAll() {
+		return allValues;
 	}
 }

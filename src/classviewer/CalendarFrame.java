@@ -1,8 +1,11 @@
 package classviewer;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.DateFormat;
@@ -13,6 +16,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 
+import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -70,8 +74,19 @@ public class CalendarFrame extends NamedInternalFrame implements
 		super("Calendar", model);
 		this.settings = settings;
 		model.addListener(this);
+		this.setLayout(new BorderLayout());
+
+		JPanel buttons = new JPanel();
+		this.add(buttons, BorderLayout.NORTH);
+
+		for (Status stat : Status.getAll()) {
+			BlockFilter filter = new BlockFilter(stat);
+			filters.add(filter);
+			buttons.add(new FilterCheckBox(filter));
+		}
+
 		this.drawingPanel = new DrawingPanel();
-		this.add(new JScrollPane(drawingPanel));
+		this.add(new JScrollPane(drawingPanel), BorderLayout.CENTER);
 
 		today = toWeekStart(new Date());
 		this.addMouseListener(new MouseAdapter() {
@@ -267,4 +282,22 @@ public class CalendarFrame extends NamedInternalFrame implements
 	public void addSelectionListener(GraphicSelectionListener listener) {
 		this.selectionListeners.add(listener);
 	}
+
+	private class FilterCheckBox extends JCheckBox implements ActionListener {
+		BlockFilter filter;
+
+		FilterCheckBox(BlockFilter filter) {
+			super(filter.getStatus().getName(), true);
+			this.filter = filter;
+			this.addActionListener(this);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent event) {
+			filter.setEnabled(!isSelected());
+			// Recompute and redraw
+			courseStatusChanged(null);
+		}
+	}
+
 }
