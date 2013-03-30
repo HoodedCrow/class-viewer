@@ -12,6 +12,7 @@ import javax.swing.table.TableColumn;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
+import classviewer.model.Status;
 
 /**
  * Show list of offerings, let set offering status, show HTML with course
@@ -27,13 +28,14 @@ public class DetailsFrame extends NamedInternalFrame implements
 	private JTextPane htmlPane;
 	private CourseRec selectedCourse = null;
 
-	public DetailsFrame(CourseModel model) {
+	public DetailsFrame(CourseModel model, Settings settings) {
 		super("Details", model);
 		this.setLayout(new BorderLayout());
 
 		tableModel = new OfferingTableModel();
 		offeringTable = new JTable(tableModel);
 		offeringTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		offeringTable.setDefaultRenderer(Status.class, new StatusCellRenderer(settings));
 		this.add(offeringTable, BorderLayout.NORTH);
 
 		htmlPane = new JTextPane();

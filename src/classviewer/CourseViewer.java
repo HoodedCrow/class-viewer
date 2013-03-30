@@ -51,7 +51,7 @@ public class CourseViewer extends JFrame {
 		windowMenu.add(courseFilterFrame.makeCheckBoxMenuItem());
 		desktop.add(courseFilterFrame);
 
-		courseListFrame = new CourseListFrame(model);
+		courseListFrame = new CourseListFrame(model, settings);
 		windowMenu.add(courseListFrame.makeCheckBoxMenuItem());
 		desktop.add(courseListFrame);
 
@@ -59,7 +59,7 @@ public class CourseViewer extends JFrame {
 		windowMenu.add(calendarFrame.makeCheckBoxMenuItem());
 		desktop.add(calendarFrame);
 
-		detailsFrame = new DetailsFrame(model);
+		detailsFrame = new DetailsFrame(model, settings);
 		windowMenu.add(detailsFrame.makeCheckBoxMenuItem());
 		desktop.add(detailsFrame);
 

@@ -9,6 +9,7 @@ import classviewer.model.CourseModel;
 import classviewer.model.CourseModelListener;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
+import classviewer.model.Status;
 
 public class OfferingTableModel extends DefaultTableModel implements
 		CourseSelectionListener {
@@ -28,6 +29,8 @@ public class OfferingTableModel extends DefaultTableModel implements
 
 	@Override
 	public Class<?> getColumnClass(int col) {
+		if (col == 0)
+			return Status.class;
 		return Object.class;
 	}
 

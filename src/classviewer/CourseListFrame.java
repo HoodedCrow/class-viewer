@@ -14,6 +14,7 @@ import classviewer.model.CourseModel;
 import classviewer.model.CourseModelListener;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
+import classviewer.model.Status;
 
 /**
  * Filtered list of courses.
@@ -27,7 +28,7 @@ public class CourseListFrame extends NamedInternalFrame implements
 	private JTable table;
 	private ArrayList<CourseSelectionListener> courseListeners = new ArrayList<CourseSelectionListener>();
 
-	public CourseListFrame(CourseModel model) {
+	public CourseListFrame(CourseModel model, Settings settings) {
 		super("Courses", model);
 		model.addListener(this);
 
@@ -35,6 +36,7 @@ public class CourseListFrame extends NamedInternalFrame implements
 		table = new JTable(tableModel);
 		table.setAutoCreateRowSorter(true);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.setDefaultRenderer(Status.class, new StatusCellRenderer(settings));
 		this.add(new JScrollPane(table));
 
 		table.getSelectionModel().addListSelectionListener(
@@ -124,7 +126,8 @@ public class CourseListFrame extends NamedInternalFrame implements
 
 		@Override
 		public Class<?> getColumnClass(int columnIndex) {
-			// TODO Auto-generated method stub
+			if (columnIndex == 0)
+				return Status.class;
 			return Object.class;
 		}
 
