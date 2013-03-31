@@ -1,7 +1,10 @@
 package classviewer;
 
 import java.awt.Color;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 
 /**
@@ -14,7 +17,7 @@ public class Settings {
 	public static String BASE_DIR = "BaseDirectory";
 	public static String STATIC_DATA_FNAME = "DataFile";
 	public static String STATUS_DATA_FNAME = "StatusFile";
-	
+
 	// Prefix for colors
 	public static String COLOR = "Color";
 
@@ -38,7 +41,11 @@ public class Settings {
 		else
 			settingsFilename = DEFAULT_SETTINGS_FILENAME;
 		loadDefaults();
-		load();
+		try {
+			load();
+		} catch (IOException e) {
+			System.err.println("Could not load file " + settingsFilename + ":\n" + e);
+		}
 	}
 
 	/** Load default values */
@@ -46,24 +53,24 @@ public class Settings {
 		settings.put(BASE_DIR, "./data");
 		settings.put(STATIC_DATA_FNAME, "static-data.xml");
 		settings.put(STATUS_DATA_FNAME, "statuses.txt");
-		
+
 		// Calendar colors
-		settings.put(COLOR+"UCalBg", "B0B0B0");
-		settings.put(COLOR+"YCalBg", "78FAFA");
-		settings.put(COLOR+"NCalBg", "FF0000");
-		settings.put(COLOR+"MCalBg", "F0F000");
-		settings.put(COLOR+"DCalBg", "005000");
-		settings.put(COLOR+"RCalBg", "00FF00");
-		
-		settings.put(COLOR+"UCalFg", "000000");
-		settings.put(COLOR+"YCalFg", "001478");
-		settings.put(COLOR+"NCalFg", "780000");
-		settings.put(COLOR+"MCalFg", "007800");
-		settings.put(COLOR+"DCalFg", "00FF00");
-		settings.put(COLOR+"RCalFg", "005000");
+		settings.put(COLOR + "UCalBg", "B0B0B0");
+		settings.put(COLOR + "YCalBg", "78FAFA");
+		settings.put(COLOR + "NCalBg", "FF0000");
+		settings.put(COLOR + "MCalBg", "F0F000");
+		settings.put(COLOR + "DCalBg", "005000");
+		settings.put(COLOR + "RCalBg", "00FF00");
+
+		settings.put(COLOR + "UCalFg", "000000");
+		settings.put(COLOR + "YCalFg", "001478");
+		settings.put(COLOR + "NCalFg", "780000");
+		settings.put(COLOR + "MCalFg", "007800");
+		settings.put(COLOR + "DCalFg", "00FF00");
+		settings.put(COLOR + "RCalFg", "005000");
 	}
 
-	private void load() {
+	private void load() throws IOException {
 		File file = new File(settingsFilename);
 		if (!file.exists()) {
 			System.out.println("Settings file " + settingsFilename
@@ -71,8 +78,23 @@ public class Settings {
 			return;
 		}
 
-		// TODO Auto-generated method stub
+		FileReader reader = new FileReader(file);
+		BufferedReader br = new BufferedReader(reader);
+		String s = br.readLine();
 
+		while (s != null) {
+			s = s.trim();
+			if (!s.isEmpty() && !s.startsWith("#")) {
+				String[] p = s.split("=");
+				if (p.length == 2)
+					settings.put(p[0].trim(), p[1].trim());
+				else
+					System.err.println("Ignoring line " + s);
+			}
+			s = br.readLine();
+		}
+
+		reader.close();
 	}
 
 	public File getStaticFile() {
