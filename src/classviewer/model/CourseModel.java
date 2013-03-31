@@ -1,10 +1,15 @@
 package classviewer.model;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
+import classviewer.Settings;
 import classviewer.filters.CategoryCourseFilter;
 import classviewer.filters.CourseFilter;
 import classviewer.filters.UniversityCourseFilter;
@@ -23,8 +28,10 @@ public class CourseModel {
 	private ArrayList<CourseModelListener> listeners = new ArrayList<CourseModelListener>();
 	/** Cached list of courses after filters have been applied */
 	private ArrayList<CourseRec> filteredCourses = new ArrayList<CourseRec>();
+	private Settings settings;
 
-	public CourseModel() {
+	public CourseModel(Settings settings) {
+		this.settings = settings;
 		filters.add(new CategoryCourseFilter(this));
 		filters.add(new UniversityCourseFilter(this));
 	}
@@ -89,7 +96,7 @@ public class CourseModel {
 		for (CourseModelListener lnr : listeners)
 			lnr.filtersUpdated();
 	}
-	
+
 	/** Course or one of it's offerings changed status */
 	public void fireCourseStatusChanged(CourseRec course) {
 		applyCourseFilters();
@@ -125,7 +132,20 @@ public class CourseModel {
 	}
 
 	public void saveStatusFile() throws IOException {
-		// TODO Auto-generated method stub
-		System.out.println("Save status file now");
+		// System.out.println("Save status file now");
+		File file = settings.getStatusFile();
+		FileWriter writer = new FileWriter(file);
+		StatusFileModelAdapter adap = new StatusFileModelAdapter();
+		ArrayList<CourseRec> all = new ArrayList<CourseRec>(courses.values());
+		Collections.sort(all, new CourseById());
+		adap.saveStatuses(writer, all);
+		writer.close();
+	}
+
+	private class CourseById implements Comparator<CourseRec> {
+		@Override
+		public int compare(CourseRec o1, CourseRec o2) {
+			return Integer.compare(o1.getId(), o2.getId());
+		}
 	}
 }

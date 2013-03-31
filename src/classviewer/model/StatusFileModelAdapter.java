@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.ArrayList;
 
 /**
  * Helper class to read/write status information. Made into a separate class to
@@ -13,7 +12,7 @@ import java.util.ArrayList;
  * @author TK
  */
 public class StatusFileModelAdapter {
-	public void saveStatuses(Writer writer, ArrayList<CourseRec> courses)
+	public void saveStatuses(Writer writer, Iterable<CourseRec> courses)
 			throws IOException {
 		for (CourseRec cr : courses) {
 			writer.append("c " + cr.getId() + " " + cr.getStatus() + "\n");
