@@ -38,31 +38,18 @@ public class OffRec implements Linked {
 
 	/**
 	 * * An offering set to: S=yes, done, or registered - the course is set to
-	 * S, unless higher, all other offerings that are dunno or maybe are set to
+	 * S, unless higher, all other offerings that are Unknown or maybe are set to
 	 * no
 	 */
 	public void setStatus(Status status) {
+		if (this.status == status)
+			return; // to avoid deep checks
 		this.status = status;
-		/*
-		// dunno, no, and maybe have nothing else to do
-		if (status == StatusEnum.dunno.code() || status == StatusEnum.no.code()
-				|| status == StatusEnum.maybe.code())
-			return;
-		if (status == StatusEnum.yes.code()
-				&& course.getStatus() < StatusEnum.done.code())
-			course.setStatus(status); // yes
-		if (status == StatusEnum.registered.code()
-				&& course.getStatus() != StatusEnum.done.code())
-			course.setStatus(status); // registered
-		if (status == StatusEnum.done.code())
-			course.setStatus(status); // done
-
-		// All dunno and maybe offerings are now NO
-		for (OffRec o : course.getOfferings())
-			if (o.getStatus() == StatusEnum.dunno.code()
-					|| o.getStatus() == StatusEnum.maybe.code())
-				o.setStatus(StatusEnum.no.code());
-				*/
+		
+		// Should we change course status?
+		Status cs = course.getStatus().updateByOffering(status);
+		if (cs != course.getStatus())
+			course.setStatus(cs);
 	}
 
 	public int getId() {
@@ -173,7 +160,9 @@ public class OffRec implements Linked {
 
 	public String getLongHtml() {
 		String str = "Offering <b>" + id + "</b>, start ";
-		if (start != null)
+		if (startStr != null)
+			str = str + "<b>" + startStr + "</b>";
+		else if (start != null)
 			str = str + "<b>" + dformat.format(start) + "</b>";
 		else
 			str = str + "tba";

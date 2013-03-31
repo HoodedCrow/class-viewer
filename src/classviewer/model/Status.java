@@ -1,7 +1,5 @@
 package classviewer.model;
 
-import java.util.ArrayList;
-
 /**
  * Enum for class status.
  * 
@@ -15,15 +13,8 @@ public class Status {
 	public static final Status REGISTERED = new Status('R', "registered", 0);
 	public static final Status DONE = new Status('D', "done", 1);
 
-	private static final ArrayList<Status> allValues = new ArrayList<Status>();
-	static {
-		allValues.add(UNKNOWN);
-		allValues.add(YES);
-		allValues.add(NO);
-		allValues.add(MAYBE);
-		allValues.add(REGISTERED);
-		allValues.add(DONE);
-	}
+	private static final Status[] allValues = { UNKNOWN, YES, NO, MAYBE,
+			REGISTERED, DONE };
 
 	private char value;
 	private String name;
@@ -64,7 +55,27 @@ public class Status {
 		return calendarOrder;
 	}
 
-	public static ArrayList<Status> getAll() {
+	public static Status[] getAll() {
 		return allValues;
+	}
+
+	/**
+	 * Compute the new status of a course given one of its offerings just
+	 * changed to offStat
+	 */
+	public Status updateByOffering(Status offStat) {
+		// DONE offering makes the whole course DONE regardless of the old
+		// value. DONE course never changes
+		if (offStat == DONE || this == DONE)
+			return DONE;
+		// If passed that, same thing with REGISTERED, YES, and MAYBE
+		if (offStat == REGISTERED || this == REGISTERED)
+			return REGISTERED;
+		if (offStat == YES || this == YES)
+			return YES;
+		if (offStat == MAYBE || this == MAYBE)
+			return MAYBE;
+		// The rest don't change course status
+		return this;
 	}
 }

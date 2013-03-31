@@ -1,5 +1,6 @@
 package classviewer.model;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ public class CourseModel {
 	private HashMap<Integer, CourseRec> courses = new HashMap<Integer, CourseRec>();
 	private ArrayList<CourseFilter> filters = new ArrayList<CourseFilter>();
 	private ArrayList<CourseModelListener> listeners = new ArrayList<CourseModelListener>();
-	/** Chached list of courses after filters have been applied */
+	/** Cached list of courses after filters have been applied */
 	private ArrayList<CourseRec> filteredCourses = new ArrayList<CourseRec>();
 
 	public CourseModel() {
@@ -88,6 +89,13 @@ public class CourseModel {
 		for (CourseModelListener lnr : listeners)
 			lnr.filtersUpdated();
 	}
+	
+	/** Course or one of it's offerings changed status */
+	public void fireCourseStatusChanged(CourseRec course) {
+		applyCourseFilters();
+		for (CourseModelListener lnr : listeners)
+			lnr.courseStatusChanged(course);
+	}
 
 	public void addListener(CourseModelListener lnr) {
 		this.listeners.add(lnr);
@@ -114,5 +122,10 @@ public class CourseModel {
 
 	public CourseRec getClassById(int id) {
 		return courses.get(id);
+	}
+
+	public void saveStatusFile() throws IOException {
+		// TODO Auto-generated method stub
+		System.out.println("Save status file now");
 	}
 }

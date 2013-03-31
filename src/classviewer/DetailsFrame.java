@@ -2,6 +2,7 @@ package classviewer;
 
 import java.awt.BorderLayout;
 
+import javax.swing.DefaultCellEditor;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
@@ -11,6 +12,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
 
 import classviewer.model.CourseModel;
+import classviewer.model.CourseModelListener;
 import classviewer.model.CourseRec;
 import classviewer.model.Status;
 
@@ -21,7 +23,7 @@ import classviewer.model.Status;
  * @author TK
  */
 public class DetailsFrame extends NamedInternalFrame implements
-		CourseSelectionListener {
+		CourseSelectionListener, CourseModelListener {
 
 	private JTable offeringTable;
 	private OfferingTableModel tableModel;
@@ -31,11 +33,19 @@ public class DetailsFrame extends NamedInternalFrame implements
 	public DetailsFrame(CourseModel model, Settings settings) {
 		super("Details", model);
 		this.setLayout(new BorderLayout());
+		model.addListener(this);
 
-		tableModel = new OfferingTableModel();
+		tableModel = new OfferingTableModel(model);
 		offeringTable = new JTable(tableModel);
 		offeringTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		offeringTable.setDefaultRenderer(Status.class, new StatusCellRenderer(settings));
+		offeringTable.setDefaultRenderer(Status.class, new StatusCellRenderer(
+				settings));
+		offeringTable
+				.getColumnModel()
+				.getColumn(0)
+				.setCellEditor(
+						new DefaultCellEditor(new StatusComboBox(Status
+								.getAll(), settings)));
 		this.add(offeringTable, BorderLayout.NORTH);
 
 		htmlPane = new JTextPane();
@@ -91,5 +101,21 @@ public class DetailsFrame extends NamedInternalFrame implements
 			column.setWidth(cw);
 			column.setMaxWidth(cw);
 		}
+	}
+
+	@Override
+	public void courseStatusChanged(CourseRec course) {
+		if (course == selectedCourse && course != null)
+			courseSelected(selectedCourse);
+	}
+
+	@Override
+	public void modelUpdated() {
+		courseSelected(selectedCourse);
+	}
+
+	@Override
+	public void filtersUpdated() {
+		// Noop
 	}
 }

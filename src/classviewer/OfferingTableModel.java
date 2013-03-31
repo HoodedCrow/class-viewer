@@ -6,7 +6,6 @@ import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
 import classviewer.model.CourseModel;
-import classviewer.model.CourseModelListener;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
 import classviewer.model.Status;
@@ -14,18 +13,17 @@ import classviewer.model.Status;
 public class OfferingTableModel extends DefaultTableModel implements
 		CourseSelectionListener {
 
-//	private CourseModel model;
-
+	private CourseModel model;
 	private CourseRec selected = null;
 
-//	public OfferingTableModel(CourseModel model) {
-//		this.model = model;
-//	}
+	public OfferingTableModel(CourseModel model) {
+		this.model = model;
+	}
 
-//	public void refreshModel() {
-//		courseSelected(null);
-//		this.fireTableDataChanged();
-//	}
+	// public void refreshModel() {
+	// courseSelected(null);
+	// this.fireTableDataChanged();
+	// }
 
 	@Override
 	public Class<?> getColumnClass(int col) {
@@ -71,32 +69,25 @@ public class OfferingTableModel extends DefaultTableModel implements
 
 	@Override
 	public boolean isCellEditable(int row, int col) {
-		return false; // TODO col == 0;
+		return col == 0;
 	}
-/*
+
 	@Override
 	public void setValueAt(Object value, int row, int col) {
 		assert (col == 0);
-		int idx = ((StatusEnum) value).ordinal() + 1;
-		selected.getOfferings().get(row).setStatus(idx);
+		selected.getOfferings().get(row).setStatus((Status) value);
 		try {
 			model.saveStatusFile();
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, "Error saving status file: "
 					+ e);
 		}
-		model.notifyListeners(selected);
+		model.fireCourseStatusChanged(selected);
 	}
-*/
+
 	@Override
 	public void courseSelected(CourseRec course) {
 		selected = course;
 		this.fireTableDataChanged();
 	}
-/*
-	@Override
-	public void courseStatusChanged(CourseRec course) {
-		fireTableDataChanged();
-	}
-	*/
 }

@@ -1,7 +1,10 @@
 package classviewer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
+import javax.swing.DefaultCellEditor;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -27,6 +30,7 @@ public class CourseListFrame extends NamedInternalFrame implements
 	private final String[] columnNames = { "", "", "Name" };
 	private JTable table;
 	private ArrayList<CourseSelectionListener> courseListeners = new ArrayList<CourseSelectionListener>();
+	private DefaultCellEditor cellEditor;
 
 	public CourseListFrame(CourseModel model, Settings settings) {
 		super("Courses", model);
@@ -37,6 +41,8 @@ public class CourseListFrame extends NamedInternalFrame implements
 		table.setAutoCreateRowSorter(true);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.setDefaultRenderer(Status.class, new StatusCellRenderer(settings));
+		this.cellEditor = new DefaultCellEditor(new StatusComboBox(
+				Status.getAll(), settings));
 		this.add(new JScrollPane(table));
 
 		table.getSelectionModel().addListSelectionListener(
@@ -71,6 +77,7 @@ public class CourseListFrame extends NamedInternalFrame implements
 		column.setPreferredWidth(cw);
 		column.setWidth(cw);
 		column.setMaxWidth(cw);
+		table.getColumnModel().getColumn(0).setCellEditor(cellEditor);
 	}
 
 	@Override
@@ -133,8 +140,7 @@ public class CourseListFrame extends NamedInternalFrame implements
 
 		@Override
 		public boolean isCellEditable(int rowIndex, int columnIndex) {
-			// TODO Auto-generated method stub
-			return false;
+			return columnIndex == 0;
 		}
 
 		@Override
@@ -157,8 +163,16 @@ public class CourseListFrame extends NamedInternalFrame implements
 
 		@Override
 		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-			// TODO Auto-generated method stub
-
+			assert (columnIndex == 0);
+			CourseRec rec = courseModel.getFilteredCourses().get(rowIndex);
+			rec.setStatus((Status) aValue);
+			try {
+				courseModel.saveStatusFile();
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(null,
+						"Error saving status file: " + e);
+			}
+			courseModel.fireCourseStatusChanged(rec);
 		}
 	}
 }

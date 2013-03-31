@@ -71,13 +71,26 @@ public class CourseRec implements Named, Linked {
 	 * registered.
 	 */
 	public void setStatus(Status status) {
+		if (this.status == status)
+			return; // to avoid deep checks
 		this.status = status;
-		// TODO
-		// if (status != 3)
-		// return; // only for no
-		// for (OffRec o : offerings)
-		// if (o.getStatus() < 5)
-		// o.setStatus(3);
+
+		// If course status flipped to REGISTERED or DONE, all UNKNOWN or MAYBE
+		// offerings go to NO. No need to propagate from the offering back, so
+		// use setStatusDirect.
+		if (status == Status.REGISTERED || status == Status.DONE)
+			for (OffRec o : offerings)
+				if (o.getStatus() == Status.UNKNOWN
+						|| o.getStatus() == Status.MAYBE)
+					o.setStatusDirect(Status.NO);
+		// If course is a no, anything other than registered or done should be a
+		// NO. In fact, if there is a DONE/REGISTERED offering, we should
+		// probably not flip the course to NO
+		if (status == Status.NO)
+			for (OffRec o : offerings)
+				if (o.getStatus() != Status.REGISTERED
+						&& o.getStatus() != Status.DONE)
+					o.setStatusDirect(Status.NO);
 	}
 
 	public String getShortName() {
@@ -133,7 +146,8 @@ public class CourseRec implements Named, Linked {
 	}
 
 	public String getLongHtml() {
-		String str = "<html><b>" + name + "</b> (" + id + ", " + status.getName() + ")<br/>\n";
+		String str = "<html><b>" + name + "</b> (" + id + ", "
+				+ status.getName() + ")<br/>\n";
 		str += "<b>Instructor(s):</b> " + instructor + "<br/>";
 		str += "<b>Categories:</b> " + recNames(categories) + "<br/>";
 		str += "<b>University:</b> " + recNames(universities) + "<br/>";
