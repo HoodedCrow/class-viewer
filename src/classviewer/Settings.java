@@ -72,6 +72,8 @@ public class Settings {
 		settings.put(COLOR + "MCalFg", "007800");
 		settings.put(COLOR + "DCalFg", "00FF00");
 		settings.put(COLOR + "RCalFg", "005000");
+
+		settings.put(COLOR + "TodayBg", "E0A0E0");
 	}
 
 	private void load() throws IOException {

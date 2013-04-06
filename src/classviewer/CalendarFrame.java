@@ -222,7 +222,7 @@ public class CalendarFrame extends NamedInternalFrame implements
 			Date day = cal.getTime();
 			for (int week = 0; week < maxWeek; week++) {
 				if (Math.abs(day.getTime() - today.getTime()) < 24 * 3600000) {
-					g.setColor(Color.GREEN);
+					g.setColor(settings.getColor("TodayBg"));
 					g.fillRect((week - 1) * WEEK_PX + 1, 0, WEEK_PX - 1, h);
 					g.setColor(Color.DARK_GRAY);
 				}
