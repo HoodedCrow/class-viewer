@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.DateFormat;
@@ -66,6 +68,7 @@ public class CalendarFrame extends NamedInternalFrame implements
 
 	private ArrayList<GraphicSelectionListener> selectionListeners = new ArrayList<GraphicSelectionListener>();
 
+	private HeaderPanel headerPanel;
 	private DrawingPanel drawingPanel;
 
 	private Settings settings;
@@ -77,7 +80,7 @@ public class CalendarFrame extends NamedInternalFrame implements
 		this.setLayout(new BorderLayout());
 
 		JPanel buttons = new JPanel();
-		this.add(buttons, BorderLayout.NORTH);
+		this.add(buttons, BorderLayout.SOUTH);
 
 		for (Status stat : Status.getAll()) {
 			BlockFilter filter = new BlockFilter(stat);
@@ -85,8 +88,19 @@ public class CalendarFrame extends NamedInternalFrame implements
 			buttons.add(new FilterCheckBox(filter));
 		}
 
+		this.headerPanel = new HeaderPanel();
+		this.add(headerPanel, BorderLayout.NORTH);
 		this.drawingPanel = new DrawingPanel();
-		this.add(new JScrollPane(drawingPanel), BorderLayout.CENTER);
+		JScrollPane scroller = new JScrollPane(drawingPanel);
+		this.add(scroller, BorderLayout.CENTER);
+		scroller.getHorizontalScrollBar().addAdjustmentListener(
+				new AdjustmentListener() {
+					@Override
+					public void adjustmentValueChanged(AdjustmentEvent e) {
+						headerPanel.setShift(e.getValue());
+						headerPanel.repaint();
+					}
+				});
 
 		today = toWeekStart(new Date());
 		this.drawingPanel.addMouseListener(new MouseAdapter() {
@@ -210,10 +224,47 @@ public class CalendarFrame extends NamedInternalFrame implements
 		return cal.getTime();
 	}
 
+	private class HeaderPanel extends JPanel {
+		private int shift = 0;
+
+		public void paint(Graphics g) {
+			super.paint(g);
+			// Draw header block
+			g.setColor(Color.DARK_GRAY);
+			cal.setTime(today);
+			cal.add(Calendar.WEEK_OF_YEAR, -lookBackWeeks - 1);
+			Date day = cal.getTime();
+			for (int week = 0; week < maxWeek; week++) {
+				if (Math.abs(day.getTime() - today.getTime()) < 24 * 3600000) {
+					g.setColor(settings.getColor("TodayBg"));
+					g.fillRect((week - 1) * WEEK_PX + 1 - shift, 0,
+							WEEK_PX - 1, LINE_HGT);
+					g.setColor(Color.DARK_GRAY);
+				}
+				g.drawLine(week * WEEK_PX - shift, 0, week * WEEK_PX - shift,
+						LINE_HGT);
+				g.drawString(format.format(day), (week - 1) * WEEK_PX + 5
+						- shift, 20);
+				cal.add(Calendar.WEEK_OF_YEAR, 1);
+				day = cal.getTime();
+			}
+		}
+
+		protected void setShift(int shift) {
+			this.shift = shift;
+		}
+
+		protected void updateSize(int width) {
+			Dimension dim = new Dimension(width, LINE_HGT);
+			this.setMinimumSize(dim);
+			this.setPreferredSize(dim);
+		}
+	}
+
 	private class DrawingPanel extends JPanel {
 		public void paint(Graphics g) {
 			super.paint(g);
-			final int h = (rowCount + 1) * LINE_HGT;
+			final int h = rowCount * LINE_HGT;
 
 			// Draw header block
 			g.setColor(Color.DARK_GRAY);
@@ -227,16 +278,14 @@ public class CalendarFrame extends NamedInternalFrame implements
 					g.setColor(Color.DARK_GRAY);
 				}
 				g.drawLine(week * WEEK_PX, 0, week * WEEK_PX, h);
-				g.drawString(format.format(day), (week - 1) * WEEK_PX + 5, 20);
 				cal.add(Calendar.WEEK_OF_YEAR, 1);
 				day = cal.getTime();
 			}
-			g.drawLine(0, LINE_HGT, maxWeek * WEEK_PX, LINE_HGT);
 
 			// Draw the records
 			for (Block b : curBlocks) {
 				int x = b.start * WEEK_PX;
-				int y = (b.row + 1) * LINE_HGT;
+				int y = b.row * LINE_HGT;
 				Status status = b.offering.getStatus();
 				g.setColor(settings.getColor(status.toString() + "CalBg"));
 				g.fillRect(x + 2, y + 2, b.len * WEEK_PX - 4, LINE_HGT - 4);
@@ -253,6 +302,7 @@ public class CalendarFrame extends NamedInternalFrame implements
 			Dimension dim = new Dimension(width, height);
 			this.setMinimumSize(dim);
 			this.setPreferredSize(dim);
+			headerPanel.updateSize(width);
 			if (getParent() != null)
 				getParent().doLayout();
 		}
