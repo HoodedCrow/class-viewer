@@ -1,6 +1,8 @@
 package classviewer;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -11,12 +13,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
 import classviewer.changes.Change;
 import classviewer.changes.JsonModelAdapter;
 import classviewer.model.CourseModel;
+import classviewer.model.Status;
 
 /**
  * Frame for loading changes (only Coursera so far) and applying them to the
@@ -68,6 +72,7 @@ public class ChangesFrame extends NamedInternalFrame {
 		buttons.add(but);
 
 		table = new JTable(new ChangeModel());
+		table.setDefaultRenderer(Object.class, new OperationCellRenderer());
 		this.add(new JScrollPane(table), BorderLayout.CENTER);
 		setColumnWidth();
 	}
@@ -206,6 +211,23 @@ public class ChangesFrame extends NamedInternalFrame {
 		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 			assert (columnIndex == 0);
 			changeSelected.set(rowIndex, (Boolean) aValue);
+		}
+	}
+
+	private class OperationCellRenderer extends DefaultTableCellRenderer {
+		@Override
+		public Component getTableCellRendererComponent(JTable table,
+				Object value, boolean isSelected, boolean hasFocus, int row,
+				int column) {
+			Component res = super.getTableCellRendererComponent(table, value,
+					isSelected, hasFocus, row, column);
+			if (Change.ADD.equals(value))
+				res.setBackground(Color.GREEN);
+			else if (Change.DELETE.equals(value))
+				res.setBackground(Color.RED);
+			else
+				res.setBackground(table.getBackground());
+			return res;
 		}
 	}
 }
