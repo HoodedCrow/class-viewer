@@ -1,6 +1,7 @@
 package classviewer.model;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,15 +55,31 @@ public class CourseModel {
 		universities.put(desc.getId(), desc);
 	}
 
+	public DescRec removeUniversity(String id) {
+		return universities.remove(id);
+	}
+
 	public void addCourse(CourseRec course) {
 		if (courses.containsKey(course.getId()))
 			System.err
 					.println("Ignoring duplicate course id " + course.getId());
 		courses.put(course.getId(), course);
 	}
+	
+	public CourseRec getCourse(Integer id) {
+		return courses.get(id);
+	}
+
+	public CourseRec removeCourse(Integer id) {
+		return courses.remove(id);
+	}
 
 	public DescRec getCategory(String id) {
 		return categories.get(id);
+	}
+
+	public DescRec removeCategory(String id) {
+		return categories.remove(id);
 	}
 
 	public DescRec getUniversity(String id) {
@@ -132,7 +149,6 @@ public class CourseModel {
 	}
 
 	public void saveStatusFile() throws IOException {
-		// System.out.println("Save status file now");
 		File file = settings.getStatusFile();
 		FileWriter writer = new FileWriter(file);
 		StatusFileModelAdapter adap = new StatusFileModelAdapter();
@@ -140,6 +156,14 @@ public class CourseModel {
 		Collections.sort(all, new CourseById());
 		adap.saveStatuses(writer, all);
 		writer.close();
+	}
+
+	public void saveModelFile() throws IOException {
+		File file = settings.getStaticFile();
+		FileOutputStream output = new FileOutputStream(file);
+		XmlModelAdapter xml = new XmlModelAdapter();
+		xml.writeModel(output, this);
+		output.close();
 	}
 
 	private class CourseById implements Comparator<CourseRec> {

@@ -17,6 +17,7 @@ public class Settings {
 	public static String BASE_DIR = "BaseDirectory";
 	public static String STATIC_DATA_FNAME = "DataFile";
 	public static String STATUS_DATA_FNAME = "StatusFile";
+	public static String COURSERA_URL = "CourseraJsonURL";
 
 	// Prefix for colors
 	public static String COLOR = "Color";
@@ -44,7 +45,8 @@ public class Settings {
 		try {
 			load();
 		} catch (IOException e) {
-			System.err.println("Could not load file " + settingsFilename + ":\n" + e);
+			System.err.println("Could not load file " + settingsFilename
+					+ ":\n" + e);
 		}
 	}
 
@@ -53,6 +55,8 @@ public class Settings {
 		settings.put(BASE_DIR, "./data");
 		settings.put(STATIC_DATA_FNAME, "static-data.xml");
 		settings.put(STATUS_DATA_FNAME, "statuses.txt");
+		settings.put(COURSERA_URL,
+				"https://www.coursera.org/maestro/api/topic/list?full=1");
 
 		// Calendar colors
 		settings.put(COLOR + "UCalBg", "B0B0B0");
@@ -85,10 +89,14 @@ public class Settings {
 		while (s != null) {
 			s = s.trim();
 			if (!s.isEmpty() && !s.startsWith("#")) {
-				String[] p = s.split("=");
-				if (p.length == 2)
-					settings.put(p[0].trim(), p[1].trim());
-				else
+				int i = s.indexOf("=");
+				if (i > 0) {
+					String key = s.substring(0, i).trim();
+					if (!settings.containsKey(key))
+						System.err.println("Warning: unknown settings key "
+								+ key);
+					settings.put(key, s.substring(i + 1).trim());
+				} else
 					System.err.println("Ignoring line " + s);
 			}
 			s = br.readLine();

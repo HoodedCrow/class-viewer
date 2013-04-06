@@ -1,7 +1,5 @@
 package classviewer.model;
 
-import java.util.ArrayList;
-
 /**
  * Common record for universities and categories.
  * 
@@ -49,16 +47,6 @@ public class DescRec implements Named, Comparable<DescRec> {
 	public String toString() {
 		return id;
 	}
-/*
-	public void diff(DescRec other, ArrayList<Change> changes) {
-		assert (this.id.equals(other.id));
-		if (!this.name.equals(other.name))
-			changes.add(Change.changed("Name changed", Change.Type.NAME, this,
-					other.name));
-		if (!this.description.equals(other.description))
-			changes.add(Change.changed("Description changed",
-					Change.Type.DESCRIPTION, this, other.description));
-	}*/
 
 	/** Compare by name. Used for sorting in GUI */
 	@Override

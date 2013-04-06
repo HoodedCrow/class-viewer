@@ -63,7 +63,7 @@ public class CourseViewer extends JFrame {
 		windowMenu.add(detailsFrame.makeCheckBoxMenuItem());
 		desktop.add(detailsFrame);
 
-		changesFrame = new ChangesFrame(model);
+		changesFrame = new ChangesFrame(model, settings);
 		windowMenu.add(changesFrame.makeCheckBoxMenuItem());
 		desktop.add(changesFrame);
 
@@ -88,7 +88,6 @@ public class CourseViewer extends JFrame {
 			xml.readModel(reader, model);
 			reader.close();
 			haveOldData = true;
-			// xml.writeModel(System.out, model); // TODO Kill once works
 		} catch (FileNotFoundException e) {
 			System.err.println("Initial data file " + file
 					+ " is not found. Starting empty.");
@@ -109,11 +108,9 @@ public class CourseViewer extends JFrame {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+
 			model.fireModelReloaded();
 		}
-
-		// TODO somewhere load JSON
 	}
 
 	private static void printUsageInfo() {

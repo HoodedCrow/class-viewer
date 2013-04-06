@@ -16,19 +16,21 @@ public class CourseRec implements Named, Linked {
 	private String description;
 	private String instructor;
 	private String link;
+	private String language;
 	private Status status = Status.UNKNOWN;
 	private ArrayList<DescRec> categories = new ArrayList<DescRec>();
 	private ArrayList<DescRec> universities = new ArrayList<DescRec>();
 	private ArrayList<OffRec> offerings = new ArrayList<OffRec>();
 
 	public CourseRec(int id, String shortName, String name, String description,
-			String instructor, String link) {
+			String instructor, String link, String language) {
 		this.id = id;
 		this.shortName = shortName;
 		this.name = name == null ? "" : name;
 		this.description = description == null ? "" : description;
 		this.instructor = instructor == null ? "" : instructor;
 		this.link = link == null ? "" : link;
+		this.setLanguage(language);
 	}
 
 	@Override
@@ -133,6 +135,14 @@ public class CourseRec implements Named, Linked {
 		this.link = link;
 	}
 
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
 	public ArrayList<DescRec> getCategories() {
 		return categories;
 	}
@@ -143,6 +153,13 @@ public class CourseRec implements Named, Linked {
 
 	public ArrayList<OffRec> getOfferings() {
 		return offerings;
+	}
+
+	public OffRec removeOffering(int offId) {
+		for (int i = 0; i < offerings.size(); i++)
+			if (offerings.get(i).getId() == offId)
+				return offerings.remove(i);
+		return null;
 	}
 
 	public String getLongHtml() {
@@ -176,44 +193,6 @@ public class CourseRec implements Named, Linked {
 		this.status = stat;
 	}
 
-	/*
-	 * public void diff(CourseRec other, ArrayList<Change> changes) { assert
-	 * (this.id == other.id); if (!this.name.equals(other.name))
-	 * changes.add(Change.changed("Name changed", Change.Type.NAME, this,
-	 * other.name)); if (!this.description.equals(other.description))
-	 * changes.add(Change.changed("Description changed",
-	 * Change.Type.DESCRIPTION, this, other.description)); if
-	 * (!this.shortName.equals(other.shortName))
-	 * changes.add(Change.changed("Short name changed", Change.Type.SHORT_NAME,
-	 * this, other.shortName)); if (!this.instructor.equals(other.instructor))
-	 * changes.add(Change.changed("Instructor changed", Change.Type.INSTRUCTOR,
-	 * this, other.instructor)); if (!this.link.equals(other.link))
-	 * changes.add(Change.changed("Link changed", Change.Type.LINK, this,
-	 * other.link));
-	 * 
-	 * // Categories HashSet<String> oldIds = getIdSet(this.categories);
-	 * HashSet<String> newIds = getIdSet(other.categories); if
-	 * (!oldIds.equals(newIds)) {
-	 * changes.add(Change.changed("Categories for class " + name,
-	 * Change.Type.CATEGORIES, this, newIds)); }
-	 * 
-	 * // Universities oldIds = getIdSet(this.universities); newIds =
-	 * getIdSet(other.universities); if (!oldIds.equals(newIds)) {
-	 * changes.add(Change.changed("Universities for class " + name,
-	 * Change.Type.UNIVERSITIES, this, newIds)); }
-	 * 
-	 * // Offerings HashSet<Object> ioldIds = new HashSet<Object>(); for (OffRec
-	 * r : this.offerings) { ioldIds.add(r.getId()); } HashSet<Object> inewIds =
-	 * new HashSet<Object>(); for (OffRec r : other.offerings) {
-	 * inewIds.add(r.getId()); } HashSet<Object> ids = new
-	 * HashSet<Object>(ioldIds); ids.removeAll(inewIds); for (Object o : ids) {
-	 * changes.add(Change.remove("Offering removed", this.getOffering((Integer)
-	 * o))); } ids = new HashSet<Object>(inewIds); ids.removeAll(ioldIds); for
-	 * (Object o : ids) { changes.add(Change.add("Offering added",
-	 * other.getOffering((Integer) o))); } ids = new HashSet<Object>(inewIds);
-	 * ids.retainAll(ioldIds); for (Object o : ids) { this.getOffering((Integer)
-	 * o).diff(other.getOffering((Integer) o), changes); } }
-	 */
 	public static HashSet<String> getIdSet(ArrayList<DescRec> list) {
 		HashSet<String> set = new HashSet<String>();
 		for (DescRec r : list) {
@@ -234,5 +213,12 @@ public class CourseRec implements Named, Linked {
 			if (r.getStart() == null)
 				return true;
 		return false;
+	}
+
+	public static HashSet<String> idSet(ArrayList<DescRec> set) {
+		HashSet<String> res = new HashSet<String>();
+		for (DescRec r : set)
+			res.add(r.getId());
+		return res;
 	}
 }

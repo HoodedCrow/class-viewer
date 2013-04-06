@@ -41,6 +41,7 @@ public class MainWindowLayout implements LayoutManager {
 		int x2 = 400 + x1;
 		// Start of the details/changes frames
 		int y1 = pH - 300;
+		int y2 = pH / 2;
 
 		// Assume these two are visible
 		courseFilterFrame.setLocation(0, 0);
@@ -59,9 +60,9 @@ public class MainWindowLayout implements LayoutManager {
 		// Assuming calendar is visible
 		calendarFrame.setLocation(x2, 0);
 		if (changesFrame.isVisible()) {
-			calendarFrame.setSize(pW - x2, y1);
-			changesFrame.setLocation(x2, y1);
-			changesFrame.setSize(pW - x2, pH - y1);
+			calendarFrame.setSize(pW - x2, y2);
+			changesFrame.setLocation(x2, y2);
+			changesFrame.setSize(pW - x2, pH - y2);
 		} else {
 			calendarFrame.setSize(pW - x2, pH);
 		}

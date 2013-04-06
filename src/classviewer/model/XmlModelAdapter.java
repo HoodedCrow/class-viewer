@@ -5,6 +5,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -81,8 +84,6 @@ public class XmlModelAdapter {
 			}
 		}
 
-		// TODO Languages
-
 		list = doc.getElementsByTagName("Classes");
 		if (list != null) {
 			if (list.getLength() != 1)
@@ -103,7 +104,7 @@ public class XmlModelAdapter {
 			return null;
 		NamedNodeMap attrs = item.getAttributes();
 		Integer id;
-		String shortName, categories, universities; // TODO , language;
+		String shortName, categories, universities, language;
 		try {
 			id = Integer.parseInt(attrs.getNamedItem("id").getNodeValue());
 		} catch (Exception e) {
@@ -112,13 +113,14 @@ public class XmlModelAdapter {
 		shortName = attrOrNull(attrs, "short");
 		categories = attrOrNull(attrs, "categories");
 		universities = attrOrNull(attrs, "universities");
-		// TODO language = attrOrNull(attrs, "lang");
+		language = attrOrNull(attrs, "lang");
 		String name = valueOrNull(item, "Name");
 		String desc = valueOrNull(item, "Long");
 		String prof = valueOrNull(item, "Prof");
 		String link = valueOrNull(item, "Link");
 
-		CourseRec res = new CourseRec(id, shortName, name, desc, prof, link);
+		CourseRec res = new CourseRec(id, shortName, name, desc, prof, link,
+				language);
 
 		// Dereference categories and universities
 		if (categories != null && !categories.isEmpty()) {
@@ -243,21 +245,34 @@ public class XmlModelAdapter {
 			// Categories
 			Element group = dom.createElement("Categories");
 			root.appendChild(group);
-			for (DescRec rec : model.getCategories()) {
+			ArrayList<DescRec> list = new ArrayList<DescRec>(
+					model.getCategories());
+			Collections.sort(list);
+			for (DescRec rec : list) {
 				group.appendChild(makeDescNode(rec, dom));
 			}
 
 			// Universities
+			list = new ArrayList<DescRec>(model.getUniversities());
+			Collections.sort(list);
 			group = dom.createElement("Universities");
 			root.appendChild(group);
-			for (DescRec rec : model.getUniversities()) {
+			for (DescRec rec : list) {
 				group.appendChild(makeDescNode(rec, dom));
 			}
 
 			// Courses
 			group = dom.createElement("Classes");
 			root.appendChild(group);
-			for (CourseRec rec : model.getCourses()) {
+			ArrayList<CourseRec> list2 = new ArrayList<CourseRec>(
+					model.getCourses());
+			Collections.sort(list2, new Comparator<CourseRec>() {
+				@Override
+				public int compare(CourseRec o1, CourseRec o2) {
+					return Integer.compare(o1.getId(), o2.getId());
+				}
+			});
+			for (CourseRec rec : list2) {
 				group.appendChild(makeCourseNode(rec, dom, model));
 			}
 
@@ -294,6 +309,7 @@ public class XmlModelAdapter {
 		Element node = dom.createElement("Class");
 		node.setAttribute("id", String.valueOf(rec.getId()));
 		node.setAttribute("short", rec.getShortName());
+		node.setAttribute("lang", rec.getLanguage());
 		String str = "";
 		for (DescRec dr : rec.getCategories())
 			str = str + " " + dr.getId();
@@ -304,7 +320,6 @@ public class XmlModelAdapter {
 			str = str + " " + dr.getId();
 		if (!str.isEmpty())
 			node.setAttribute("universities", str.substring(1));
-		// TODO language
 		addChildIfNotNull(rec.getName(), "Name", node, dom);
 		addChildIfNotNull(rec.getDescription(), "Long", node, dom);
 		addChildIfNotNull(rec.getInstructor(), "Prof", node, dom);

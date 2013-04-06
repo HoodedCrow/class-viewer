@@ -10,7 +10,7 @@ import java.util.Date;
  * @author TK
  */
 public class OffRec implements Linked {
-	private static SimpleDateFormat dformat = new SimpleDateFormat(
+	public static SimpleDateFormat dformat = new SimpleDateFormat(
 			"dd MMM yyyy");
 
 	private int id, duration, spread;

@@ -1,4 +1,4 @@
-package classviewer.model;
+package classviewer.changes;
 
 import java.io.BufferedReader;
 import java.io.IOException;
