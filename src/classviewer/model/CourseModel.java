@@ -15,6 +15,7 @@ import classviewer.Settings;
 import classviewer.filters.CategoryCourseFilter;
 import classviewer.filters.CourseFilter;
 import classviewer.filters.LanguageCourseFilter;
+import classviewer.filters.StatusCourseFilter;
 import classviewer.filters.UniversityCourseFilter;
 
 /**
@@ -35,6 +36,7 @@ public class CourseModel {
 
 	public CourseModel(Settings settings) {
 		this.settings = settings;
+		filters.add(new StatusCourseFilter(this));
 		filters.add(new CategoryCourseFilter(this));
 		filters.add(new UniversityCourseFilter(this));
 		filters.add(new LanguageCourseFilter(this));
