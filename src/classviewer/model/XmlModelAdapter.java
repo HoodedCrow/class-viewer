@@ -315,9 +315,13 @@ public class XmlModelAdapter {
 			str = str + " " + dr.getId();
 		if (!str.isEmpty())
 			node.setAttribute("categories", str.substring(1));
-		str = "";
+		str = "";		
 		for (DescRec dr : rec.getUniversities())
+			try {
 			str = str + " " + dr.getId();
+			} catch (Exception e) {
+				e.printStackTrace();				
+			}
 		if (!str.isEmpty())
 			node.setAttribute("universities", str.substring(1));
 		addChildIfNotNull(rec.getName(), "Name", node, dom);
