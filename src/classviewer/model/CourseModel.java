@@ -9,10 +9,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import classviewer.Settings;
 import classviewer.filters.CategoryCourseFilter;
 import classviewer.filters.CourseFilter;
+import classviewer.filters.LanguageCourseFilter;
 import classviewer.filters.UniversityCourseFilter;
 
 /**
@@ -35,6 +37,7 @@ public class CourseModel {
 		this.settings = settings;
 		filters.add(new CategoryCourseFilter(this));
 		filters.add(new UniversityCourseFilter(this));
+		filters.add(new LanguageCourseFilter(this));
 	}
 
 	public void addCategory(DescRec desc) {
@@ -65,7 +68,7 @@ public class CourseModel {
 					.println("Ignoring duplicate course id " + course.getId());
 		courses.put(course.getId(), course);
 	}
-	
+
 	public CourseRec getCourse(Integer id) {
 		return courses.get(id);
 	}
@@ -146,6 +149,14 @@ public class CourseModel {
 
 	public CourseRec getClassById(int id) {
 		return courses.get(id);
+	}
+
+	public HashSet<String> getLanguages() {
+		HashSet<String> res = new HashSet<String>();
+		for (CourseRec r : courses.values())
+			res.add(r.getLanguage());
+		// Clean up possible NULL and ""?
+		return res;
 	}
 
 	public void saveStatusFile() throws IOException {
