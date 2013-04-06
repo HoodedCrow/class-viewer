@@ -1,7 +1,6 @@
 package classviewer.model;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -10,8 +9,7 @@ import java.util.Date;
  * @author TK
  */
 public class OffRec implements Linked {
-	public static SimpleDateFormat dformat = new SimpleDateFormat(
-			"dd MMM yyyy");
+	public static SimpleDateFormat dformat = new SimpleDateFormat("dd MMM yyyy");
 
 	private int id, duration, spread;
 	private Status status = Status.UNKNOWN;
@@ -20,8 +18,8 @@ public class OffRec implements Linked {
 	private boolean active;
 	private CourseRec course;
 
-	public OffRec(int id, Date start, int duration, int spread, 
-			String home, boolean active, String startStr, String durStr) {
+	public OffRec(int id, Date start, int duration, int spread, String home,
+			boolean active, String startStr, String durStr) {
 		this.id = id;
 		this.start = start;
 		this.duration = duration;
@@ -38,14 +36,14 @@ public class OffRec implements Linked {
 
 	/**
 	 * * An offering set to: S=yes, done, or registered - the course is set to
-	 * S, unless higher, all other offerings that are Unknown or maybe are set to
-	 * no
+	 * S, unless higher, all other offerings that are Unknown or maybe are set
+	 * to no
 	 */
 	public void setStatus(Status status) {
 		if (this.status == status)
 			return; // to avoid deep checks
 		this.status = status;
-		
+
 		// Should we change course status?
 		Status cs = course.getStatus().updateByOffering(status);
 		if (cs != course.getStatus())
@@ -136,27 +134,6 @@ public class OffRec implements Linked {
 	public void setStatusDirect(Status stat) {
 		this.status = stat;
 	}
-/*
-	public void diff(OffRec other, ArrayList<Change> changes) {
-		assert (this.id == other.id);
-		if (this.spread != other.spread) {
-			changes.add(Change.changed("Spread changed", Change.Type.SPREAD,
-					this, other.spread));
-		}
-		if (this.active != other.active) {
-			changes.add(Change.changed("Active changed", Change.Type.ACTIVE,
-					this, other.active));
-		}
-		if (!this.home.equals(other.home))
-			changes.add(Change.changed("Link changed", Change.Type.LINK, this,
-					other.home));
-		if (!this.startStr.equals(other.startStr))
-			changes.add(Change.changed("Start string changed",
-					Change.Type.START, this, other));
-		if (!this.durStr.equals(other.durStr))
-			changes.add(Change.changed("Duration string changed",
-	}
-*/
 
 	public String getLongHtml() {
 		String str = "Offering <b>" + id + "</b>, start ";

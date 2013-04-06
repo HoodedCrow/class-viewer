@@ -209,8 +209,29 @@ public class JsonModelAdapter {
 
 	private void diffOffering(ArrayList<Change> list, OffRec rec,
 			HashMap<String, Object> map) {
-		// TODO Auto-generated method stub
-		System.out.println("TBD");
+		// Use as a field parser
+		OffRec created = OfferingChange.makeOffering(map);
+		if (created.getSpread() != rec.getSpread())
+			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(),
+					"Spread", rec, map));
+		if (created.isActive() != rec.isActive())
+			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(),
+					"Active", rec, map));
+		if (created.getStartStr() == null && rec.getStartStr() != null
+				|| created.getStartStr() != null
+				&& !created.getStartStr().equals(rec.getStartStr()))
+			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(),
+					"Start", rec, map));
+		if (created.getDurStr() == null && rec.getDurStr() != null
+				|| created.getDurStr() != null
+				&& !created.getDurStr().equals(rec.getDurStr()))
+			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(),
+					"Duration", rec, map));
+		if (created.getLink() == null && rec.getLink() != null
+				|| created.getLink() != null
+				&& !created.getLink().equals(rec.getLink()))
+			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(), "Link",
+					rec, map));
 	}
 
 	private void compareCourseField(ArrayList<Change> list, String existing,

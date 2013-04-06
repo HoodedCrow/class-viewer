@@ -24,7 +24,7 @@ public class OfferingChange extends Change {
 		this.offering = offering;
 		this.json = json;
 		if (json != null)
-			created = makeOffering();
+			created = makeOffering(json);
 	}
 
 	@Override
@@ -45,13 +45,29 @@ public class OfferingChange extends Change {
 	public Object getNewValue() {
 		if (type == ADD)
 			return created.getStartStr();
-		// TODO Auto-generated method stub
-		return null;
+		if (type == DELETE)
+			return offering.getStartStr();
+		return getField(created);
+	}
+
+	private Object getField(OffRec rec) {
+		if ("Spread".equals(field))
+			return rec.getSpread();
+		if ("Active".equals(field))
+			return rec.isActive();
+		if ("Start".equals(field))
+			return rec.getStartStr();
+		if ("Duration".equals(field))
+			return rec.getDurStr();
+		if ("Link".equals(field))
+			return rec.getLink();
+		return "??? " + field;
 	}
 
 	@Override
 	public Object getOldValue() {
-		// TODO Auto-generated method stub
+		if (type == MODIFY)
+			return getField(offering);
 		return null;
 	}
 
@@ -63,13 +79,25 @@ public class OfferingChange extends Change {
 			Integer id = (Integer) json.get("id");
 			course.removeOffering(id);
 		} else {
-			System.out.println(this);
-
-			// TODO Auto-generated method stub
+			if ("Spread".equals(field)) {
+				offering.setSpread(created.getSpread());
+			} else if ("Active".equals(field)) {
+				offering.setActive(created.isActive());
+			} else if ("Start".equals(field)) {
+				offering.setStart(created.getStart());
+				offering.setStartStr(created.getStartStr());
+			} else if ("Duration".equals(field)) {
+				offering.setDuration(created.getDuration());
+				offering.setDurStr(created.getDurStr());
+			} else if ("Link".equals(field)) {
+				offering.setLink(created.getLink());
+			} else
+				throw new UnsupportedOperationException("Unsupported field "
+						+ field);
 		}
 	}
 
-	private OffRec makeOffering() {
+	public static OffRec makeOffering(HashMap<String, Object> json) {
 		Integer id = (Integer) json.get("id");
 
 		// Some of these might be missing
@@ -94,17 +122,21 @@ public class OfferingChange extends Change {
 			// No year => no date
 			cal.set(Calendar.YEAR, startYear);
 			start = cal.getTime();
+		} else {
+			spread = 1; // no data
 		}
 		if (startStr == null && start != null)
 			startStr = OffRec.dformat.format(start);
 
 		String durStr = (String) json.get("duration_string");
+		if ("".equals(durStr))
+			durStr = null;
 		int duration = 1;
 		if (durStr != null)
 			try {
 				String s = durStr.trim();
 				duration = Integer.parseInt(s.substring(0, s.indexOf(" ")));
-			} catch (NumberFormatException e) {
+			} catch (Exception e) {
 				System.err.println("Cannot parse duration " + durStr);
 			}
 

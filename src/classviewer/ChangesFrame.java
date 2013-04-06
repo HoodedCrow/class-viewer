@@ -20,7 +20,6 @@ import javax.swing.table.TableColumn;
 import classviewer.changes.Change;
 import classviewer.changes.JsonModelAdapter;
 import classviewer.model.CourseModel;
-import classviewer.model.Status;
 
 /**
  * Frame for loading changes (only Coursera so far) and applying them to the
@@ -72,7 +71,6 @@ public class ChangesFrame extends NamedInternalFrame {
 		buttons.add(but);
 
 		table = new JTable(new ChangeModel());
-		table.setDefaultRenderer(Object.class, new OperationCellRenderer());
 		this.add(new JScrollPane(table), BorderLayout.CENTER);
 		setColumnWidth();
 	}
@@ -121,6 +119,8 @@ public class ChangesFrame extends NamedInternalFrame {
 			column.setWidth(widths[i]);
 			column.setMaxWidth(widths[i]);
 		}
+		table.getColumnModel().getColumn(1)
+				.setCellRenderer(new OperationCellRenderer());
 	}
 
 	protected void loadCoursera() {
@@ -227,6 +227,7 @@ public class ChangesFrame extends NamedInternalFrame {
 				res.setBackground(Color.RED);
 			else
 				res.setBackground(table.getBackground());
+			res.setForeground(Color.BLACK);
 			return res;
 		}
 	}
