@@ -71,6 +71,7 @@ public class ChangesFrame extends NamedInternalFrame {
 		buttons.add(but);
 
 		table = new JTable(new ChangeModel());
+		table.setAutoCreateRowSorter(true);
 		this.add(new JScrollPane(table), BorderLayout.CENTER);
 		setColumnWidth();
 	}
