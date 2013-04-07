@@ -79,6 +79,15 @@ public class CalendarFrame extends NamedInternalFrame implements
 		model.addListener(this);
 		this.setLayout(new BorderLayout());
 
+		try {
+			this.lookBackWeeks = Integer.parseInt(settings
+					.getString(Settings.LOOK_BACK_WEEKS));
+		} catch (Exception e) {
+			System.err.println("Cannot parse " + Settings.LOOK_BACK_WEEKS
+					+ ": " + e);
+			this.lookBackWeeks = 10;
+		}
+
 		JPanel buttons = new JPanel();
 		this.add(buttons, BorderLayout.SOUTH);
 

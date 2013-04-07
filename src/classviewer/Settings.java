@@ -14,13 +14,14 @@ import java.util.HashMap;
  */
 public class Settings {
 	// KEY NAMES
-	public static String BASE_DIR = "BaseDirectory";
-	public static String STATIC_DATA_FNAME = "DataFile";
-	public static String STATUS_DATA_FNAME = "StatusFile";
-	public static String COURSERA_URL = "CourseraJsonURL";
+	public static final String BASE_DIR = "BaseDirectory";
+	public static final String STATIC_DATA_FNAME = "DataFile";
+	public static final String STATUS_DATA_FNAME = "StatusFile";
+	public static final String COURSERA_URL = "CourseraJsonURL";
+	public static final String LOOK_BACK_WEEKS = "LookBackWeeks";
 
 	// Prefix for colors
-	public static String COLOR = "Color";
+	public static final String COLOR = "Color";
 
 	/** Name of the settings file. Not part of the settings themselves */
 	private String settingsFilename;
@@ -58,6 +59,9 @@ public class Settings {
 		settings.put(COURSERA_URL,
 				"https://www.coursera.org/maestro/api/topic/list?full=1");
 
+		// How many weeks from today to look back in the calendar
+		settings.put(LOOK_BACK_WEEKS, "20");
+		
 		// Calendar colors
 		settings.put(COLOR + "UCalBg", "B0B0B0");
 		settings.put(COLOR + "YCalBg", "78FAFA");
