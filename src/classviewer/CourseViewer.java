@@ -11,6 +11,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.UIManager;
+import javax.swing.plaf.basic.BasicDesktopPaneUI;
 
 import classviewer.model.CourseModel;
 import classviewer.model.StatusFileModelAdapter;
@@ -31,12 +32,16 @@ public class CourseViewer extends JFrame {
 	private CalendarFrame calendarFrame;
 	private DetailsFrame detailsFrame;
 	private ChangesFrame changesFrame;
+	private MainWindowLayout layout;
 
 	private CourseViewer(Settings settings) {
 		super("Course Viewer/Chooser");
 		this.settings = settings;
 
 		JDesktopPane desktop = new JDesktopPane();
+		// This disables SynthDesktopManager, which otherwise does not let me
+		// set my own DesktopManager
+		desktop.setUI(new BasicDesktopPaneUI());
 		this.setContentPane(desktop);
 
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -70,11 +75,29 @@ public class CourseViewer extends JFrame {
 		courseListFrame.addSelectionListener(detailsFrame);
 		calendarFrame.addSelectionListener(courseListFrame);
 
-		desktop.setLayout(new MainWindowLayout(courseFilterFrame,
-				courseListFrame, calendarFrame, detailsFrame, changesFrame));
+		layout = new MainWindowLayout(courseFilterFrame, courseListFrame,
+				calendarFrame, detailsFrame, changesFrame);
+		desktop.setDesktopManager(layout);
 
 		this.setSize(800, 600); // so it's not a dot when un-maximized
 		this.setExtendedState(this.getExtendedState() | JFrame.MAXIMIZED_BOTH);
+	}
+
+	@Override
+	public void setVisible(boolean value) {
+		super.setVisible(value);
+		layout.updateOtherFramesBasedOn(null);
+	}
+
+	/**
+	 * Trying to react to main window resize. This is not good enough, some
+	 * other method is being called. TODO
+	 */
+	@Override
+	public void setBounds(int x, int y, int w, int h) {
+		super.setBounds(x, y, w, h);
+		if (layout != null)
+			layout.updateOtherFramesBasedOn(null);
 	}
 
 	/** Load settings and existing data */

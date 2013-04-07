@@ -1,5 +1,6 @@
 package classviewer;
 
+import java.awt.Dimension;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -35,6 +36,10 @@ public class CourseListFrame extends NamedInternalFrame implements
 	public CourseListFrame(CourseModel model, Settings settings) {
 		super("Courses", model);
 		model.addListener(this);
+
+		Dimension dim = new Dimension(400, 200);
+		this.setMinimumSize(dim);
+		this.setSize(dim);
 
 		final CourseTableModel tableModel = new CourseTableModel();
 		table = new JTable(tableModel);

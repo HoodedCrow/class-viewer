@@ -3,6 +3,7 @@ package classviewer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -39,6 +40,10 @@ public class ChangesFrame extends NamedInternalFrame {
 
 	public ChangesFrame(CourseModel model, Settings settings) {
 		super("Changes", model);
+
+		Dimension dim = new Dimension(400, 200);
+		this.setMinimumSize(dim);
+		this.setSize(dim);
 
 		this.settings = settings;
 		// model.addListener(this);

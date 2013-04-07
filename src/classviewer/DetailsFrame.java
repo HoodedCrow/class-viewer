@@ -1,6 +1,7 @@
 package classviewer;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JScrollPane;
@@ -34,6 +35,10 @@ public class DetailsFrame extends NamedInternalFrame implements
 		super("Details", model);
 		this.setLayout(new BorderLayout());
 		model.addListener(this);
+
+		Dimension dim = new Dimension(400, 200);
+		this.setMinimumSize(dim);
+		this.setSize(dim);
 
 		tableModel = new OfferingTableModel(model);
 		offeringTable = new JTable(tableModel);

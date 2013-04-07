@@ -79,6 +79,10 @@ public class CalendarFrame extends NamedInternalFrame implements
 		model.addListener(this);
 		this.setLayout(new BorderLayout());
 
+		Dimension dim = new Dimension(400, 200);
+		this.setMinimumSize(dim);
+		this.setSize(dim);
+
 		try {
 			this.lookBackWeeks = Integer.parseInt(settings
 					.getString(Settings.LOOK_BACK_WEEKS));

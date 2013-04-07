@@ -36,7 +36,7 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 	public CourseFilterFrame(CourseModel model) {
 		super("Filter", model);
 
-		Dimension dim = new Dimension(50, 50);
+		Dimension dim = new Dimension(200, 200);
 		this.setMinimumSize(dim);
 		this.setSize(dim);
 

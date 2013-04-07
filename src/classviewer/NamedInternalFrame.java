@@ -20,9 +20,9 @@ public class NamedInternalFrame extends JInternalFrame {
 	protected CourseModel courseModel;
 
 	public NamedInternalFrame(String name, CourseModel model) {
-		super(name, false, // resizable
+		super(name, true, // resizable
 				true, // closable
-				false, // maximizable
+				true, // maximizable
 				false);// iconifiable);
 		this.setName(name);
 		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
