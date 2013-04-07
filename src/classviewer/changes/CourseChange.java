@@ -77,6 +77,13 @@ public class CourseChange extends Change {
 	@Override
 	public void apply(CourseModel model) {
 		if (type == ADD) {
+			// Add offerings
+			created.getOfferings().clear();
+			@SuppressWarnings("unchecked")
+			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) json
+					.get("courses");
+			for (HashMap<String, Object> map : list)
+				created.addOffering(OfferingChange.makeOffering(map));
 			model.addCourse(created);
 		} else if (type == DELETE) {
 			Integer id = (Integer) json.get("id");

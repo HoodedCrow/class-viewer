@@ -41,12 +41,14 @@ public class StatusFileModelAdapter {
 				else
 					rec.setStatusDirect(Status.parse(str[2]));
 			} else if ("o".equals(str[0])) {
-				OffRec r = rec.getOffering(id);
-				if (r == null)
-					System.out
-							.println("No offering " + id + " in class " + rec);
-				else
-					r.setStatusDirect(Status.parse(str[2]));
+				if (rec != null) {
+					OffRec r = rec.getOffering(id);
+					if (r == null)
+						System.out.println("No offering " + id + " in class "
+								+ rec);
+					else
+						r.setStatusDirect(Status.parse(str[2]));
+				}
 			} else {
 				System.out.println("Unknown code " + str[0]);
 			}
