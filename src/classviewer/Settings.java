@@ -53,7 +53,7 @@ public class Settings {
 
 	/** Load default values */
 	private void loadDefaults() {
-		settings.put(BASE_DIR, "./data");
+		settings.put(BASE_DIR, ".");
 		settings.put(STATIC_DATA_FNAME, "static-data.xml");
 		settings.put(STATUS_DATA_FNAME, "statuses.txt");
 		settings.put(COURSERA_URL,
