@@ -12,6 +12,7 @@ import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicDesktopPaneUI;
 
@@ -146,6 +147,7 @@ public class CourseViewer extends JFrame {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		ToolTipManager.sharedInstance().setDismissDelay(10000);
 
 		String settingsFileName = null;
 		for (int i = 0; i < args.length; i++) {

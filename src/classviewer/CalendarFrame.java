@@ -122,6 +122,22 @@ public class CalendarFrame extends NamedInternalFrame implements
 				processClick(event.getX(), event.getY());
 			}
 		});
+		this.drawingPanel.addMouseMotionListener(new MouseAdapter() {
+			Block lastBlock = null;
+			@Override
+			public void mouseMoved(MouseEvent e){
+				Block b = getBlockAt(e.getX(), e.getY());
+				if (b != lastBlock) {
+					lastBlock = b;
+					if (b == null)
+						drawingPanel.setToolTipText(null);
+					else {
+						String txt = "<html><div width=\"200\">" + b.offering.getCourse().getLongHtml() + b.offering.getLongHtml();
+						drawingPanel.setToolTipText(txt);
+					}
+				}
+			}
+		});
 		refreshModel();
 	}
 

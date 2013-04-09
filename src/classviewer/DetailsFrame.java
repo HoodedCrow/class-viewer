@@ -80,7 +80,7 @@ public class DetailsFrame extends NamedInternalFrame implements
 		if (selectedCourse == null) {
 			htmlPane.setText("");
 		} else {
-			String text = selectedCourse.getLongHtml();
+			String text = "<html>" + selectedCourse.getLongHtml();
 			if (offeringTable.getSelectedRow() >= 0) {
 				text += "<br/>"
 						+ selectedCourse.getOfferings()
