@@ -139,7 +139,7 @@ public class CalendarFrame extends NamedInternalFrame implements
 
 	protected Block getBlockAt(int x, int y) {
 		// Pick row and column
-		int row = y / LINE_HGT - 1; // skip the header
+		int row = y / LINE_HGT; // skip the header
 		int col = x / WEEK_PX;
 
 		if (row < 0)
