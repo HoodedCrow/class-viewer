@@ -1,5 +1,7 @@
 package classviewer;
 
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -79,6 +81,13 @@ public class CourseViewer extends JFrame {
 				calendarFrame, detailsFrame, changesFrame);
 		desktop.setDesktopManager(layout);
 
+		desktop.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				layout.updateOtherFramesBasedOn(null);
+			}
+		});
+
 		this.setSize(800, 600); // so it's not a dot when un-maximized
 		this.setExtendedState(this.getExtendedState() | JFrame.MAXIMIZED_BOTH);
 	}
@@ -87,17 +96,6 @@ public class CourseViewer extends JFrame {
 	public void setVisible(boolean value) {
 		super.setVisible(value);
 		layout.updateOtherFramesBasedOn(null);
-	}
-
-	/**
-	 * Trying to react to main window resize. This is not good enough, some
-	 * other method is being called. TODO
-	 */
-	@Override
-	public void setBounds(int x, int y, int w, int h) {
-		super.setBounds(x, y, w, h);
-		if (layout != null)
-			layout.updateOtherFramesBasedOn(null);
 	}
 
 	/** Load settings and existing data */
