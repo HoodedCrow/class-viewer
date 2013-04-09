@@ -22,7 +22,7 @@ public class NamedInternalFrame extends JInternalFrame {
 	public NamedInternalFrame(String name, CourseModel model) {
 		super(name, true, // resizable
 				true, // closable
-				true, // maximizable
+				false, // maximizable
 				false);// iconifiable);
 		this.setName(name);
 		this.setDefaultCloseOperation(HIDE_ON_CLOSE);

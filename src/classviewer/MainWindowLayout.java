@@ -67,10 +67,12 @@ public class MainWindowLayout extends DefaultDesktopManager {
 			}
 			if (x2 - x1 < this.courseListFrame.getMinimumSize().width)
 				x2 = x1 + this.courseListFrame.getMinimumSize().width;
-		} else if (this.courseFilterFrame.isVisible()) {
+		} else {
 			x2 = x1;
-		} else if (this.detailsFrame.isVisible()) {
-			x2 = this.detailsFrame.getWidth();
+		}
+		if (this.detailsFrame.isVisible()
+				&& x2 < this.detailsFrame.getMinimumSize().width) {
+			x2 = this.detailsFrame.getMinimumSize().width;
 		}
 
 		if (this.detailsFrame.isVisible()) {
@@ -82,12 +84,16 @@ public class MainWindowLayout extends DefaultDesktopManager {
 					&& !this.courseListFrame.isVisible()) {
 				y1 = 0;
 			} else {
-				y1 = this.detailsFrame.getY();
+				y1 = pH - this.detailsFrame.getHeight();
 			}
-			if (y1 < this.calendarFrame.getMinimumSize().height)
-				y1 = this.calendarFrame.getMinimumSize().height;
-			if (pH - y1 < this.detailsFrame.getMinimumSize().getHeight())
-				y1 = pH - (int) this.detailsFrame.getMinimumSize().getHeight();
+			if (this.courseFilterFrame.isVisible()
+					&& y1 < this.courseFilterFrame.getMinimumSize().height)
+				y1 = this.courseFilterFrame.getMinimumSize().height;
+			if (this.courseListFrame.isVisible()
+					&& y1 < this.courseListFrame.getMinimumSize().height)
+				y1 = this.courseListFrame.getMinimumSize().height;
+			if (pH - y1 < this.detailsFrame.getMinimumSize().height)
+				y1 = pH - this.detailsFrame.getMinimumSize().height;
 		} else {
 			y1 = pH;
 		}
@@ -98,7 +104,7 @@ public class MainWindowLayout extends DefaultDesktopManager {
 			} else if (!this.calendarFrame.isVisible()) {
 				y2 = 0;
 			} else {
-				y2 = this.changesFrame.getY();
+				y2 = pH - this.changesFrame.getHeight();
 			}
 			if (this.calendarFrame.isVisible()
 					&& y2 < this.calendarFrame.getMinimumSize().height)
