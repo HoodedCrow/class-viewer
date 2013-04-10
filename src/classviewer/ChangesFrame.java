@@ -8,6 +8,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -34,7 +36,7 @@ public class ChangesFrame extends NamedInternalFrame {
 	private Settings settings;
 
 	/** Debug JSON data? Should be settings configurable */
-	private boolean debugJson = true;
+	private boolean debugJson = false;
 	private ArrayList<Change> changes = null;
 	private ArrayList<Boolean> changeSelected = new ArrayList<Boolean>();
 
@@ -147,6 +149,19 @@ public class ChangesFrame extends NamedInternalFrame {
 		}
 
 		changes = json.collectChanges(courseModel);
+		Collections.sort(changes, new Comparator<Change>() {
+			@Override
+			public int compare(Change o1, Change o2) {
+				// Add category/uni first  
+				// Add class
+				// Add offering
+				// Change anything
+				// Delete offering
+				// Delete class
+				// Delete category/uni
+				return Integer.compare(o1.getOrder(), o2.getOrder());
+			}
+		});
 		changeSelected.clear();
 		for (int i = 0; i < changes.size(); i++)
 			changeSelected.add(Boolean.FALSE);

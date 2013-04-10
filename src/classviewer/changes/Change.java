@@ -13,6 +13,7 @@ public abstract class Change {
 	public static final String MODIFY = "*";
 
 	protected String type;
+	protected int order;
 
 	public Change(String type) {
 		this.type = type;
@@ -31,4 +32,8 @@ public abstract class Change {
 	public abstract Object getOldValue();
 
 	public abstract void apply(CourseModel model);
+
+	public int getOrder() {
+		return order;
+	}
 }

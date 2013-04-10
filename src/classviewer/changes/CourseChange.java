@@ -28,6 +28,12 @@ public class CourseChange extends Change {
 		this.json = json;
 		if (json != null)
 			created = makeCourse(model);
+		if (type == ADD)
+			order = 2;
+		else if (type == DELETE)
+			order = 6;
+		else
+			order = 4;
 	}
 
 	public String getDescription() {
@@ -62,9 +68,9 @@ public class CourseChange extends Change {
 		if ("Link".equals(field))
 			return rec.getLink();
 		if ("Categories".equals(field))
-			return CourseRec.idSet(rec.getCategories());
+			return json.get("category-ids");
 		if ("Universities".equals(field))
-			return CourseRec.idSet(rec.getUniversities());
+			return json.get("university-ids");
 		return "??? " + field;
 	}
 
@@ -77,6 +83,8 @@ public class CourseChange extends Change {
 	@Override
 	public void apply(CourseModel model) {
 		if (type == ADD) {
+			setCategories(created, model);
+			setUniverisities(created, model);
 			// Add offerings
 			created.getOfferings().clear();
 			@SuppressWarnings("unchecked")
@@ -105,11 +113,9 @@ public class CourseChange extends Change {
 			} else if ("Link".equals(field)) {
 				course.setLink(created.getLink());
 			} else if ("Categories".equals(field)) {
-				course.getCategories().clear();
-				course.getCategories().addAll(created.getCategories());
+				setCategories(course, model);
 			} else if ("Universities".equals(field)) {
-				course.getUniversities().clear();
-				course.getUniversities().addAll(created.getUniversities());
+				setUniverisities(course, model);
 			} else {
 				throw new UnsupportedOperationException("Unknown field "
 						+ field);
@@ -117,7 +123,22 @@ public class CourseChange extends Change {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	private void setCategories(CourseRec rec, CourseModel model) {
+		rec.getCategories().clear();
+		@SuppressWarnings("unchecked")
+		ArrayList<String> lst = (ArrayList<String>) json.get("category-ids");
+		for (String s : lst)
+			rec.addCategory(model.getCategory(s));
+	}
+
+	private void setUniverisities(CourseRec rec, CourseModel model) {
+		rec.getUniversities().clear();
+		@SuppressWarnings("unchecked")
+		ArrayList<String> lst = (ArrayList<String>) json.get("university-ids");
+		for (String s : lst)
+			rec.addUniversity(model.getUniversity(s));
+	}
+
 	private CourseRec makeCourse(CourseModel model) {
 		Integer id = (Integer) json.get("id");
 		String shortName = (String) json.get("short_name");
@@ -128,12 +149,6 @@ public class CourseChange extends Change {
 		String link = (String) json.get("social_link");
 		CourseRec res = new CourseRec(id, shortName, name, dsc, instructor,
 				link, language);
-		ArrayList<String> lst = (ArrayList<String>) json.get("category-ids");
-		for (String s : lst)
-			res.addCategory(model.getCategory(s));
-		lst = (ArrayList<String>) json.get("university-ids");
-		for (String s : lst)
-			res.addUniversity(model.getUniversity(s));
 		return res;
 	}
 }

@@ -25,6 +25,12 @@ public class OfferingChange extends Change {
 		this.json = json;
 		if (json != null)
 			created = makeOffering(json);
+		if (type == ADD)
+			order = 3;
+		else if (type == DELETE)
+			order = 5;
+		else
+			order = 4;
 	}
 
 	@Override

@@ -31,6 +31,12 @@ public class DescChange extends Change {
 		this.field = field;
 		this.desc = desc;
 		this.json = json;
+		if (type == ADD)
+			order = 1;
+		else if (type == DELETE)
+			order = 7;
+		else
+			order = 4;
 	}
 
 	public String getDescription() {
@@ -106,7 +112,7 @@ public class DescChange extends Change {
 	}
 
 	private DescRec makeDesc() {
-		String id = (String) json.get("short-name");
+		String id = (String) json.get("short_name");
 		String name = (String) json.get("name");
 		String dsc = (String) json.get("description");
 		return new DescRec(id, name, dsc);
