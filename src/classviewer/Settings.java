@@ -60,7 +60,7 @@ public class Settings {
 				"https://www.coursera.org/maestro/api/topic/list?full=1");
 
 		// How many weeks from today to look back in the calendar
-		settings.put(LOOK_BACK_WEEKS, "20");
+		settings.put(LOOK_BACK_WEEKS, "10");
 		
 		// Calendar colors
 		settings.put(COLOR + "UCalBg", "B0B0B0");
