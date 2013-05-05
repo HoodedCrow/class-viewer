@@ -82,8 +82,7 @@ public class OfferingChange extends Change {
 		if (type == ADD) {
 			course.addOffering(created);
 		} else if (type == DELETE) {
-			Integer id = (Integer) json.get("id");
-			course.removeOffering(id);
+			course.removeOffering(this.offering.getId());
 		} else {
 			if ("Spread".equals(field)) {
 				offering.setSpread(created.getSpread());
@@ -141,7 +140,11 @@ public class OfferingChange extends Change {
 		if (durStr != null)
 			try {
 				String s = durStr.trim();
-				duration = Integer.parseInt(s.substring(0, s.indexOf(" ")));
+				if (s.indexOf(" ") > 0)
+					s = s.substring(0, s.indexOf(" "));
+				if (s.indexOf("-") > 0)
+					s = s.substring(0, s.indexOf("-"));
+				duration = Integer.parseInt(s);
 			} catch (Exception e) {
 				System.err.println("Cannot parse duration " + durStr);
 			}
