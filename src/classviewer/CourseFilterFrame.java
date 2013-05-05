@@ -29,7 +29,7 @@ import classviewer.model.CourseRec;
 public class CourseFilterFrame extends NamedInternalFrame implements
 		CourseModelListener {
 
-	private DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
+	private DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
 	private JTree tree;
 	private FilterTreeModel treeModel;
 
@@ -58,7 +58,7 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 		tree.setCellRenderer(new FilterTreeRenderer());
 		tree.setCellEditor(new FilterCellEditor());
 		tree.setEditable(true);
-		tree.setRootVisible(false);
+		tree.setRootVisible(true); // otherwise checkboxes are not visible in Win
 		this.add(new JScrollPane(tree));
 	}
 
