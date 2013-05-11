@@ -94,8 +94,7 @@ public class CourseChange extends Change {
 				created.addOffering(OfferingChange.makeOffering(map));
 			model.addCourse(created);
 		} else if (type == DELETE) {
-			Integer id = (Integer) json.get("id");
-			model.removeCourse(id);
+			model.removeCourse(course.getId());
 		} else {
 			// Assume we have a pointer to the record we can change in place.
 			assert (json != null);
