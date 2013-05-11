@@ -46,7 +46,7 @@ public class DescChange extends Change {
 	public Object getTarget() {
 		if (desc != null)
 			return desc.getId();
-		return json.get("short-name");
+		return json.get("short_name");
 	}
 
 	public Object getNewValue() {
@@ -83,7 +83,7 @@ public class DescChange extends Change {
 						+ what);
 			}
 		} else if (type == DELETE) {
-			String id = (String) json.get("short-name");
+			String id = (String) json.get("short_name");
 			switch (what) {
 			case UNIVERSITY:
 				model.removeUniversity(id);

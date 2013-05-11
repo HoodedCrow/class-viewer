@@ -64,7 +64,9 @@ public class JsonModelAdapter {
 		HashSet<String> newIds = new HashSet<String>(this.universities.keySet());
 		for (DescRec rec : model.getUniversities()) {
 			if (!newIds.contains(rec.getId())) {
-				if (!rec.getId().endsWith("_x"))
+				String d = rec.getDescription();
+				if (!rec.getId().equals("udacity")
+						&& (d == null || !d.contains("EdX")))
 					list.add(new DescChange(DescChange.UNIVERSITY,
 							Change.DELETE, "University", rec, null));
 			} else {

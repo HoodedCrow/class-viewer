@@ -33,6 +33,8 @@ public class CourseModel {
 	/** Cached list of courses after filters have been applied */
 	private ArrayList<CourseRec> filteredCourses = new ArrayList<CourseRec>();
 	private Settings settings;
+	/** Smallest (most negative) id ever assigned. */
+	private int smallestId = 0;
 
 	public CourseModel(Settings settings) {
 		this.settings = settings;
@@ -108,6 +110,7 @@ public class CourseModel {
 	}
 
 	public void fireModelReloaded() {
+		this.smallestId = getSmallestId();
 		applyCourseFilters();
 		for (CourseModelListener lnr : listeners)
 			lnr.modelUpdated();
@@ -153,6 +156,18 @@ public class CourseModel {
 		return courses.get(id);
 	}
 
+	/**
+	 * Locate the class by short name AKA string id. This is used, for example,
+	 * when EdX data is imported.
+	 */
+	public CourseRec getClassByShortName(String courseId) {
+		for (CourseRec cr : courses.values()) {
+			if (courseId.equals(cr.getShortName()))
+				return cr;
+		}
+		return null;
+	}
+
 	public HashSet<String> getLanguages() {
 		HashSet<String> res = new HashSet<String>();
 		for (CourseRec r : courses.values())
@@ -177,6 +192,26 @@ public class CourseModel {
 		XmlModelAdapter xml = new XmlModelAdapter();
 		xml.writeModel(output, this);
 		output.close();
+	}
+
+	/**
+	 * Get the smallest int value mentioned in class or offering ids. Assume
+	 * this method will not be called often.
+	 */
+	private int getSmallestId() {
+		int value = 0; // default
+		for (CourseRec cr : courses.values()) {
+			value = Math.min(value, cr.getId());
+			for (OffRec or : cr.getOfferings())
+				value = Math.min(value, or.getId());
+		}
+		return value;
+	}
+
+	/** Generate a brand new negative ID for use for EdX and such */
+	public int getNewNegativeId() {
+		this.smallestId--;
+		return this.smallestId;
 	}
 
 	private class CourseById implements Comparator<CourseRec> {

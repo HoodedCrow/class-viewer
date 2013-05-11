@@ -13,12 +13,12 @@ import classviewer.model.CourseRec;
  */
 public class CourseChange extends Change {
 	/** Field that changed */
-	private String field = null;
+	protected String field = null;
 	/** Affected existing course, if any */
-	private CourseRec course = null;
+	protected CourseRec course = null;
 	/** Incoming chunk of JSON, unless deletion */
 	private HashMap<String, Object> json = null;
-	private CourseRec created = null;
+	protected CourseRec created = null;
 
 	public CourseChange(String type, String field, CourseRec course,
 			HashMap<String, Object> json, CourseModel model) {
@@ -97,7 +97,6 @@ public class CourseChange extends Change {
 			model.removeCourse(course.getId());
 		} else {
 			// Assume we have a pointer to the record we can change in place.
-			assert (json != null);
 			assert (course != null);
 			if ("Name".equals(field)) {
 				course.setName(created.getName());
@@ -122,7 +121,7 @@ public class CourseChange extends Change {
 		}
 	}
 
-	private void setCategories(CourseRec rec, CourseModel model) {
+	protected void setCategories(CourseRec rec, CourseModel model) {
 		rec.getCategories().clear();
 		@SuppressWarnings("unchecked")
 		ArrayList<String> lst = (ArrayList<String>) json.get("category-ids");
@@ -130,7 +129,7 @@ public class CourseChange extends Change {
 			rec.addCategory(model.getCategory(s));
 	}
 
-	private void setUniverisities(CourseRec rec, CourseModel model) {
+	protected void setUniverisities(CourseRec rec, CourseModel model) {
 		rec.getUniversities().clear();
 		@SuppressWarnings("unchecked")
 		ArrayList<String> lst = (ArrayList<String>) json.get("university-ids");

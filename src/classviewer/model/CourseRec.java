@@ -33,6 +33,11 @@ public class CourseRec implements Named, Linked {
 		this.setLanguage(language);
 	}
 
+	public void updateId(int newId) {
+		assert (this.id == 0);
+		this.id = newId;
+	}
+
 	@Override
 	public boolean equals(Object other) {
 		try {
@@ -163,8 +168,7 @@ public class CourseRec implements Named, Linked {
 	}
 
 	public String getLongHtml() {
-		String str = "<b>" + name + "</b> (" + id + ", "
-				+ status.getName()
+		String str = "<b>" + name + "</b> (" + id + ", " + status.getName()
 				+ ")<br/>\n";
 		str += "<b>Instructor(s):</b> " + instructor + "<br/>";
 		str += "<b>Categories:</b> " + recNames(categories) + "<br/>";

@@ -18,6 +18,7 @@ public class Settings {
 	public static final String STATIC_DATA_FNAME = "DataFile";
 	public static final String STATUS_DATA_FNAME = "StatusFile";
 	public static final String COURSERA_URL = "CourseraJsonURL";
+	public static final String EDX_URL = "EdXListURL";
 	public static final String LOOK_BACK_WEEKS = "LookBackWeeks";
 
 	// Prefix for colors
@@ -58,6 +59,7 @@ public class Settings {
 		settings.put(STATUS_DATA_FNAME, "statuses.txt");
 		settings.put(COURSERA_URL,
 				"https://www.coursera.org/maestro/api/topic/list?full=1");
+		settings.put(EDX_URL, "http://www.edx.org");
 
 		// How many weeks from today to look back in the calendar
 		settings.put(LOOK_BACK_WEEKS, "10");

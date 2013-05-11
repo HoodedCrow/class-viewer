@@ -7,7 +7,7 @@ import classviewer.model.CourseModel;
  * 
  * @author TK
  */
-public abstract class Change {
+public abstract class Change implements Comparable<Change> {
 	public static final String ADD = "+";
 	public static final String DELETE = "-";
 	public static final String MODIFY = "*";
@@ -35,5 +35,17 @@ public abstract class Change {
 
 	public int getOrder() {
 		return order;
+	}
+
+	@Override
+	public int compareTo(Change other) {
+		// Add category/uni first
+		// Add class
+		// Add offering
+		// Change anything
+		// Delete offering
+		// Delete class
+		// Delete category/uni
+		return Integer.compare(this.getOrder(), other.getOrder());
 	}
 }

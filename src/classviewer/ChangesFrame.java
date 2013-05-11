@@ -9,7 +9,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -21,6 +20,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
 import classviewer.changes.Change;
+import classviewer.changes.EdxModelAdapter;
 import classviewer.changes.JsonModelAdapter;
 import classviewer.model.CourseModel;
 
@@ -62,6 +62,16 @@ public class ChangesFrame extends NamedInternalFrame {
 			}
 		});
 		buttons.add(but);
+
+		but = new JButton("Load EdX");
+		but.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				loadEdx();
+			}
+		});
+		buttons.add(but);
+
 		but = new JButton("Select all");
 		but.addActionListener(new SelectListener(true));
 		buttons.add(but);
@@ -96,6 +106,12 @@ public class ChangesFrame extends NamedInternalFrame {
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(this,
 					"Cannot save static data file:\n" + e);
+		}
+		try {
+			courseModel.saveStatusFile();
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(this, "Cannot save status file:\n"
+					+ e);
 		}
 		courseModel.fireModelReloaded();
 		table.tableChanged(null);
@@ -149,19 +165,26 @@ public class ChangesFrame extends NamedInternalFrame {
 		}
 
 		changes = json.collectChanges(courseModel);
-		Collections.sort(changes, new Comparator<Change>() {
-			@Override
-			public int compare(Change o1, Change o2) {
-				// Add category/uni first  
-				// Add class
-				// Add offering
-				// Change anything
-				// Delete offering
-				// Delete class
-				// Delete category/uni
-				return Integer.compare(o1.getOrder(), o2.getOrder());
-			}
-		});
+		Collections.sort(changes);
+		changeSelected.clear();
+		for (int i = 0; i < changes.size(); i++)
+			changeSelected.add(Boolean.FALSE);
+		table.tableChanged(null);
+		setColumnWidth();
+	}
+
+	protected void loadEdx() {
+		EdxModelAdapter edx = new EdxModelAdapter();
+		try {
+			edx.parse(settings.getString(Settings.EDX_URL));
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(this, "Failed to load EdX data:\n"
+					+ e);
+			return;
+		}
+
+		changes = edx.collectChanges(courseModel);
+		Collections.sort(changes);
 		changeSelected.clear();
 		for (int i = 0; i < changes.size(); i++)
 			changeSelected.add(Boolean.FALSE);

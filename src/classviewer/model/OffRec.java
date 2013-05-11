@@ -30,6 +30,11 @@ public class OffRec implements Linked {
 		this.durStr = durStr == null ? "" : durStr;
 	}
 
+	public void updateId(int newId) {
+		assert (this.id == 0);
+		this.id = newId;
+	}
+
 	public Status getStatus() {
 		return status;
 	}

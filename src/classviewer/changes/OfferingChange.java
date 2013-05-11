@@ -11,10 +11,10 @@ import classviewer.model.OffRec;
 public class OfferingChange extends Change {
 
 	private String field;
-	private CourseRec course;
-	private OffRec offering;
+	protected CourseRec course;
+	protected OffRec offering;
 	private HashMap<String, Object> json;
-	private OffRec created = null;
+	protected OffRec created = null;
 
 	public OfferingChange(String type, CourseRec course, String field,
 			OffRec offering, HashMap<String, Object> json) {
