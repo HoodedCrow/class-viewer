@@ -17,23 +17,25 @@ public class EdxRecord {
 	private String descr;
 	private String univer;
 	private String home;
-	private String date;
+	private Date date;
+	private int duration;
 	private boolean isNew;
 
 	public EdxRecord(String courseId, String name, String descr, String univer,
-			String date, String home, boolean isNew) {
+			Date date, int duration, String home, boolean isNew) {
 		this.courseId = courseId;
 		this.name = name;
 		this.descr = descr;
 		this.univer = univer;
-		this.date = date; // TODO Parse
+		this.date = date;
+		this.duration = duration;
 		this.home = home;
 		this.isNew = isNew;
 	}
 
 	public String toString() {
 		return courseId + ", " + name + "\n\t" + descr + "\n\t" + univer + ", "
-				+ date + ", " + home + ", " + isNew;
+				+ (date==null?"No start":dformat.format(date)) + ", " + duration + " weeks, " + home + ", " + isNew;
 
 	}
 
@@ -58,11 +60,19 @@ public class EdxRecord {
 	}
 
 	public Date getStart() {
+		return date;
+	}
+	
+	public static Date parseDate(String str) {
 		try {
-			return dformat.parse(date);
+			return dformat.parse(str);
 		} catch (Exception e) {
-			System.err.println("Cannot parse date " + date);
+			System.err.println("Cannot parse date " + str);
 		}
 		return null;
+	}
+
+	public int getDuration() {
+		return duration;
 	}
 }

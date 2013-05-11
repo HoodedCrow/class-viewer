@@ -10,7 +10,7 @@ import classviewer.model.OffRec;
 
 public class OfferingChange extends Change {
 
-	private String field;
+	protected String field;
 	protected CourseRec course;
 	protected OffRec offering;
 	private HashMap<String, Object> json;
@@ -56,7 +56,7 @@ public class OfferingChange extends Change {
 		return getField(created);
 	}
 
-	private Object getField(OffRec rec) {
+	protected Object getField(OffRec rec) {
 		if ("Spread".equals(field))
 			return rec.getSpread();
 		if ("Active".equals(field))

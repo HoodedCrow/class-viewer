@@ -220,4 +220,8 @@ public class CourseModel {
 			return Integer.compare(o1.getId(), o2.getId());
 		}
 	}
+
+	public Settings getSettings() {
+		return this.settings;
+	}
 }

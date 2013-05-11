@@ -59,7 +59,7 @@ public class Settings {
 		settings.put(STATUS_DATA_FNAME, "statuses.txt");
 		settings.put(COURSERA_URL,
 				"https://www.coursera.org/maestro/api/topic/list?full=1");
-		settings.put(EDX_URL, "http://www.edx.org");
+		settings.put(EDX_URL, "https://www.edx.org");
 
 		// How many weeks from today to look back in the calendar
 		settings.put(LOOK_BACK_WEEKS, "10");

@@ -18,7 +18,15 @@ public class EdxOfferingChange extends OfferingChange {
 		if (record != null)
 			created = makeEdxOffering(record);
 	}
-	
+
+	@Override
+	protected Object getField(OffRec rec) {
+		if ("Duration".equals(field))
+			return rec.getDuration();
+		return super.getField(rec);
+	}
+
+	@Override
 	public Object getTarget() {
 		if (offering != null)
 			return offering.getCourse().getName() + " [" + offering.getId()
@@ -44,13 +52,11 @@ public class EdxOfferingChange extends OfferingChange {
 		if (start != null)
 			startStr = OffRec.dformat.format(start);
 
-		String durStr = null; // TODO Get EdX course duration from somewhere
-		if ("".equals(durStr))
-			durStr = null;
-		int duration = 1;
+		String home = record.getHome();
 
+		int duration = record.getDuration();
+		String durStr = duration + " weeks";
 		Boolean active = false; // Set based on calendar?
-		String home = record.getHome(); 
 		return new OffRec(id, start, duration, spread, home, active, startStr,
 				durStr);
 	}

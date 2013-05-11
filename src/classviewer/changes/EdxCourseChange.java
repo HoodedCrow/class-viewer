@@ -53,7 +53,7 @@ public class EdxCourseChange extends CourseChange {
 				created.addOffering(off);
 			}
 			model.addCourse(created);
-		} else 
+		} else
 			super.apply(model);
 	}
 

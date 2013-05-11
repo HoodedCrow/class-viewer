@@ -1,7 +1,6 @@
 package classviewer.changes;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -76,7 +75,8 @@ public class EdxModelAdapter {
 	 * 
 	 * @return
 	 */
-	private EdxRecord parseCourse(String all) throws IOException {
+	private EdxRecord parseCourse(String all, String edxBase)
+			throws IOException {
 		// final String toID = "<article id=\"";
 		final String toUrl = "<a href=\"/courses/";
 		final String toNew = "<span class=\"status\">New</span>";
@@ -125,7 +125,7 @@ public class EdxModelAdapter {
 		end = all.indexOf("</", idx);
 		if (end < 0)
 			throw new IOException("Tag at " + idx + " does not close " + all);
-		String date = all.substring(idx + toDate.length(), end).trim();
+		String dateStr = all.substring(idx + toDate.length(), end).trim();
 
 		idx = all.indexOf(toUni);
 		if (idx < 0)
@@ -138,12 +138,24 @@ public class EdxModelAdapter {
 		// System.out.println(courseId + ", " + name + "\n\t" + descr + "\n\t"
 		// + univer + ", " + date + ", " + isNew);
 
-		return new EdxRecord(courseId, name, descr, univer, date, home, isNew);
+		Date start = EdxRecord.parseDate(dateStr);
+		int duration = 1;
+		if (home != null && start != null) {
+			String endStr = extractEndDate(edxBase, home);
+			Date endDate = EdxRecord.parseDate(endStr);
+			if (endDate != null) {
+				long mills = endDate.getTime() - start.getTime();
+				duration = Math.round(mills / (1000 * 3600 * 24 * 7.0f));
+			}
+		}
+
+		return new EdxRecord(courseId, name, descr, univer, start, duration,
+				home, isNew);
 	}
 
 	/** Assuming everything is in a string buffer, pick out classes */
-	private HashMap<String, ArrayList<EdxRecord>> readHtml(StringBuffer all)
-			throws IOException {
+	private HashMap<String, ArrayList<EdxRecord>> readHtml(StringBuffer all,
+			String baseUrl) throws IOException {
 		records.clear();
 		int offset = 0;
 		final int END = all.length();
@@ -159,7 +171,7 @@ public class EdxModelAdapter {
 				end = END;
 			}
 			// Parse this particular course info
-			EdxRecord rec = parseCourse(all.substring(start, end));
+			EdxRecord rec = parseCourse(all.substring(start, end), baseUrl);
 			ArrayList<EdxRecord> list = records.get(rec.getCourseId());
 			if (list == null) {
 				list = new ArrayList<EdxRecord>();
@@ -184,7 +196,7 @@ public class EdxModelAdapter {
 		StringBuffer buffer = readIntoBuffer(reader);
 		stream.close();
 
-		readHtml(buffer);
+		readHtml(buffer, edxUrl);
 	}
 
 	/**
@@ -262,6 +274,25 @@ public class EdxModelAdapter {
 		for (EdxRecord r : list)
 			if (diff.contains(r.getStart()))
 				res.add(new EdxOfferingChange(Change.ADD, oldRec, null, null, r));
+
+		// For the intersection check duration. No need to check the start date,
+		// since it's the key
+		diff = new ArrayList<Date>(existing);
+		diff.retainAll(incoming);
+		for (EdxRecord r : list)
+			if (diff.contains(r.getStart())) {
+				// Locate corresponding existing
+				OffRec r1 = null;
+				for (OffRec r2 : oldRec.getOfferings())
+					if (r2.getStart().equals(r.getStart()))
+						r1 = r2;
+				assert (r1 != null);
+
+				if (r1.getDuration() != r.getDuration()) {
+					res.add(new EdxOfferingChange(Change.MODIFY, oldRec,
+							"Duration", r1, r));
+				}
+			}
 	}
 
 	private HashMap<String, Object> makeUniJsonForId(String u) {
@@ -272,18 +303,26 @@ public class EdxModelAdapter {
 		return res;
 	}
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) throws Exception {
+	public String extractEndDate(String baseUrl, String home) {
+		final String tag = "<span class=\"final-date\">";
 
-		FileReader reader = new FileReader("data/edx.index.html");
-		EdxModelAdapter me = new EdxModelAdapter();
-		HashMap<String, ArrayList<EdxRecord>> map = me.readHtml(me
-				.readIntoBuffer(reader));
-		for (ArrayList<EdxRecord> list : map.values())
-			for (EdxRecord r : list)
-				System.out.println(r);
-		reader.close();
+		String addr = baseUrl + home;
+		try {
+			URL url = new URL(addr);
+			InputStream stream = url.openStream();
+			InputStreamReader reader = new InputStreamReader(stream);
+
+			StringBuffer buffer = readIntoBuffer(reader);
+			stream.close();
+
+			int idx = buffer.indexOf(tag);
+			if (idx < 0)
+				return null;
+			int end = buffer.indexOf("</span>", idx);
+			return buffer.substring(idx + tag.length(), end).trim();
+		} catch (Exception e) {
+			System.err.println("Cannot get end date from " + addr);
+		}
+		return null;
 	}
 }
