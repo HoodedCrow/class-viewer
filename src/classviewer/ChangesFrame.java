@@ -11,10 +11,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.WindowConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
@@ -147,11 +150,29 @@ public class ChangesFrame extends NamedInternalFrame {
 				.setCellRenderer(new OperationCellRenderer());
 	}
 
+	private class WaitDialog extends JDialog {
+		WaitDialog() {
+			this.setTitle("Working on it");
+			this.setModal(true);
+			this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+			JProgressBar bar = new JProgressBar();
+			bar.setIndeterminate(true);
+			this.add(bar);
+			this.pack();
+			this.setSize(400, 30);
+			this.setLocationRelativeTo(null);
+		}
+	}
+
 	protected void loadCoursera() {
+		WaitDialog wait = new WaitDialog();
+		wait.setVisible(true);
+
 		JsonModelAdapter json = new JsonModelAdapter();
 		try {
 			json.load(settings.getString(Settings.COURSERA_URL));
 		} catch (IOException e) {
+			wait.setVisible(false);
 			JOptionPane.showMessageDialog(this,
 					"Failed to load Coursera data:\n" + e);
 			return;
@@ -171,13 +192,17 @@ public class ChangesFrame extends NamedInternalFrame {
 			changeSelected.add(Boolean.FALSE);
 		table.tableChanged(null);
 		setColumnWidth();
+		wait.setVisible(false);
 	}
 
 	protected void loadEdx() {
+		WaitDialog wait = new WaitDialog();
+		wait.setVisible(true);
 		EdxModelAdapter edx = new EdxModelAdapter();
 		try {
 			edx.parse(settings.getString(Settings.EDX_URL));
 		} catch (IOException e) {
+			wait.setVisible(false);
 			JOptionPane.showMessageDialog(this, "Failed to load EdX data:\n"
 					+ e);
 			return;
@@ -190,6 +215,7 @@ public class ChangesFrame extends NamedInternalFrame {
 			changeSelected.add(Boolean.FALSE);
 		table.tableChanged(null);
 		setColumnWidth();
+		wait.setVisible(false);
 	}
 
 	private class ChangeModel extends DefaultTableModel {
