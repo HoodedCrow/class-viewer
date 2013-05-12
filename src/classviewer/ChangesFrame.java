@@ -159,7 +159,7 @@ public class ChangesFrame extends NamedInternalFrame {
 			bar.setIndeterminate(true);
 			this.add(bar);
 			this.pack();
-			this.setSize(400, 30);
+			this.setSize(400, this.getHeight());
 			this.setLocationRelativeTo(null);
 		}
 	}

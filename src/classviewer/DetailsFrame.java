@@ -65,13 +65,15 @@ public class DetailsFrame extends NamedInternalFrame implements
 		htmlPane.addHyperlinkListener(new HyperlinkListener() {
 			@Override
 			public void hyperlinkUpdate(HyperlinkEvent e) {
-				if (EventType.ACTIVATED.equals(e.getEventType())) {
+				if (EventType.ACTIVATED.equals(e.getEventType())
+						&& e.getURL() != null) {
 					Desktop desktop = java.awt.Desktop.getDesktop();
 					try {
 						desktop.browse(e.getURL().toURI());
 					} catch (Exception e1) {
 						JOptionPane.showMessageDialog(null,
-								"Cannot open browser:\n" + e1);
+								"Cannot open browser for\n" + e.getURL() + "\n"
+										+ e1.getMessage());
 					}
 				}
 			}
