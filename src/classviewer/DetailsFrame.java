@@ -3,9 +3,6 @@ package classviewer;
 import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.awt.Dimension;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JOptionPane;
