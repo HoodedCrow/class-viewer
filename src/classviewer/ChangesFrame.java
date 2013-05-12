@@ -165,57 +165,66 @@ public class ChangesFrame extends NamedInternalFrame {
 	}
 
 	protected void loadCoursera() {
-		WaitDialog wait = new WaitDialog();
+		final WaitDialog wait = new WaitDialog();
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				JsonModelAdapter json = new JsonModelAdapter();
+				try {
+					json.load(settings.getString(Settings.COURSERA_URL));
+				} catch (IOException e) {
+					wait.setVisible(false);
+					JOptionPane.showMessageDialog(null,
+							"Failed to load Coursera data:\n" + e);
+					return;
+				}
+
+				if (debugJson) {
+					System.out.println("Course-level keys");
+					System.out.println(json.getCourseLevelKeys());
+					System.out.println("Offering-level keys");
+					System.out.println(json.getOfferingLevelKeys());
+				}
+
+				changes = json.collectChanges(courseModel);
+				Collections.sort(changes);
+				changeSelected.clear();
+				for (int i = 0; i < changes.size(); i++)
+					changeSelected.add(Boolean.FALSE);
+				table.tableChanged(null);
+				setColumnWidth();
+				wait.setVisible(false);
+			}
+		}).start();
 		wait.setVisible(true);
-
-		JsonModelAdapter json = new JsonModelAdapter();
-		try {
-			json.load(settings.getString(Settings.COURSERA_URL));
-		} catch (IOException e) {
-			wait.setVisible(false);
-			JOptionPane.showMessageDialog(this,
-					"Failed to load Coursera data:\n" + e);
-			return;
-		}
-
-		if (debugJson) {
-			System.out.println("Course-level keys");
-			System.out.println(json.getCourseLevelKeys());
-			System.out.println("Offering-level keys");
-			System.out.println(json.getOfferingLevelKeys());
-		}
-
-		changes = json.collectChanges(courseModel);
-		Collections.sort(changes);
-		changeSelected.clear();
-		for (int i = 0; i < changes.size(); i++)
-			changeSelected.add(Boolean.FALSE);
-		table.tableChanged(null);
-		setColumnWidth();
-		wait.setVisible(false);
 	}
 
 	protected void loadEdx() {
-		WaitDialog wait = new WaitDialog();
-		wait.setVisible(true);
-		EdxModelAdapter edx = new EdxModelAdapter();
-		try {
-			edx.parse(settings.getString(Settings.EDX_URL));
-		} catch (IOException e) {
-			wait.setVisible(false);
-			JOptionPane.showMessageDialog(this, "Failed to load EdX data:\n"
-					+ e);
-			return;
-		}
+		final WaitDialog wait = new WaitDialog();
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				EdxModelAdapter edx = new EdxModelAdapter();
+				try {
+					edx.parse(settings.getString(Settings.EDX_URL));
+				} catch (IOException e) {
+					wait.setVisible(false);
+					JOptionPane.showMessageDialog(null,
+							"Failed to load EdX data:\n" + e);
+					return;
+				}
 
-		changes = edx.collectChanges(courseModel);
-		Collections.sort(changes);
-		changeSelected.clear();
-		for (int i = 0; i < changes.size(); i++)
-			changeSelected.add(Boolean.FALSE);
-		table.tableChanged(null);
-		setColumnWidth();
-		wait.setVisible(false);
+				changes = edx.collectChanges(courseModel);
+				Collections.sort(changes);
+				changeSelected.clear();
+				for (int i = 0; i < changes.size(); i++)
+					changeSelected.add(Boolean.FALSE);
+				table.tableChanged(null);
+				setColumnWidth();
+				wait.setVisible(false);
+			}
+		}).start();
+		wait.setVisible(true);
 	}
 
 	private class ChangeModel extends DefaultTableModel {
