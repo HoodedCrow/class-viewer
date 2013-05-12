@@ -1,13 +1,21 @@
 package classviewer;
 
 import java.awt.BorderLayout;
+import java.awt.Desktop;
 import java.awt.Dimension;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 import javax.swing.DefaultCellEditor;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkEvent.EventType;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
@@ -57,6 +65,20 @@ public class DetailsFrame extends NamedInternalFrame implements
 		this.add(new JScrollPane(htmlPane), BorderLayout.CENTER);
 		htmlPane.setContentType("text/html");
 		htmlPane.setEditable(false);
+		htmlPane.addHyperlinkListener(new HyperlinkListener() {
+			@Override
+			public void hyperlinkUpdate(HyperlinkEvent e) {
+				if (EventType.ACTIVATED.equals(e.getEventType())) {
+					Desktop desktop = java.awt.Desktop.getDesktop();
+					try {
+						desktop.browse(e.getURL().toURI());
+					} catch (Exception e1) {
+						JOptionPane.showMessageDialog(null,
+								"Cannot open browser:\n" + e1);
+					}
+				}
+			}
+		});
 
 		offeringTable.getSelectionModel().addListSelectionListener(
 				new ListSelectionListener() {
