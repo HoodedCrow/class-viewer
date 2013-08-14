@@ -9,8 +9,10 @@ import java.util.Date;
  * @author TK
  */
 public class EdxRecord {
-	public static SimpleDateFormat dformat = new SimpleDateFormat(
-			"MMM dd, yyyy");
+	public static SimpleDateFormat dformat1 = new SimpleDateFormat(
+			"dd MMM yyyy");
+	public static SimpleDateFormat dformat3 = new SimpleDateFormat(
+			"MMMMM yyyy");
 
 	private String courseId;
 	private String name;
@@ -35,7 +37,7 @@ public class EdxRecord {
 
 	public String toString() {
 		return courseId + ", " + name + "\n\t" + descr + "\n\t" + univer + ", "
-				+ (date==null?"No start":dformat.format(date)) + ", " + duration + " weeks, " + home + ", " + isNew;
+				+ (date==null?"No start":dformat1.format(date)) + ", " + duration + " weeks, " + home + ", " + isNew;
 
 	}
 
@@ -64,8 +66,18 @@ public class EdxRecord {
 	}
 	
 	public static Date parseDate(String str) {
+		if (str == null)
+			return null;
+		str = str.replace("<span class=\"date-display-single\">", "");
+		str = str.replace(",", "");
+		str = str.replace("Sept ", "Sep "); // More of these?
+		
 		try {
-			return dformat.parse(str);
+			return dformat1.parse(str);
+		} catch (Exception e) {
+		}
+		try {
+			return dformat3.parse(str);
 		} catch (Exception e) {
 			System.err.println("Cannot parse date " + str);
 		}

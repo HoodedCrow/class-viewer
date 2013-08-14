@@ -34,7 +34,6 @@ import org.xml.sax.SAXException;
  * @author TK
  */
 public class XmlModelAdapter {
-	protected static String XML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	private static SimpleDateFormat dformat = new SimpleDateFormat("MM/dd/yy");
 
 	protected boolean addIndent = true;

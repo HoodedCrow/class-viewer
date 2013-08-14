@@ -15,8 +15,6 @@ import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
 
-// import org.w3c.dom.html.HTMLDocument;
-
 /**
  * EdX html is weird. I could not find an off-the-shelf parser that would
  * convert it into DOM, so here is a hackish solution.
@@ -54,13 +52,13 @@ public class EdxModelAdapter {
 			if (off < 0)
 				return -1;
 			// Closing > after this
-			int close = all.indexOf(">", off);
+			int close = all.indexOf("</article>", off);
 			if (close < 0)
 				throw new IOException("Article tag at " + off
 						+ " does not close. Broken file?");
 			// Now look for class before the closing. Assume no spaces between
 			// the attribute name and the value
-			int cl = all.indexOf("class=\"course\"", off);
+			int cl = all.indexOf("<h1><span>", off);
 			if (cl > 0 && cl < close)
 				return off;
 			// Otherwise move past close
@@ -78,12 +76,12 @@ public class EdxModelAdapter {
 	private EdxRecord parseCourse(String all, String edxBase)
 			throws IOException {
 		// final String toID = "<article id=\"";
-		final String toUrl = "<a href=\"/courses/";
-		final String toNew = "<span class=\"status\">New</span>";
-		final String toNumber = "<span class=\"course-number\">";
-		final String toDesc = "<div class=\"desc\">";
-		final String toDate = "<span class=\"start-date\">";
-		final String toUni = "<p class=\"university\">";
+		final String toUrl = "<a class=\"go-to-course\" href=\"";
+		final String toNew = "<div class=\"new-course-ribbon\">";
+		final String toNumber = "<h1><span>";
+		final String toDesc = "<div class=\"subtitle\">";
+		final String toDate = "<span class=\"bold-title\">Starts:</span>";
+		final String toUni = "<li class=\"school-list\">";
 
 		int idx, end;
 
@@ -92,8 +90,8 @@ public class EdxModelAdapter {
 		idx = all.indexOf(toUrl);
 		if (idx < 0)
 			throw new IOException("No URL for course " + all);
-		end = all.indexOf("\"", idx + 9);
-		String home = all.substring(idx + 9, end);
+		end = all.indexOf("\"", idx + toUrl.length());
+		String home = all.substring(idx + toUrl.length(), end);
 
 		idx = all.indexOf(toNumber);
 		if (idx < 0)
@@ -102,27 +100,29 @@ public class EdxModelAdapter {
 		if (end < 0)
 			throw new IOException("Tag at " + idx + " does not close " + all);
 		String courseId = all.substring(idx + toNumber.length(), end).trim();
+		if (courseId.endsWith(":"))
+			courseId = courseId.substring(0, courseId.length()-1);
 		idx = end + 7; // assuming it's </span>
 		end = all.indexOf("</", idx);
 		if (end < 0)
 			throw new IOException("Tag at " + idx + " does not close " + all);
-		String name = all.substring(idx, end).trim();
+		String name = cleanStr(all.substring(idx, end).trim());
 
 		idx = all.indexOf(toDesc);
 		if (idx < 0)
 			throw new IOException("No description for course " + all);
-		idx = all.indexOf("<p>", idx);
-		if (idx < 0)
-			throw new IOException("No <p> in description for course " + all);
-		end = all.indexOf("</", idx);
+//		idx = all.indexOf("<p>", idx);
+//		if (idx < 0)
+//			throw new IOException("No <p> in description for course " + all);
+		end = all.indexOf("<", idx+2);
 		if (end < 0)
 			throw new IOException("Tag at " + idx + " does not close " + all);
-		String descr = all.substring(idx + 3, end).trim();
+		String descr = cleanStr(all.substring(idx + toDesc.length(), end).trim());
 
 		idx = all.indexOf(toDate);
 		if (idx < 0)
 			throw new IOException("No date for course " + all);
-		end = all.indexOf("</", idx);
+		end = all.indexOf("</", idx + toDate.length() + 1);
 		if (end < 0)
 			throw new IOException("Tag at " + idx + " does not close " + all);
 		String dateStr = all.substring(idx + toDate.length(), end).trim();
@@ -140,23 +140,53 @@ public class EdxModelAdapter {
 
 		Date start = EdxRecord.parseDate(dateStr);
 		int duration = 1;
-		if (home != null && start != null) {
-			String endStr = extractEndDate(edxBase, home);
-			Date endDate = EdxRecord.parseDate(endStr);
-			if (endDate != null) {
-				long mills = endDate.getTime() - start.getTime();
-				duration = Math.round(mills / (1000 * 3600 * 24 * 7.0f));
-			}
-		}
+		// TODO they seem to have dropped end date
+//		if (home != null && start != null) {
+//			String endStr = extractEndDate(edxBase, home);
+//			Date endDate = EdxRecord.parseDate(endStr);
+//			if (endDate != null) {
+//				long mills = endDate.getTime() - start.getTime();
+//				duration = Math.round(mills / (1000 * 3600 * 24 * 7.0f));
+//			}
+//		}
 
 		return new EdxRecord(courseId, name, descr, univer, start, duration,
 				home, isNew);
 	}
+	private String cleanStr(String str) {
+		str = str.replace("&amp;", "&");
+		return str;
+	}
 
+/*
+	<article class="course-tile"><div class="left-col">
+	<div class="new-course-ribbon"></div><div class="top"><div class="title">
+	<h1><span>24.00x:</span> Introduction to Philosophy: God, Knowledge and Consciousness</h1>
+	</div>
+	<div class="subtitle">This course will focus on big questions. You will learn how to ask them and how to answer them. 
+		<a class="go-to-course" href="/course/mit/24-00x/introduction-philosophy-god/888">more</a>
+	</div></div><div class="bottom">
+	<div class="detail"><ul class="clearfix"><li>
+	<span class="bold-title">Starts:</span> <span class="date-display-single">1 Oct 2013</span>
+	</li><li> • </li><li><div class="instructor-list">
+	<span class="bold-title">Instructors:</span> Caspar Hare</div></li>
+	<li> • </li><li class="school-list">MITx</li></ul></div></div></div>
+	<div class="right-col">
+	<div class="image">
+	<img src="https://www.edx.org/sites/default/files/styles/course_tile_image/public/2400x_262x136.jpg?itok=y3n29SDS" width="277" height="136" alt="Introduction to Philosophy: God, Knowledge and Consciousness" />
+	</div><div class="actions clearfix">
+	<div class="action"><div class="iframe iframe-register action-register-course">
+	<iframe src="https://courses.edx.org/mktg/MITx/24.00x/2013_SOND"></iframe>
+	</div></div></div></div><div class="clearfix"></div>
+	<div style="hidden" class="course-link" href="/course/mit/24-00x/introduction-philosophy-god/888"></div>
+	</article>  
+	</div><div class="views-row views-row-2 views-row-even">
+	<!-- This is the template for every row in Courses Page -->
+*/
+	
 	/** Assuming everything is in a string buffer, pick out classes */
 	private HashMap<String, ArrayList<EdxRecord>> readHtml(StringBuffer all,
 			String baseUrl) throws IOException {
-		records.clear();
 		int offset = 0;
 		final int END = all.length();
 		while (offset < END) {
@@ -189,14 +219,24 @@ public class EdxModelAdapter {
 	 * into internal structure
 	 */
 	public void parse(String edxUrl) throws IOException {
-		URL url = new URL(edxUrl);
-		InputStream stream = url.openStream();
-		InputStreamReader reader = new InputStreamReader(stream);
+		records.clear();
+		int page = 0;
+		while (true) {
+			URL url = new URL(edxUrl
+					+ "/course-list/allschools/allsubjects/allcourses"
+					+ ((page == 0) ? "" : ("?page=" + page)));
+			InputStream stream = url.openStream();
+			InputStreamReader reader = new InputStreamReader(stream);
 
-		StringBuffer buffer = readIntoBuffer(reader);
-		stream.close();
+			StringBuffer buffer = readIntoBuffer(reader);
+			stream.close();
+			
+			if (buffer.indexOf("courses-no-result-title") > 0)
+				break;
 
-		readHtml(buffer, edxUrl);
+			readHtml(buffer, edxUrl);
+			page++;
+		}
 	}
 
 	/**
@@ -276,23 +316,23 @@ public class EdxModelAdapter {
 				res.add(new EdxOfferingChange(Change.ADD, oldRec, null, null, r));
 
 		// For the intersection check duration. No need to check the start date,
-		// since it's the key
-		diff = new ArrayList<Date>(existing);
-		diff.retainAll(incoming);
-		for (EdxRecord r : list)
-			if (diff.contains(r.getStart())) {
-				// Locate corresponding existing
-				OffRec r1 = null;
-				for (OffRec r2 : oldRec.getOfferings())
-					if (r2.getStart().equals(r.getStart()))
-						r1 = r2;
-				assert (r1 != null);
-
-				if (r1.getDuration() != r.getDuration()) {
-					res.add(new EdxOfferingChange(Change.MODIFY, oldRec,
-							"Duration", r1, r));
-				}
-			}
+		// since it's the key. TODO They no longer have duration
+//		diff = new ArrayList<Date>(existing);
+//		diff.retainAll(incoming);
+//		for (EdxRecord r : list)
+//			if (diff.contains(r.getStart())) {
+//				// Locate corresponding existing
+//				OffRec r1 = null;
+//				for (OffRec r2 : oldRec.getOfferings())
+//					if (r2.getStart().equals(r.getStart()))
+//						r1 = r2;
+//				assert (r1 != null);
+//
+//				if (r1.getDuration() != r.getDuration()) {
+//					res.add(new EdxOfferingChange(Change.MODIFY, oldRec,
+//							"Duration", r1, r));
+//				}
+//			}
 	}
 
 	private HashMap<String, Object> makeUniJsonForId(String u) {
