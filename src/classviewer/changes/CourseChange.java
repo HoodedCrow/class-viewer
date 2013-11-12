@@ -51,6 +51,10 @@ public class CourseChange extends Change {
 			return created.getName();
 		if (type == DELETE)
 			return course.getName();
+		if ("Categories".equals(field))
+			return json.get("category-ids");
+		if ("Universities".equals(field))
+			return json.get("university-ids");
 		return valueOf(created);
 	}
 
@@ -67,16 +71,16 @@ public class CourseChange extends Change {
 			return rec.getLanguage();
 		if ("Link".equals(field))
 			return rec.getLink();
-		if ("Categories".equals(field))
-			return json.get("category-ids");
-		if ("Universities".equals(field))
-			return json.get("university-ids");
 		return "??? " + field;
 	}
 
 	public Object getOldValue() {
 		if (type == ADD || type == DELETE)
 			return null;
+		if ("Categories".equals(field))
+			return CourseRec.idSet(course.getCategories());
+		if ("Universities".equals(field))
+			return CourseRec.idSet(course.getUniversities());
 		return valueOf(course);
 	}
 
