@@ -9,18 +9,25 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.RowFilter;
+import javax.swing.RowSorter;
+import javax.swing.RowSorter.SortKey;
 import javax.swing.WindowConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import classviewer.changes.Change;
 import classviewer.changes.EdxModelAdapter;
@@ -42,7 +49,10 @@ public class ChangesFrame extends NamedInternalFrame {
 	private boolean debugJson = false;
 	private ArrayList<Change> changes = null;
 	private ArrayList<Boolean> changeSelected = new ArrayList<Boolean>();
+	/** If true, remove changes that modify existing link or professor name to empty */
+	private boolean pruneDropLinkProf = false;
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public ChangesFrame(CourseModel model, Settings settings) {
 		super("Changes", model);
 
@@ -90,8 +100,39 @@ public class ChangesFrame extends NamedInternalFrame {
 		});
 		buttons.add(but);
 
+		final JCheckBox cbox = new JCheckBox("Hide clear link",
+				pruneDropLinkProf);
+		cbox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				pruneDropLinkProf = cbox.isSelected();
+				List<? extends SortKey> skeys = table.getRowSorter().getSortKeys();
+				((ChangeModel) table.getModel()).fireTableChanged(null);
+				setColumnWidth();
+				table.getRowSorter().setSortKeys(skeys);
+			}
+		});
+		buttons.add(cbox);
+
 		table = new JTable(new ChangeModel());
 		table.setAutoCreateRowSorter(true);
+		RowFilter<ChangeModel, Object> rf = new RowFilter<ChangeModel, Object>() {
+			@Override
+			public boolean include(
+					javax.swing.RowFilter.Entry<? extends ChangeModel, ? extends Object> entry) {
+				if (!pruneDropLinkProf)
+					return true;
+				Change c = changes.get((Integer) entry.getIdentifier());
+				if (!Change.MODIFY.equals(c.getType()))
+					return true;
+				Object ov = c.getOldValue();
+				Object nv = c.getNewValue();
+				boolean res = !"".equals(nv) || "".equals(ov);
+				return res;
+			}
+		};
+		RowSorter<? extends TableModel> sorter = table.getRowSorter();
+		((TableRowSorter) sorter).setRowFilter(rf);
 		this.add(new JScrollPane(table), BorderLayout.CENTER);
 		setColumnWidth();
 	}
@@ -116,9 +157,11 @@ public class ChangesFrame extends NamedInternalFrame {
 			JOptionPane.showMessageDialog(this, "Cannot save status file:\n"
 					+ e);
 		}
+		List<? extends SortKey> skeys = table.getRowSorter().getSortKeys();
 		courseModel.fireModelReloaded();
 		table.tableChanged(null);
 		setColumnWidth();
+		table.getRowSorter().setSortKeys(skeys);
 	}
 
 	/** Action listener for select all / deselect all buttons */
