@@ -214,7 +214,7 @@ public class ChangesFrame extends NamedInternalFrame {
 					return;
 				}
 
-				changes = edx.collectChanges(courseModel);
+				changes = edx.collectChanges(courseModel, settings.getInt(Settings.OLD_AGE_IN_DAYS, 3650));
 				Collections.sort(changes);
 				changeSelected.clear();
 				for (int i = 0; i < changes.size(); i++)

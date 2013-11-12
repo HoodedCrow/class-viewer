@@ -20,6 +20,7 @@ public class Settings {
 	public static final String COURSERA_URL = "CourseraJsonURL";
 	public static final String EDX_URL = "EdXListURL";
 	public static final String LOOK_BACK_WEEKS = "LookBackWeeks";
+	public static final String OLD_AGE_IN_DAYS = "EdXOldAgeInDays";
 
 	// Prefix for colors
 	public static final String COLOR = "Color";
@@ -63,7 +64,10 @@ public class Settings {
 
 		// How many weeks from today to look back in the calendar
 		settings.put(LOOK_BACK_WEEKS, "10");
-		
+
+		// Define "too old to be removed" for EdX classes
+		settings.put(OLD_AGE_IN_DAYS, "210");
+
 		// Calendar colors
 		settings.put(COLOR + "UCalBg", "B0B0B0");
 		settings.put(COLOR + "YCalBg", "78FAFA");
@@ -145,6 +149,14 @@ public class Settings {
 
 		cachedColors.put(name, clr);
 		return clr;
+	}
+
+	public int getInt(String name, int def) {
+		try {
+			return Integer.parseInt(settings.get(name));
+		} catch (Exception e) {
+			return def;
+		}
 	}
 
 }

@@ -10,10 +10,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
+import classviewer.model.Status;
 
 /**
  * EdX html is weird. I could not find an off-the-shelf parser that would
@@ -134,6 +136,11 @@ public class EdxModelAdapter {
 		if (end < 0)
 			throw new IOException("Tag at " + idx + " does not close " + all);
 		String univer = all.substring(idx + toUni.length(), end).trim();
+		// Drop spaces in the university name. Otherwise we have problems
+		// forming space-separated attribute string. Also, get rid of
+		// "University of "
+		univer = univer.replace("University of ", "");
+		univer = univer.replace(" ", "");
 
 		// System.out.println(courseId + ", " + name + "\n\t" + descr + "\n\t"
 		// + univer + ", " + date + ", " + isNew);
@@ -202,7 +209,7 @@ public class EdxModelAdapter {
 			}
 			// Parse this particular course info
 			EdxRecord rec = parseCourse(all.substring(start, end), baseUrl);
-			ArrayList<EdxRecord> list = records.get(rec.getCourseId());
+			ArrayList<EdxRecord> list = records.get(rec.getCourseId());			
 			if (list == null) {
 				list = new ArrayList<EdxRecord>();
 				records.put(rec.getCourseId(), list);
@@ -243,7 +250,11 @@ public class EdxModelAdapter {
 	 * Compare the internal structure produced by the parse method to the given
 	 * model and return the set of differences
 	 */
-	public ArrayList<Change> collectChanges(CourseModel courseModel) {
+	public ArrayList<Change> collectChanges(CourseModel courseModel, int tooOldInDays) {
+		// Build a date before which we do not remove offerings
+		Date tooOld = new Date( new Date().getTime() - 24*3600000l*tooOldInDays );
+		System.out.println("Will keep all offerings older than " + tooOldInDays + " days: " + tooOld);
+		
 		ArrayList<Change> res = new ArrayList<Change>();
 
 		// There are no categories for Edx, but there are universities. For
@@ -258,6 +269,27 @@ public class EdxModelAdapter {
 						"EdX University", null, makeUniJsonForId(u)));
 		}
 
+		// EdX is not particularly consistent with naming, hence this hack.
+		// Note that this will only work for simplification of ids.
+		ArrayList<String> names = new ArrayList<String>(records.keySet());
+		for (String s : names) {
+			CourseRec oldRec = courseModel.getClassByShortName(s);
+			if (oldRec != null)
+				continue;
+			String s1 = s.replace(" ", "").replace("-", "");
+			oldRec = courseModel.getClassByShortName(s1);
+			if (oldRec != null) {
+				ArrayList<EdxRecord> list = records.remove(s);
+				for (EdxRecord r : list)
+					r.setCourseId(s1);
+				ArrayList<EdxRecord> list1 = records.get(s1);
+				if (list1 == null)
+					records.put(s1, list);
+				else
+					list1.addAll(list);
+			}
+		}
+		
 		// Go over all course bundles, pick those that don't yet exist
 		for (ArrayList<EdxRecord> list : records.values()) {
 			String courseId = list.get(0).getCourseId();
@@ -266,14 +298,14 @@ public class EdxModelAdapter {
 				res.add(new EdxCourseChange(Change.ADD, null, null, list,
 						courseModel));
 			} else {
-				diffCourse(list, oldRec, res, courseModel);
+				diffCourse(list, oldRec, res, courseModel, tooOld);
 			}
 		}
 		return res;
 	}
 
 	private void diffCourse(ArrayList<EdxRecord> list, CourseRec oldRec,
-			ArrayList<Change> res, CourseModel model) {
+			ArrayList<Change> res, CourseModel model, Date tooOld) {
 		// The only things we have here are: name, description, offerings
 		String s1 = list.get(0).getName();
 		String s2 = oldRec.getName();
@@ -301,18 +333,55 @@ public class EdxModelAdapter {
 				System.err.println("Existing EdX offering without start date: "
 						+ r);
 
-		// Removed
-		ArrayList<Date> diff = new ArrayList<Date>(existing);
-		diff.removeAll(incoming);
+		// Differences
+		ArrayList<Date> deleted = new ArrayList<Date>(existing);
+		deleted.removeAll(incoming);
+		ArrayList<Date> added = new ArrayList<Date>(incoming);
+		added.removeAll(existing);
+		
+		// Remove deletes that are too old
+		for (Iterator<Date> it = deleted.iterator(); it.hasNext(); ) {
+			Date d = it.next();
+			if (d.before(tooOld))
+				it.remove();
+		}
+		
+		// Possible date shift?
+		if (deleted.size() == 1 && added.size() == 1) {
+			OffRec rr = null;
+			for (OffRec r : oldRec.getOfferings())
+				if (r.getStart().equals(deleted.get(0))) {
+					rr = r;
+					break;
+				}
+			EdxRecord er = null;
+			for (EdxRecord r : list)
+				if (r.getStart().equals(added.get(0))) {
+					er  = r;
+					break;
+				}
+			// EdxOfferingChange(String type, CourseRec course, String field, OffRec offering, EdxRecord record
+			res.add(new EdxOfferingChange(Change.MODIFY, oldRec, "Start", rr, er));
+			deleted.clear();
+			added.clear();
+		}
+
+		// Prune deleted things that are actually done: never delete those records
 		for (OffRec r : oldRec.getOfferings())
-			if (diff.contains(r.getStart()))
+			if (deleted.contains(r.getStart())
+					&& (Status.DONE.equals(r.getStatus()) || Status.REGISTERED
+							.equals(r.getStatus()))) {
+				deleted.remove(r.getStart());
+			}		
+		
+		// Deleted
+		for (OffRec r : oldRec.getOfferings())
+			if (deleted.contains(r.getStart()))
 				res.add(new EdxOfferingChange(Change.DELETE, oldRec, null, r,
 						null));
 		// Added
-		diff = new ArrayList<Date>(incoming);
-		diff.removeAll(existing);
 		for (EdxRecord r : list)
-			if (diff.contains(r.getStart()))
+			if (added.contains(r.getStart()))
 				res.add(new EdxOfferingChange(Change.ADD, oldRec, null, null, r));
 
 		// For the intersection check duration. No need to check the start date,

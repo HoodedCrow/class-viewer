@@ -87,4 +87,8 @@ public class EdxRecord {
 	public int getDuration() {
 		return duration;
 	}
+
+	public void setCourseId(String courseId) {
+		this.courseId = courseId;
+	}
 }

@@ -129,8 +129,13 @@ public class XmlModelAdapter {
 		}
 		if (universities != null && !universities.isEmpty()) {
 			String[] parts = universities.split(" ");
-			for (String s : parts)
-				res.addUniversity(model.getUniversity(s));
+			for (String s : parts) {
+				DescRec uni = model.getUniversity(s);
+				if (uni == null)
+					System.err.println("Cannot find university " + s + ", specified in " + universities);
+				else
+					res.addUniversity(uni);
+			}
 		}
 
 		// Find node for offerings
