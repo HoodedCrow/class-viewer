@@ -3,12 +3,14 @@ package classviewer;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter.SortKey;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
@@ -111,8 +113,10 @@ public class CourseListFrame extends NamedInternalFrame implements
 	}
 
 	private void reloadModel() {
+		List<? extends SortKey> sortKeys = table.getRowSorter().getSortKeys();
 		((CourseTableModel) table.getModel()).fireTableChanged(null);
 		setColumnWidth();
+		table.getRowSorter().setSortKeys(sortKeys);
 	}
 
 	public void addSelectionListener(CourseSelectionListener listener) {
