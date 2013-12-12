@@ -49,25 +49,26 @@ public class EdxModelAdapter {
 	private int findNextArticle(StringBuffer all, int offset)
 			throws IOException {
 		// Until we find something or run out of file
-		while (offset < all.length()) {
-			int off = all.indexOf("<article", offset);
-			if (off < 0)
-				return -1;
-			// Closing > after this
-			int close = all.indexOf("</article>", off);
-			if (close < 0)
-				throw new IOException("Article tag at " + off
-						+ " does not close. Broken file?");
-			// Now look for class before the closing. Assume no spaces between
-			// the attribute name and the value
-			int cl = all.indexOf("<h1><span>", off);
-			if (cl > 0 && cl < close)
-				return off;
-			// Otherwise move past close
-			offset = close + 1;
-		}
-		// Ran out of file
-		return -1;
+//		while (offset < all.length()) {
+			int off = all.indexOf("course-tile", offset);
+			return off;
+//			if (off < 0)
+//				return -1;
+//			// Closing > after this
+//			int close = all.indexOf("</article>", off);
+//			if (close < 0)
+//				throw new IOException("Article tag at " + off
+//						+ " does not close. Broken file?");
+//			// Now look for class before the closing. Assume no spaces between
+//			// the attribute name and the value
+//			int cl = all.indexOf("<h1><span>", off);
+//			if (cl > 0 && cl < close)
+//				return off;
+//			// Otherwise move past close
+//			offset = close + 1;
+//		}
+//		// Ran out of file
+//		return -1;
 	}
 
 	/**
@@ -78,12 +79,12 @@ public class EdxModelAdapter {
 	private EdxRecord parseCourse(String all, String edxBase)
 			throws IOException {
 		// final String toID = "<article id=\"";
-		final String toUrl = "<a class=\"go-to-course\" href=\"";
+		final String toUrl = "<a href=\"";
 		final String toNew = "<div class=\"new-course-ribbon\">";
-		final String toNumber = "<h1><span>";
-		final String toDesc = "<div class=\"subtitle\">";
-		final String toDate = "<span class=\"bold-title\">Starts:</span>";
-		final String toUni = "<li class=\"school-list\">";
+		final String toNumber = "<h2 class=\"title course-title\">";
+		final String toDesc = "course-subtitle copy-detail\">";
+		final String toDate = "Starts:</span>";
+		final String toUni = "<li><strong>";
 
 		int idx, end;
 
@@ -98,17 +99,18 @@ public class EdxModelAdapter {
 		idx = all.indexOf(toNumber);
 		if (idx < 0)
 			throw new IOException("No number for course " + all);
-		end = all.indexOf("</", idx);
+		end = all.indexOf("<", idx + toNumber.length());
 		if (end < 0)
 			throw new IOException("Tag at " + idx + " does not close " + all);
 		String courseId = all.substring(idx + toNumber.length(), end).trim();
 		if (courseId.endsWith(":"))
 			courseId = courseId.substring(0, courseId.length()-1);
-		idx = end + 7; // assuming it's </span>
-		end = all.indexOf("</", idx);
+		// assuming it's </strong><a ...
+		idx = all.indexOf(">", end + 15);
+		end = all.indexOf("<", idx);
 		if (end < 0)
-			throw new IOException("Tag at " + idx + " does not close " + all);
-		String name = cleanStr(all.substring(idx, end).trim());
+			throw new IOException("No title end at " + idx + " in " + all);
+		String name = cleanStr(all.substring(idx + 1, end).trim());
 
 		idx = all.indexOf(toDesc);
 		if (idx < 0)
@@ -201,8 +203,8 @@ public class EdxModelAdapter {
 			int start = findNextArticle(all, offset);
 			if (start < 0)
 				break;
-			// End of this article
-			int end = all.indexOf("</article>", offset);
+			// End of this article, will miss the last big blue button
+			int end = all.indexOf("<div class=\"col-both-courses\">", offset);
 			if (end < 0) {
 				System.err.println("Article at " + offset + " is not closed");
 				end = END;
@@ -241,7 +243,12 @@ public class EdxModelAdapter {
 			if (buffer.indexOf("courses-no-result-title") > 0)
 				break;
 
+			int before = records.size();
 			readHtml(buffer, edxUrl);
+			if (records.size() == before) {
+				System.out.println("Found no records and no stop sign in page " + page);
+				break;
+			}
 			page++;
 		}
 	}

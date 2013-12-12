@@ -69,6 +69,7 @@ public class EdxRecord {
 		if (str == null)
 			return null;
 		str = str.replace("<span class=\"date-display-single\">", "");
+		str = str.replace("<strong>", "");
 		str = str.replace(",", "");
 		str = str.replace("Sept ", "Sep "); // More of these?
 		
