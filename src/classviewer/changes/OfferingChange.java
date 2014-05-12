@@ -64,7 +64,7 @@ public class OfferingChange extends Change {
 		if ("Start".equals(field))
 			return rec.getStartStr();
 		if ("Duration".equals(field))
-			return rec.getDurStr();
+			return rec.getDuration();
 		if ("Link".equals(field))
 			return rec.getLink();
 		return "??? " + field;
@@ -93,7 +93,6 @@ public class OfferingChange extends Change {
 				offering.setStartStr(created.getStartStr());
 			} else if ("Duration".equals(field)) {
 				offering.setDuration(created.getDuration());
-				offering.setDurStr(created.getDurStr());
 			} else if ("Link".equals(field)) {
 				offering.setLink(created.getLink());
 			} else
@@ -151,7 +150,6 @@ public class OfferingChange extends Change {
 
 		Boolean active = (Boolean) json.get("active");
 		String home = (String) json.get("home_link");
-		return new OffRec(id, start, duration, spread, home, active, startStr,
-				durStr);
+		return new OffRec(id, start, duration, spread, home, active, startStr);
 	}
 }

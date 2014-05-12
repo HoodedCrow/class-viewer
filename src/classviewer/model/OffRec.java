@@ -14,12 +14,12 @@ public class OffRec implements Linked {
 	private int id, duration, spread;
 	private Status status = Status.UNKNOWN;
 	private Date start;
-	private String home, startStr, durStr;
+	private String home, startStr;
 	private boolean active;
 	private CourseRec course;
 
 	public OffRec(int id, Date start, int duration, int spread, String home,
-			boolean active, String startStr, String durStr) {
+			boolean active, String startStr) {
 		this.id = id;
 		this.start = start;
 		this.duration = duration;
@@ -27,7 +27,6 @@ public class OffRec implements Linked {
 		this.home = home == null ? "" : home;
 		this.active = active;
 		this.startStr = startStr == null ? "" : startStr;
-		this.durStr = durStr == null ? "" : durStr;
 	}
 
 	public void updateId(int newId) {
@@ -99,14 +98,6 @@ public class OffRec implements Linked {
 		this.startStr = startStr;
 	}
 
-	public String getDurStr() {
-		return durStr;
-	}
-
-	public void setDurStr(String durStr) {
-		this.durStr = durStr;
-	}
-
 	public boolean isActive() {
 		return active;
 	}
@@ -148,8 +139,7 @@ public class OffRec implements Linked {
 			str = str + "<b>" + dformat.format(start) + "</b>";
 		else
 			str = str + "tba";
-		if (durStr != null)
-			str = str + ", duration: <b>" + durStr + "</b>";
+		str = str + ", duration: <b>" + duration + "</b> weeks";
 		if (active)
 			str = str + ", active";
 		if (home != null)

@@ -224,9 +224,7 @@ public class JsonModelAdapter {
 				&& !created.getStartStr().equals(rec.getStartStr()))
 			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(),
 					"Start", rec, map));
-		if (created.getDurStr() == null && rec.getDurStr() != null
-				|| created.getDurStr() != null
-				&& !created.getDurStr().equals(rec.getDurStr()))
+		if (created.getDuration() != rec.getDuration())
 			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(),
 					"Duration", rec, map));
 		if (created.getLink() == null && rec.getLink() != null

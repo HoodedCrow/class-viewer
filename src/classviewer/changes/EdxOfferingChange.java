@@ -55,9 +55,7 @@ public class EdxOfferingChange extends OfferingChange {
 		String home = record.getHome();
 
 		int duration = record.getDuration();
-		String durStr = duration + " weeks";
 		Boolean active = false; // Set based on calendar?
-		return new OffRec(id, start, duration, spread, home, active, startStr,
-				durStr);
+		return new OffRec(id, start, duration, spread, home, active, startStr);
 	}
 }

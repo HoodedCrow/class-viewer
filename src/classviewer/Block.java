@@ -20,7 +20,8 @@ public class Block {
 		return offering.getCourse().getStatus().toString()
 				+ offering.getCourse().getOfferings().size() + " "
 				+ offering.getCourse().getName() + ", "
-				+ offering.getStartStr() + ", " + offering.getDurStr();
+				+ offering.getStartStr() + ", " + offering.getDuration()
+				+ " weeks";
 	}
 
 	@Override
