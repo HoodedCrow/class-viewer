@@ -21,6 +21,7 @@ public class Settings {
 	public static final String EDX_URL = "EdXListURL";
 	public static final String LOOK_BACK_WEEKS = "LookBackWeeks";
 	public static final String OLD_AGE_IN_DAYS = "EdXOldAgeInDays";
+	public static final String IGNORE_SSL_CERT = "IgnoreSSLCert";
 
 	// Prefix for colors
 	public static final String COLOR = "Color";
@@ -67,6 +68,9 @@ public class Settings {
 
 		// Define "too old to be removed" for EdX classes
 		settings.put(OLD_AGE_IN_DAYS, "210");
+
+		// Ignore SSL certificates from EdX
+		settings.put(IGNORE_SSL_CERT, "true");
 
 		// Calendar colors
 		settings.put(COLOR + "UCalBg", "B0B0B0");

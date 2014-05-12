@@ -249,7 +249,10 @@ public class ChangesFrame extends NamedInternalFrame {
 			public void run() {
 				EdxModelAdapter edx = new EdxModelAdapter();
 				try {
-					edx.parse(settings.getString(Settings.EDX_URL));
+					edx.parse(
+							settings.getString(Settings.EDX_URL),
+							new Boolean(settings
+									.getString(Settings.IGNORE_SSL_CERT)));
 				} catch (IOException e) {
 					wait.setVisible(false);
 					JOptionPane.showMessageDialog(null,

@@ -6,11 +6,21 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.net.URLConnection;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
@@ -29,7 +39,13 @@ public class EdxModelAdapter {
 
 	/** Class records bundled by class id */
 	private HashMap<String, ArrayList<EdxRecord>> records = new HashMap<String, ArrayList<EdxRecord>>();
+	private SSLSocketFactory sslSocketFactory;
 
+	public EdxModelAdapter() {
+		// We will use this to deal with PKIX cert exceptions
+		makeAllTrustingManager();
+	}
+	
 	/** Read everything into a string buffer */
 	private StringBuffer readIntoBuffer(Reader reader) throws IOException {
 		StringBuffer b = new StringBuffer();
@@ -223,18 +239,57 @@ public class EdxModelAdapter {
 		return records;
 	}
 
+	// Borrowed from https://code.google.com/p/misc-utils/wiki/JavaHttpsUrl
+	private void makeAllTrustingManager() {
+		// Create a trust manager that does not validate certificate chains
+		final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+			@Override
+			public void checkClientTrusted(final X509Certificate[] chain,
+					final String authType) {
+			}
+
+			@Override
+			public void checkServerTrusted(final X509Certificate[] chain,
+					final String authType) {
+			}
+
+			@Override
+			public X509Certificate[] getAcceptedIssuers() {
+				return null;
+			}
+		} };
+
+		// Install the all-trusting trust manager
+		try {
+			SSLContext sslContext = SSLContext.getInstance("SSL");
+			sslContext.init(null, trustAllCerts,
+					new java.security.SecureRandom());
+			// Create an ssl socket factory with our all-trusting manager
+			this.sslSocketFactory = sslContext.getSocketFactory();
+		} catch (NoSuchAlgorithmException | KeyManagementException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	/**
 	 * This is the main read method called from the application. It puts data
 	 * into internal structure
 	 */
-	public void parse(String edxUrl) throws IOException {
+	public void parse(String edxUrl, boolean ignoreSSL) throws IOException {
 		records.clear();
 		int page = 0;
 		while (true) {
 			URL url = new URL(edxUrl
 					+ "/course-list/allschools/allsubjects/allcourses"
 					+ ((page == 0) ? "" : ("?page=" + page)));
-			InputStream stream = url.openStream();
+			// All set up, we can get a resource through https now:
+			URLConnection urlCon = url.openConnection();
+			// Tell the url connection object to use our socket factory which
+			// bypasses security checks
+			if (ignoreSSL)
+				((HttpsURLConnection) urlCon)
+						.setSSLSocketFactory(sslSocketFactory);
+			InputStream stream = urlCon.getInputStream();
 			InputStreamReader reader = new InputStreamReader(stream);
 
 			StringBuffer buffer = readIntoBuffer(reader);
