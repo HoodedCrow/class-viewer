@@ -77,6 +77,7 @@ public class CourseViewer extends JFrame {
 
 		courseListFrame.addSelectionListener(detailsFrame);
 		calendarFrame.addSelectionListener(courseListFrame);
+		detailsFrame.addModelReloadListener(calendarFrame);
 
 		layout = new MainWindowLayout(courseFilterFrame, courseListFrame,
 				calendarFrame, detailsFrame, changesFrame);

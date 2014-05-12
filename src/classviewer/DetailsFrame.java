@@ -88,6 +88,10 @@ public class DetailsFrame extends NamedInternalFrame implements
 				});
 	}
 
+	public void addModelReloadListener(CourseModelListener lnr) {
+		tableModel.addModelReloadListener(lnr);
+	}
+
 	@Override
 	public void courseSelected(CourseRec course) {
 		this.selectedCourse = course;
