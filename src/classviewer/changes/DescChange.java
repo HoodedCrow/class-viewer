@@ -83,7 +83,8 @@ public class DescChange extends Change {
 						+ what);
 			}
 		} else if (type == DELETE) {
-			String id = (String) json.get("short_name");
+			// This is deletion, so we have a record but no JSON
+			String id =  desc.getId();
 			switch (what) {
 			case UNIVERSITY:
 				model.removeUniversity(id);
