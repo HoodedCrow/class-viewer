@@ -18,11 +18,14 @@ public class OfferingTableModel extends DefaultTableModel implements
 	private CourseModel model;
 	private CourseRec selected = null;
 	private ArrayList<CourseModelListener> listeners = new ArrayList<CourseModelListener>();
+	private final String[] names = { " ", "Start", "Weeks (edit)", "Id" };
+	private final Class<?>[] classes = { Status.class, String.class,
+			Integer.class, Integer.class };
 
 	public OfferingTableModel(CourseModel model) {
 		this.model = model;
 	}
-	
+
 	public void addModelReloadListener(CourseModelListener lnr) {
 		listeners.add(lnr);
 	}
@@ -34,11 +37,7 @@ public class OfferingTableModel extends DefaultTableModel implements
 
 	@Override
 	public Class<?> getColumnClass(int col) {
-		if (col == 0)
-			return Status.class;
-		if (col == 2)
-			return Integer.class;
-		return Object.class;
+		return classes[col];
 	}
 
 	@Override
@@ -48,13 +47,7 @@ public class OfferingTableModel extends DefaultTableModel implements
 
 	@Override
 	public String getColumnName(int col) {
-		if (col == 0)
-			return "?";
-		if (col == 1)
-			return "Start";
-		if (col == 2)
-			return "Weeks";
-		return "Id";
+		return names[col];
 	}
 
 	@Override
@@ -72,7 +65,7 @@ public class OfferingTableModel extends DefaultTableModel implements
 		if (col == 1)
 			return off.asHTML();
 		if (col == 2)
-			return off.getDuration(); 
+			return off.getDuration();
 		return off.getId();
 	}
 

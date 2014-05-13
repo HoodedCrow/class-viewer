@@ -1,20 +1,24 @@
 package classviewer;
 
-import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
 
 import javax.swing.DefaultCellEditor;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkEvent.EventType;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 
 import classviewer.model.CourseModel;
@@ -38,7 +42,8 @@ public class DetailsFrame extends NamedInternalFrame implements
 
 	public DetailsFrame(CourseModel model, Settings settings) {
 		super("Details", model);
-		this.setLayout(new BorderLayout());
+		JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		this.setContentPane(split);
 		model.addListener(this);
 
 		Dimension dim = new Dimension(400, 200);
@@ -56,10 +61,26 @@ public class DetailsFrame extends NamedInternalFrame implements
 				.setCellEditor(
 						new DefaultCellEditor(new StatusComboBox(Status
 								.getAll(), settings)));
-		this.add(offeringTable, BorderLayout.NORTH);
+		offeringTable.getColumnModel().getColumn(1)
+				.setCellRenderer(new DefaultTableCellRenderer() {
+					@Override
+					public Component getTableCellRendererComponent(
+							JTable table, Object value, boolean isSelected,
+							boolean hasFocus, int row, int column) {
+						JLabel res = (JLabel) super
+								.getTableCellRendererComponent(table, value,
+										isSelected, hasFocus, row, column);
+						res.setHorizontalAlignment(SwingConstants.TRAILING);
+						return res;
+					}
+				});
 
+		JScrollPane tablePane = new JScrollPane(offeringTable);
+		Dimension minTableSize = new Dimension(50, 70);
+		tablePane.setMinimumSize(minTableSize);
+		split.setLeftComponent(tablePane);
 		htmlPane = new JTextPane();
-		this.add(new JScrollPane(htmlPane), BorderLayout.CENTER);
+		split.setRightComponent(new JScrollPane(htmlPane));
 		htmlPane.setContentType("text/html");
 		htmlPane.setEditable(false);
 		htmlPane.addHyperlinkListener(new HyperlinkListener() {
@@ -117,20 +138,21 @@ public class DetailsFrame extends NamedInternalFrame implements
 	}
 
 	private void setColumnWidth() {
-		offeringTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		// This method is called after the data changes (a new course is selected).
+		// Only need to reset fixed sized columns. The rest will adjust.
+		// offeringTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		int cw = 20;
 		TableColumn column = offeringTable.getColumnModel().getColumn(0);
 		column.setPreferredWidth(cw);
 		column.setWidth(cw);
 		column.setMaxWidth(cw);
-
-		cw = (offeringTable.getWidth() - cw) / 3;
-		for (int i = 1; i < 4; i++) {
-			column = offeringTable.getColumnModel().getColumn(i);
-			column.setPreferredWidth(cw);
-			column.setWidth(cw);
-			column.setMaxWidth(cw);
-		}
+//		cw = (offeringTable.getWidth() - cw) / 3;
+//		for (int i = 1; i < 4; i++) {
+//			column = offeringTable.getColumnModel().getColumn(i);
+//			column.setPreferredWidth(cw);
+//			column.setWidth(cw);
+//			column.setMaxWidth(cw);
+//		}
 	}
 
 	@Override
