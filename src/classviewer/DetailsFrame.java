@@ -3,10 +3,16 @@ package classviewer;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
 
+import javax.swing.AbstractAction;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -21,9 +27,11 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 
+import classviewer.changes.EdxModelAdapter;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseModelListener;
 import classviewer.model.CourseRec;
+import classviewer.model.OffRec;
 import classviewer.model.Status;
 
 /**
@@ -40,7 +48,7 @@ public class DetailsFrame extends NamedInternalFrame implements
 	private JTextPane htmlPane;
 	private CourseRec selectedCourse = null;
 
-	public DetailsFrame(CourseModel model, Settings settings) {
+	public DetailsFrame(CourseModel model, final Settings settings) {
 		super("Details", model);
 		JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		this.setContentPane(split);
@@ -74,6 +82,49 @@ public class DetailsFrame extends NamedInternalFrame implements
 						return res;
 					}
 				});
+		offeringTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getButton() != MouseEvent.BUTTON3)
+					return;
+				int col = offeringTable.columnAtPoint(e.getPoint());
+				if (col != 2)
+					return;
+				int row = offeringTable.rowAtPoint(e.getPoint());
+				final OffRec off = tableModel.getOfferingAt(row);
+				// Only show for EdX
+				if (off.getId() >= 0)
+					return;
+				JPopupMenu offeringPopupMenu = new JPopupMenu();
+				AbstractAction askToLoadEdXDuration = new AbstractAction(
+						"Load duration") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						EdxModelAdapter edx = new EdxModelAdapter();
+						try {
+							if (edx.loadClassDuration(
+									settings.getString(Settings.EDX_URL),
+									off,
+									new Boolean(
+											settings.getString(Settings.IGNORE_SSL_CERT)))) {
+								tableModel.saveModelAndInform();
+							} else {
+								JOptionPane
+										.showMessageDialog(null,
+												"Could not figure out the duration from EdX webpage");
+							}
+						} catch (IOException ex) {
+							// wait.setVisible(false);
+							JOptionPane.showMessageDialog(null,
+									"Failed to load EdX data:\n" + ex);
+							return;
+						}
+					}
+				};
+				offeringPopupMenu.add(askToLoadEdXDuration);
+				offeringPopupMenu.show(offeringTable, e.getX(), e.getY());
+			}
+		});
 
 		JScrollPane tablePane = new JScrollPane(offeringTable);
 		Dimension minTableSize = new Dimension(50, 70);

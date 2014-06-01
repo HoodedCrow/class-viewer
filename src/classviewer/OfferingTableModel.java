@@ -69,6 +69,10 @@ public class OfferingTableModel extends DefaultTableModel implements
 		return off.getId();
 	}
 
+	public OffRec getOfferingAt(int row) {
+		return selected.getOfferings().get(row);
+	}
+
 	@Override
 	public boolean isCellEditable(int row, int col) {
 		return col == 0 || col == 2;
@@ -89,20 +93,28 @@ public class OfferingTableModel extends DefaultTableModel implements
 			break;
 		case 2:
 			selected.getOfferings().get(row).setDuration((Integer) value);
-			try {
-				model.saveModelFile();
-			} catch (IOException e) {
-				JOptionPane.showMessageDialog(null, "Error saving model file: "
-						+ e);
-			}
-			for (CourseModelListener lnr : listeners)
-				lnr.modelUpdated();
+			saveModelAndInform();
 			break;
 
 		default:
 			throw new RuntimeException("Column " + col
 					+ " should not be editable");
 		}
+	}
+
+	/**
+	 * Save the model file and inform all listeners. This method is called when
+	 * the offering duration is changed by some means
+	 */
+	protected void saveModelAndInform() {
+		try {
+			model.saveModelFile();
+		} catch (IOException e) {
+			JOptionPane
+					.showMessageDialog(null, "Error saving model file: " + e);
+		}
+		for (CourseModelListener lnr : listeners)
+			lnr.modelUpdated();
 	}
 
 	@Override

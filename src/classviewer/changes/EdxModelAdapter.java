@@ -39,9 +39,9 @@ public class EdxModelAdapter {
 
 	/** Class records bundled by class id */
 	private HashMap<String, ArrayList<EdxRecord>> records = new HashMap<String, ArrayList<EdxRecord>>();
-	private SSLSocketFactory sslSocketFactory;
+	private static SSLSocketFactory sslSocketFactory;
 
-	public EdxModelAdapter() {
+	static {
 		// We will use this to deal with PKIX cert exceptions
 		makeAllTrustingManager();
 	}
@@ -240,7 +240,7 @@ public class EdxModelAdapter {
 	}
 
 	// Borrowed from https://code.google.com/p/misc-utils/wiki/JavaHttpsUrl
-	private void makeAllTrustingManager() {
+	private static void makeAllTrustingManager() {
 		// Create a trust manager that does not validate certificate chains
 		final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
 			@Override
@@ -265,7 +265,7 @@ public class EdxModelAdapter {
 			sslContext.init(null, trustAllCerts,
 					new java.security.SecureRandom());
 			// Create an ssl socket factory with our all-trusting manager
-			this.sslSocketFactory = sslContext.getSocketFactory();
+			sslSocketFactory = sslContext.getSocketFactory();
 		} catch (NoSuchAlgorithmException | KeyManagementException e) {
 			throw new RuntimeException(e);
 		}
@@ -495,5 +495,47 @@ public class EdxModelAdapter {
 			System.err.println("Cannot get end date from " + addr);
 		}
 		return null;
+	}
+
+	public boolean loadClassDuration(String baseURL, OffRec off,
+			boolean ignoreSSL) throws IOException {
+		String tail = off.getLink();
+		if (tail == null)
+			return false;
+		URL url = new URL(baseURL + tail);
+		// All set up, we can get a resource through https now:
+		URLConnection urlCon = url.openConnection();
+		// Tell the url connection object to use our socket factory which
+		// bypasses security checks
+		if (ignoreSSL)
+			((HttpsURLConnection) urlCon).setSSLSocketFactory(sslSocketFactory);
+		InputStream stream = urlCon.getInputStream();
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		StringBuffer buffer = readIntoBuffer(reader);
+		stream.close();
+
+		// We are looking for the number of weeks. This code is specific to the
+		// EdX format
+		final String startLabel = "Course Length:";
+		int start = buffer.indexOf(startLabel);
+		if (start < 0) {
+			return false;
+		}
+		start += startLabel.length();
+		int end = buffer.indexOf(" week", start);
+		if (end < 0) {
+			return false;
+		}
+
+		// This slice should end with the number we are looking for
+		String slice = buffer.substring(start, end).trim();
+		for (start = slice.length() - 1; start >= 0
+				&& Character.isDigit(slice.charAt(start)); start--)
+			;
+		int weeks = Integer.parseInt(slice.substring(start + 1));
+
+		off.setDuration(weeks);
+		return true;
 	}
 }
