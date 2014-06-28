@@ -412,7 +412,7 @@ public class EdxModelAdapter {
 		if (deleted.size() == 1 && added.size() == 1) {
 			OffRec rr = null;
 			for (OffRec r : oldRec.getOfferings())
-				if (r.getStart().equals(deleted.get(0))) {
+				if (r.getStart() != null && r.getStart().equals(deleted.get(0))) {
 					rr = r;
 					break;
 				}
