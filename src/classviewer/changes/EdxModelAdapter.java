@@ -175,8 +175,8 @@ public class EdxModelAdapter {
 //			}
 //		}
 
-		return new EdxRecord(courseId, name, descr, univer, start, duration,
-				home, isNew);
+		return new EdxRecord(courseId, name, descr, univer, start, dateStr, 
+				duration, home, isNew);
 	}
 	private String cleanStr(String str) {
 		str = str.replace("&amp;", "&");
@@ -386,12 +386,12 @@ public class EdxModelAdapter {
 		for (EdxRecord r : list)
 			if (r.getStart() != null)
 				incoming.add(r.getStart());
-			else
+			else if (!r.getStartStr().toLowerCase().contains("self"))
 				System.err.println("New EdX offering without start date: " + r);
 		for (OffRec r : oldRec.getOfferings())
 			if (r.getStart() != null)
 				existing.add(r.getStart());
-			else
+			else if (!r.getStartStr().toLowerCase().contains("self"))
 				System.err.println("Existing EdX offering without start date: "
 						+ r);
 
