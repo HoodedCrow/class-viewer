@@ -338,18 +338,31 @@ public class EdxModelAdapter {
 			CourseRec oldRec = courseModel.getClassByShortName(s);
 			if (oldRec != null)
 				continue;
-			String s1 = s.replace(" ", "").replace("-", "");
-			oldRec = courseModel.getClassByShortName(s1);
+			// Try to locate by both course name and university
+			EdxRecord r = records.get(s).get(0);
+			oldRec = courseModel.getClassByLongNameAndUni(r.getName(), r.getUniversity());
+			
+			// Now two options: reuse old id or change the id in the DB
+			// Usually it's better to change the short name in the DB, except 
+			// "Foundations of Computer Graphics" from BerkleyX exists as CS-184.1x 
+			// and CS184.1x at the same time!
 			if (oldRec != null) {
+				// Change existing id to the new one
+				oldRec.setShortName(s);
+			} else if ("CS-184.1x".equals(s)) {
+				// Very ugly hack to deal with CS184.1x
+				System.err.println("Berkley CS-184.1x hack active");
 				ArrayList<EdxRecord> list = records.remove(s);
-				for (EdxRecord r : list)
-					r.setCourseId(s1);
+				String s1 = s.replace(" ", "").replace("-", "");
+				for (EdxRecord r1 : list)
+					r1.setCourseId(s1);
 				ArrayList<EdxRecord> list1 = records.get(s1);
 				if (list1 == null)
 					records.put(s1, list);
 				else
 					list1.addAll(list);
 			}
+
 		}
 		
 		// Go over all course bundles, pick those that don't yet exist

@@ -168,6 +168,14 @@ public class CourseModel {
 		return null;
 	}
 
+	public CourseRec getClassByLongNameAndUni(String name, String uni) {
+		for (CourseRec cr : courses.values()) {
+			if (name.equals(cr.getName()) && cr.getUniversities().contains(uni))
+				return cr;
+		}
+		return null;
+	}
+
 	public HashSet<String> getLanguages() {
 		HashSet<String> res = new HashSet<String>();
 		for (CourseRec r : courses.values())
