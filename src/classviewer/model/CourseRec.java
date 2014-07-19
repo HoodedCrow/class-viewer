@@ -169,7 +169,7 @@ public class CourseRec implements Named, Linked {
 
 	public String getLongHtml() {
 		String str = "<b>" + name + "</b> (" + id + ", " + status.getName()
-				+ ")<br/>\n";
+				+ ", " + shortName + ")<br/>\n";
 		str += "<b>Instructor(s):</b> " + instructor + "<br/>";
 		str += "<b>Categories:</b> " + recNames(categories) + "<br/>";
 		str += "<b>University:</b> " + recNames(universities) + "<br/>";
