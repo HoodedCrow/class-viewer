@@ -459,24 +459,26 @@ public class EdxModelAdapter {
 			if (added.contains(r.getStart()))
 				res.add(new EdxOfferingChange(Change.ADD, oldRec, null, null, r));
 
-		// For the intersection check duration. No need to check the start date,
-		// since it's the key. TODO They no longer have duration
-//		diff = new ArrayList<Date>(existing);
-//		diff.retainAll(incoming);
-//		for (EdxRecord r : list)
-//			if (diff.contains(r.getStart())) {
-//				// Locate corresponding existing
-//				OffRec r1 = null;
-//				for (OffRec r2 : oldRec.getOfferings())
-//					if (r2.getStart().equals(r.getStart()))
-//						r1 = r2;
-//				assert (r1 != null);
-//
-//				if (r1.getDuration() != r.getDuration()) {
-//					res.add(new EdxOfferingChange(Change.MODIFY, oldRec,
-//							"Duration", r1, r));
-//				}
-//			}
+		// For the intersection check link. No need to check the start date,
+		// since it's the key. Note: They no longer have duration
+		ArrayList<Date> diff = new ArrayList<Date>(existing);
+		diff.retainAll(incoming);
+		for (EdxRecord r : list)
+			if (diff.contains(r.getStart())) {
+				// Locate corresponding existing
+				OffRec r1 = null;
+				for (OffRec r2 : oldRec.getOfferings())
+					if (r2.getStart().equals(r.getStart()))
+						r1 = r2;
+				assert (r1 != null);
+
+				if (r1.getLink() == null && r.getHome() != null
+						|| r1.getLink() != null
+						&& !r1.getLink().equals(r.getHome())) {
+					res.add(new EdxOfferingChange(Change.MODIFY, oldRec,
+							"Link", r1, r));
+				}
+			}
 	}
 
 	private HashMap<String, Object> makeUniJsonForId(String u) {
