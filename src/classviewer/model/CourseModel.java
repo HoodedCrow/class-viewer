@@ -170,8 +170,11 @@ public class CourseModel {
 
 	public CourseRec getClassByLongNameAndUni(String name, String uni) {
 		for (CourseRec cr : courses.values()) {
-			if (name.equals(cr.getName()) && cr.getUniversities().contains(uni))
-				return cr;
+			if (name.equals(cr.getName())) {
+				for (DescRec dr : cr.getUniversities())
+					if (uni.equals(dr.getId()))
+						return cr;
+			}
 		}
 		return null;
 	}
