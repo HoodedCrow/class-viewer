@@ -32,6 +32,7 @@ import javax.swing.table.TableRowSorter;
 import classviewer.changes.Change;
 import classviewer.changes.EdxModelAdapter;
 import classviewer.changes.JsonModelAdapter;
+import classviewer.changes.OfferingChange;
 import classviewer.model.CourseModel;
 
 /**
@@ -49,7 +50,10 @@ public class ChangesFrame extends NamedInternalFrame {
 	private boolean debugJson = false;
 	private ArrayList<Change> changes = null;
 	private ArrayList<Boolean> changeSelected = new ArrayList<Boolean>();
-	/** If true, remove changes that modify existing link or professor name to empty */
+	/**
+	 * If true, remove changes that modify existing link or professor name to
+	 * empty
+	 */
 	private boolean pruneDropLinkProf = false;
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -106,13 +110,23 @@ public class ChangesFrame extends NamedInternalFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				pruneDropLinkProf = cbox.isSelected();
-				List<? extends SortKey> skeys = table.getRowSorter().getSortKeys();
+				List<? extends SortKey> skeys = table.getRowSorter()
+						.getSortKeys();
 				((ChangeModel) table.getModel()).fireTableChanged(null);
 				setColumnWidth();
 				table.getRowSorter().setSortKeys(skeys);
 			}
 		});
 		buttons.add(cbox);
+
+		but = new JButton("Accept Active");
+		but.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				applyActiveChanges();
+			}
+		});
+		buttons.add(but);
 
 		table = new JTable(new ChangeModel());
 		table.setAutoCreateRowSorter(true);
@@ -137,14 +151,7 @@ public class ChangesFrame extends NamedInternalFrame {
 		setColumnWidth();
 	}
 
-	protected void applySelectedChanges() {
-		for (int i = 0; i < changes.size(); i++)
-			if (changeSelected.get(i)) {
-				changes.get(i).apply(courseModel);
-				changes.remove(i);
-				changeSelected.remove(i);
-				i--;
-			}
+	protected void finishModification() {
 		try {
 			courseModel.saveModelFile();
 		} catch (IOException e) {
@@ -162,6 +169,37 @@ public class ChangesFrame extends NamedInternalFrame {
 		table.tableChanged(null);
 		setColumnWidth();
 		table.getRowSorter().setSortKeys(skeys);
+	}
+
+	protected void applySelectedChanges() {
+		boolean changed = false;
+		for (int i = 0; i < changes.size(); i++)
+			if (changeSelected.get(i)) {
+				changes.get(i).apply(courseModel);
+				changes.remove(i);
+				changeSelected.remove(i);
+				i--;
+				changed = true;
+			}
+		if (changed)
+			finishModification();
+	}
+
+	protected void applyActiveChanges() {
+		boolean changed = false;
+		for (int i = 0; i < changes.size(); i++) {
+			if (!(changes.get(i) instanceof OfferingChange))
+				continue;
+			if (((OfferingChange) changes.get(i)).isActivationChange()) {
+				changes.get(i).apply(courseModel);
+				changes.remove(i);
+				changeSelected.remove(i);
+				i--;
+				changed = true;
+			}
+		}
+		if (changed)
+			finishModification();
 	}
 
 	/** Action listener for select all / deselect all buttons */
@@ -260,7 +298,8 @@ public class ChangesFrame extends NamedInternalFrame {
 					return;
 				}
 
-				changes = edx.collectChanges(courseModel, settings.getInt(Settings.OLD_AGE_IN_DAYS, 3650));
+				changes = edx.collectChanges(courseModel,
+						settings.getInt(Settings.OLD_AGE_IN_DAYS, 3650));
 				Collections.sort(changes);
 				changeSelected.clear();
 				for (int i = 0; i < changes.size(); i++)

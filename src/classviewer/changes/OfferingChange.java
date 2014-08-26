@@ -70,6 +70,10 @@ public class OfferingChange extends Change {
 		return "??? " + field;
 	}
 
+	public boolean isActivationChange() {
+		return type == MODIFY && "Active".equals(field);
+	}
+
 	@Override
 	public Object getOldValue() {
 		if (type == MODIFY)
