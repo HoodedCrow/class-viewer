@@ -45,7 +45,7 @@ public class EdxModelAdapter {
 		// We will use this to deal with PKIX cert exceptions
 		makeAllTrustingManager();
 	}
-	
+
 	/** Read everything into a string buffer */
 	private StringBuffer readIntoBuffer(Reader reader) throws IOException {
 		StringBuffer b = new StringBuffer();
@@ -65,26 +65,26 @@ public class EdxModelAdapter {
 	private int findNextArticle(StringBuffer all, int offset)
 			throws IOException {
 		// Until we find something or run out of file
-//		while (offset < all.length()) {
-			int off = all.indexOf("course-tile", offset);
-			return off;
-//			if (off < 0)
-//				return -1;
-//			// Closing > after this
-//			int close = all.indexOf("</article>", off);
-//			if (close < 0)
-//				throw new IOException("Article tag at " + off
-//						+ " does not close. Broken file?");
-//			// Now look for class before the closing. Assume no spaces between
-//			// the attribute name and the value
-//			int cl = all.indexOf("<h1><span>", off);
-//			if (cl > 0 && cl < close)
-//				return off;
-//			// Otherwise move past close
-//			offset = close + 1;
-//		}
-//		// Ran out of file
-//		return -1;
+		// while (offset < all.length()) {
+		int off = all.indexOf("course-tile", offset);
+		return off;
+		// if (off < 0)
+		// return -1;
+		// // Closing > after this
+		// int close = all.indexOf("</article>", off);
+		// if (close < 0)
+		// throw new IOException("Article tag at " + off
+		// + " does not close. Broken file?");
+		// // Now look for class before the closing. Assume no spaces between
+		// // the attribute name and the value
+		// int cl = all.indexOf("<h1><span>", off);
+		// if (cl > 0 && cl < close)
+		// return off;
+		// // Otherwise move past close
+		// offset = close + 1;
+		// }
+		// // Ran out of file
+		// return -1;
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class EdxModelAdapter {
 			throw new IOException("Tag at " + idx + " does not close " + all);
 		String courseId = all.substring(idx + toNumber.length(), end).trim();
 		if (courseId.endsWith(":"))
-			courseId = courseId.substring(0, courseId.length()-1);
+			courseId = courseId.substring(0, courseId.length() - 1);
 		// assuming it's </strong><a ...
 		idx = all.indexOf(">", end + 15);
 		end = all.indexOf("<", idx);
@@ -131,13 +131,14 @@ public class EdxModelAdapter {
 		idx = all.indexOf(toDesc);
 		if (idx < 0)
 			throw new IOException("No description for course " + all);
-//		idx = all.indexOf("<p>", idx);
-//		if (idx < 0)
-//			throw new IOException("No <p> in description for course " + all);
-		end = all.indexOf("<", idx+2);
+		// idx = all.indexOf("<p>", idx);
+		// if (idx < 0)
+		// throw new IOException("No <p> in description for course " + all);
+		end = all.indexOf("<", idx + 2);
 		if (end < 0)
 			throw new IOException("Tag at " + idx + " does not close " + all);
-		String descr = cleanStr(all.substring(idx + toDesc.length(), end).trim());
+		String descr = cleanStr(all.substring(idx + toDesc.length(), end)
+				.trim());
 
 		idx = all.indexOf(toDate);
 		if (idx < 0)
@@ -166,49 +167,52 @@ public class EdxModelAdapter {
 		Date start = EdxRecord.parseDate(dateStr);
 		int duration = 1;
 		// TODO they seem to have dropped end date
-//		if (home != null && start != null) {
-//			String endStr = extractEndDate(edxBase, home);
-//			Date endDate = EdxRecord.parseDate(endStr);
-//			if (endDate != null) {
-//				long mills = endDate.getTime() - start.getTime();
-//				duration = Math.round(mills / (1000 * 3600 * 24 * 7.0f));
-//			}
-//		}
+		// if (home != null && start != null) {
+		// String endStr = extractEndDate(edxBase, home);
+		// Date endDate = EdxRecord.parseDate(endStr);
+		// if (endDate != null) {
+		// long mills = endDate.getTime() - start.getTime();
+		// duration = Math.round(mills / (1000 * 3600 * 24 * 7.0f));
+		// }
+		// }
 
-		return new EdxRecord(courseId, name, descr, univer, start, dateStr, 
+		return new EdxRecord(courseId, name, descr, univer, start, dateStr,
 				duration, home, isNew);
 	}
+
 	private String cleanStr(String str) {
 		str = str.replace("&amp;", "&");
 		return str;
 	}
 
-/*
-	<article class="course-tile"><div class="left-col">
-	<div class="new-course-ribbon"></div><div class="top"><div class="title">
-	<h1><span>24.00x:</span> Introduction to Philosophy: God, Knowledge and Consciousness</h1>
-	</div>
-	<div class="subtitle">This course will focus on big questions. You will learn how to ask them and how to answer them. 
-		<a class="go-to-course" href="/course/mit/24-00x/introduction-philosophy-god/888">more</a>
-	</div></div><div class="bottom">
-	<div class="detail"><ul class="clearfix"><li>
-	<span class="bold-title">Starts:</span> <span class="date-display-single">1 Oct 2013</span>
-	</li><li> • </li><li><div class="instructor-list">
-	<span class="bold-title">Instructors:</span> Caspar Hare</div></li>
-	<li> • </li><li class="school-list">MITx</li></ul></div></div></div>
-	<div class="right-col">
-	<div class="image">
-	<img src="https://www.edx.org/sites/default/files/styles/course_tile_image/public/2400x_262x136.jpg?itok=y3n29SDS" width="277" height="136" alt="Introduction to Philosophy: God, Knowledge and Consciousness" />
-	</div><div class="actions clearfix">
-	<div class="action"><div class="iframe iframe-register action-register-course">
-	<iframe src="https://courses.edx.org/mktg/MITx/24.00x/2013_SOND"></iframe>
-	</div></div></div></div><div class="clearfix"></div>
-	<div style="hidden" class="course-link" href="/course/mit/24-00x/introduction-philosophy-god/888"></div>
-	</article>  
-	</div><div class="views-row views-row-2 views-row-even">
-	<!-- This is the template for every row in Courses Page -->
-*/
-	
+	/*
+	 * <article class="course-tile"><div class="left-col"> <div
+	 * class="new-course-ribbon"></div><div class="top"><div class="title">
+	 * <h1><span>24.00x:</span> Introduction to Philosophy: God, Knowledge and
+	 * Consciousness</h1> </div> <div class="subtitle">This course will focus on
+	 * big questions. You will learn how to ask them and how to answer them. <a
+	 * class="go-to-course"
+	 * href="/course/mit/24-00x/introduction-philosophy-god/888">more</a>
+	 * </div></div><div class="bottom"> <div class="detail"><ul
+	 * class="clearfix"><li> <span class="bold-title">Starts:</span> <span
+	 * class="date-display-single">1 Oct 2013</span> </li><li> • </li><li><div
+	 * class="instructor-list"> <span class="bold-title">Instructors:</span>
+	 * Caspar Hare</div></li> <li> • </li><li
+	 * class="school-list">MITx</li></ul></div></div></div> <div
+	 * class="right-col"> <div class="image"> <img src=
+	 * "https://www.edx.org/sites/default/files/styles/course_tile_image/public/2400x_262x136.jpg?itok=y3n29SDS"
+	 * width="277" height="136"
+	 * alt="Introduction to Philosophy: God, Knowledge and Consciousness" />
+	 * </div><div class="actions clearfix"> <div class="action"><div
+	 * class="iframe iframe-register action-register-course"> <iframe
+	 * src="https://courses.edx.org/mktg/MITx/24.00x/2013_SOND"></iframe>
+	 * </div></div></div></div><div class="clearfix"></div> <div style="hidden"
+	 * class="course-link"
+	 * href="/course/mit/24-00x/introduction-philosophy-god/888"></div>
+	 * </article> </div><div class="views-row views-row-2 views-row-even"> <!--
+	 * This is the template for every row in Courses Page -->
+	 */
+
 	/** Assuming everything is in a string buffer, pick out classes */
 	private HashMap<String, ArrayList<EdxRecord>> readHtml(StringBuffer all,
 			String baseUrl) throws IOException {
@@ -227,7 +231,7 @@ public class EdxModelAdapter {
 			}
 			// Parse this particular course info
 			EdxRecord rec = parseCourse(all.substring(start, end), baseUrl);
-			ArrayList<EdxRecord> list = records.get(rec.getCourseId());			
+			ArrayList<EdxRecord> list = records.get(rec.getCourseId());
 			if (list == null) {
 				list = new ArrayList<EdxRecord>();
 				records.put(rec.getCourseId(), list);
@@ -294,14 +298,15 @@ public class EdxModelAdapter {
 
 			StringBuffer buffer = readIntoBuffer(reader);
 			stream.close();
-			
+
 			if (buffer.indexOf("courses-no-result-title") > 0)
 				break;
 
 			int before = records.size();
 			readHtml(buffer, edxUrl);
 			if (records.size() == before) {
-				System.out.println("Found no records and no stop sign in page " + page);
+				System.out.println("Found no records and no stop sign in page "
+						+ page);
 				break;
 			}
 			page++;
@@ -312,11 +317,14 @@ public class EdxModelAdapter {
 	 * Compare the internal structure produced by the parse method to the given
 	 * model and return the set of differences
 	 */
-	public ArrayList<Change> collectChanges(CourseModel courseModel, int tooOldInDays) {
+	public ArrayList<Change> collectChanges(CourseModel courseModel,
+			int tooOldInDays) {
 		// Build a date before which we do not remove offerings
-		Date tooOld = new Date( new Date().getTime() - 24*3600000l*tooOldInDays );
-		System.out.println("Will keep all offerings older than " + tooOldInDays + " days: " + tooOld);
-		
+		Date tooOld = new Date(new Date().getTime() - 24 * 3600000l
+				* tooOldInDays);
+		System.out.println("Will keep all offerings older than " + tooOldInDays
+				+ " days: " + tooOld);
+
 		ArrayList<Change> res = new ArrayList<Change>();
 
 		// There are no categories for Edx, but there are universities. For
@@ -340,11 +348,13 @@ public class EdxModelAdapter {
 				continue;
 			// Try to locate by both course name and university
 			EdxRecord r = records.get(s).get(0);
-			oldRec = courseModel.getClassByLongNameAndUni(r.getName(), r.getUniversity());
-			
+			oldRec = courseModel.getClassByLongNameAndUni(r.getName(),
+					r.getUniversity());
+
 			// Now two options: reuse old id or change the id in the DB
-			// Usually it's better to change the short name in the DB, except 
-			// "Foundations of Computer Graphics" from BerkleyX exists as CS-184.1x 
+			// Usually it's better to change the short name in the DB, except
+			// "Foundations of Computer Graphics" from BerkleyX exists as
+			// CS-184.1x
 			// and CS184.1x at the same time!
 			if (oldRec != null) {
 				// Change existing id to the new one
@@ -364,7 +374,7 @@ public class EdxModelAdapter {
 			}
 
 		}
-		
+
 		// Go over all course bundles, pick those that don't yet exist
 		for (ArrayList<EdxRecord> list : records.values()) {
 			String courseId = list.get(0).getCourseId();
@@ -413,14 +423,14 @@ public class EdxModelAdapter {
 		deleted.removeAll(incoming);
 		ArrayList<Date> added = new ArrayList<Date>(incoming);
 		added.removeAll(existing);
-		
+
 		// Remove deletes that are too old
-		for (Iterator<Date> it = deleted.iterator(); it.hasNext(); ) {
+		for (Iterator<Date> it = deleted.iterator(); it.hasNext();) {
 			Date d = it.next();
 			if (d.before(tooOld))
 				it.remove();
 		}
-		
+
 		// Possible date shift?
 		if (deleted.size() == 1 && added.size() == 1) {
 			OffRec rr = null;
@@ -432,23 +442,26 @@ public class EdxModelAdapter {
 			EdxRecord er = null;
 			for (EdxRecord r : list)
 				if (r.getStart().equals(added.get(0))) {
-					er  = r;
+					er = r;
 					break;
 				}
-			// EdxOfferingChange(String type, CourseRec course, String field, OffRec offering, EdxRecord record
-			res.add(new EdxOfferingChange(Change.MODIFY, oldRec, "Start", rr, er));
+			// EdxOfferingChange(String type, CourseRec course, String field,
+			// OffRec offering, EdxRecord record
+			res.add(new EdxOfferingChange(Change.MODIFY, oldRec, "Start", rr,
+					er));
 			deleted.clear();
 			added.clear();
 		}
 
-		// Prune deleted things that are actually done: never delete those records
+		// Prune deleted things that are actually done: never delete those
+		// records
 		for (OffRec r : oldRec.getOfferings())
 			if (deleted.contains(r.getStart())
 					&& (Status.DONE.equals(r.getStatus()) || Status.REGISTERED
 							.equals(r.getStatus()))) {
 				deleted.remove(r.getStart());
-			}		
-		
+			}
+
 		// Deleted
 		for (OffRec r : oldRec.getOfferings())
 			if (deleted.contains(r.getStart()))
@@ -467,9 +480,19 @@ public class EdxModelAdapter {
 			if (diff.contains(r.getStart())) {
 				// Locate corresponding existing
 				OffRec r1 = null;
-				for (OffRec r2 : oldRec.getOfferings())
-					if (r2.getStart().equals(r.getStart()))
+				for (OffRec r2 : oldRec.getOfferings()) {
+					// Pick date that match exactly. Also pick empty slots.
+					// Since there are some time strings we cannot parse, check
+					// for the string version to be empty. This still leaves
+					// the case of unparsable but valid dates, but we'll deal
+					// with it some time in the future
+					if (r2.getStart() != null
+							&& r2.getStart().equals(r.getStart()))
 						r1 = r2;
+					else if (r1 == null && (r2.getStart() == null
+							|| r2.getStartStr().isEmpty()))
+						r1 = r2;
+				}
 				assert (r1 != null);
 
 				if (r1.getLink() == null && r.getHome() != null
