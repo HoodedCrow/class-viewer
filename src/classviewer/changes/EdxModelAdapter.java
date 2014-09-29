@@ -123,7 +123,7 @@ public class EdxModelAdapter {
 			courseId = courseId.substring(0, courseId.length() - 1);
 		// assuming it's </strong><a ...
 		idx = all.indexOf(">", end + 15);
-		end = all.indexOf("<", idx);
+		end = all.indexOf("</a", idx);
 		if (end < 0)
 			throw new IOException("No title end at " + idx + " in " + all);
 		String name = cleanStr(all.substring(idx + 1, end).trim());
