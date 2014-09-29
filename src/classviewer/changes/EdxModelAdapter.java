@@ -127,7 +127,7 @@ public class EdxModelAdapter {
 		if (end < 0)
 			throw new IOException("No title end at " + idx + " in " + all);
 		String name = cleanStr(all.substring(idx + 1, end).trim());
-		if (name.startsWith("AP<sup>") && ignoreApCourses)
+		if (name.contains("AP<sup>") && ignoreApCourses)
 			return null;
 
 		idx = all.indexOf(toDesc);
