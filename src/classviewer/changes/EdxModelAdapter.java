@@ -92,8 +92,8 @@ public class EdxModelAdapter {
 	 * 
 	 * @return
 	 */
-	private EdxRecord parseCourse(String all, String edxBase)
-			throws IOException {
+	private EdxRecord parseCourse(String all, String edxBase,
+			boolean ignoreApCourses) throws IOException {
 		// final String toID = "<article id=\"";
 		final String toUrl = "<a href=\"";
 		final String toNew = "<div class=\"new-course-ribbon\">";
@@ -127,6 +127,8 @@ public class EdxModelAdapter {
 		if (end < 0)
 			throw new IOException("No title end at " + idx + " in " + all);
 		String name = cleanStr(all.substring(idx + 1, end).trim());
+		if (name.startsWith("AP<sup>") && ignoreApCourses)
+			return null;
 
 		idx = all.indexOf(toDesc);
 		if (idx < 0)
@@ -215,7 +217,7 @@ public class EdxModelAdapter {
 
 	/** Assuming everything is in a string buffer, pick out classes */
 	private HashMap<String, ArrayList<EdxRecord>> readHtml(StringBuffer all,
-			String baseUrl) throws IOException {
+			String baseUrl, boolean ignoreApCourses) throws IOException {
 		int offset = 0;
 		final int END = all.length();
 		while (offset < END) {
@@ -230,13 +232,17 @@ public class EdxModelAdapter {
 				end = END;
 			}
 			// Parse this particular course info
-			EdxRecord rec = parseCourse(all.substring(start, end), baseUrl);
-			ArrayList<EdxRecord> list = records.get(rec.getCourseId());
-			if (list == null) {
-				list = new ArrayList<EdxRecord>();
-				records.put(rec.getCourseId(), list);
+			EdxRecord rec = parseCourse(all.substring(start, end), baseUrl,
+					ignoreApCourses);
+			// Could be null if the course is ignored
+			if (rec != null) {
+				ArrayList<EdxRecord> list = records.get(rec.getCourseId());
+				if (list == null) {
+					list = new ArrayList<EdxRecord>();
+					records.put(rec.getCourseId(), list);
+				}
+				list.add(rec);
 			}
-			list.add(rec);
 			// Move past the end
 			offset = end + 10;
 		}
@@ -279,7 +285,8 @@ public class EdxModelAdapter {
 	 * This is the main read method called from the application. It puts data
 	 * into internal structure
 	 */
-	public void parse(String edxUrl, boolean ignoreSSL) throws IOException {
+	public void parse(String edxUrl, boolean ignoreSSL, boolean ignoreApCourses)
+			throws IOException {
 		records.clear();
 		int page = 0;
 		while (true) {
@@ -303,7 +310,7 @@ public class EdxModelAdapter {
 				break;
 
 			int before = records.size();
-			readHtml(buffer, edxUrl);
+			readHtml(buffer, edxUrl, ignoreApCourses);
 			if (records.size() == before) {
 				System.out.println("Found no records and no stop sign in page "
 						+ page);
@@ -489,8 +496,9 @@ public class EdxModelAdapter {
 					if (r2.getStart() != null
 							&& r2.getStart().equals(r.getStart()))
 						r1 = r2;
-					else if (r1 == null && (r2.getStart() == null
-							|| r2.getStartStr().isEmpty()))
+					else if (r1 == null
+							&& (r2.getStart() == null || r2.getStartStr()
+									.isEmpty()))
 						r1 = r2;
 				}
 				assert (r1 != null);

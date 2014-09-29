@@ -22,6 +22,7 @@ public class Settings {
 	public static final String LOOK_BACK_WEEKS = "LookBackWeeks";
 	public static final String OLD_AGE_IN_DAYS = "EdXOldAgeInDays";
 	public static final String IGNORE_SSL_CERT = "IgnoreSSLCert";
+	public static final String IGNORE_AP_COURSES = "IgnoreAPCourses";
 
 	// Prefix for colors
 	public static final String COLOR = "Color";
@@ -71,6 +72,9 @@ public class Settings {
 
 		// Ignore SSL certificates from EdX
 		settings.put(IGNORE_SSL_CERT, "true");
+
+		// Ignore AP courses from EdX
+		settings.put(IGNORE_AP_COURSES, "true");
 
 		// Calendar colors
 		settings.put(COLOR + "UCalBg", "B0B0B0");
