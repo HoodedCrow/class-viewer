@@ -26,8 +26,7 @@ public class JsonModelAdapter {
 		URL url = new URL(courseraUrl);
 		InputStream stream = url.openStream();
 		InputStreamReader reader = new InputStreamReader(stream);
-		JsonParser parser = new JsonParser();
-		this.json = parser.parse(reader);
+		this.json = JsonParser.parse(reader);
 		stream.close();
 
 		// Extract all universities and categories

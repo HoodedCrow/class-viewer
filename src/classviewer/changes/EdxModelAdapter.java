@@ -1,31 +1,21 @@
 package classviewer.changes;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
-import classviewer.model.Status;
 
 /**
  * EdX html is weird. I could not find an off-the-shelf parser that would
@@ -36,288 +26,114 @@ import classviewer.model.Status;
  * @author TK
  */
 public class EdxModelAdapter {
+	private static SSLSocketFactory sslSocketFactory = HttpHelper
+			.makeAllTrustingManager();
 
-	/** Class records bundled by class id */
-	private HashMap<String, ArrayList<EdxRecord>> records = new HashMap<String, ArrayList<EdxRecord>>();
-	private static SSLSocketFactory sslSocketFactory;
-
-	static {
-		// We will use this to deal with PKIX cert exceptions
-		makeAllTrustingManager();
-	}
-
-	/** Read everything into a string buffer */
-	private StringBuffer readIntoBuffer(Reader reader) throws IOException {
-		StringBuffer b = new StringBuffer();
-		BufferedReader br = new BufferedReader(reader);
-		String s = br.readLine();
-		while (s != null) {
-			b.append(s + "\n"); // keep /n there for easier debugging
-			s = br.readLine();
-		}
-		return b;
-	}
-
+	/** The list of course records as read from API */
+	private ArrayList<Object> json;
+	private HashSet<String> universities = new HashSet<String>();
+	private HashSet<String> categories = new HashSet<String>();
 	/**
-	 * Find next article from the given offset. An article should have XML tag
-	 * "article" and "class" attribute "course". Return -1 if not found.
+	 * Two-level structure of courses and offerings, with the offering stored as
+	 * Json for now. The course-level key is "code,", the offerings have "guid"
 	 */
-	private int findNextArticle(StringBuffer all, int offset)
-			throws IOException {
-		// Until we find something or run out of file
-		// while (offset < all.length()) {
-		int off = all.indexOf("course-tile", offset);
-		return off;
-		// if (off < 0)
-		// return -1;
-		// // Closing > after this
-		// int close = all.indexOf("</article>", off);
-		// if (close < 0)
-		// throw new IOException("Article tag at " + off
-		// + " does not close. Broken file?");
-		// // Now look for class before the closing. Assume no spaces between
-		// // the attribute name and the value
-		// int cl = all.indexOf("<h1><span>", off);
-		// if (cl > 0 && cl < close)
-		// return off;
-		// // Otherwise move past close
-		// offset = close + 1;
-		// }
-		// // Ran out of file
-		// return -1;
-	}
-
-	/**
-	 * Extract course info from the chunk of the buffer between start and end.
-	 * 
-	 * @return
-	 */
-	private EdxRecord parseCourse(String all, String edxBase,
-			boolean ignoreApCourses) throws IOException {
-		// final String toID = "<article id=\"";
-		final String toUrl = "<a href=\"";
-		final String toNew = "<div class=\"new-course-ribbon\">";
-		final String toNumber = "<h2 class=\"title course-title\">";
-		final String toDesc = "course-subtitle copy-detail\">";
-		final String toDate = "Starts:</span>";
-		final String toUni = "<li><strong>";
-
-		int idx, end;
-
-		boolean isNew = all.indexOf(toNew) > 0;
-
-		idx = all.indexOf(toUrl);
-		if (idx < 0)
-			throw new IOException("No URL for course " + all);
-		end = all.indexOf("\"", idx + toUrl.length());
-		String home = all.substring(idx + toUrl.length(), end);
-
-		idx = all.indexOf(toNumber);
-		if (idx < 0)
-			throw new IOException("No number for course " + all);
-		end = all.indexOf("<", idx + toNumber.length());
-		if (end < 0)
-			throw new IOException("Tag at " + idx + " does not close " + all);
-		String courseId = all.substring(idx + toNumber.length(), end).trim();
-		if (courseId.endsWith(":"))
-			courseId = courseId.substring(0, courseId.length() - 1);
-		// assuming it's </strong><a ...
-		idx = all.indexOf(">", end + 15);
-		end = all.indexOf("</a", idx);
-		if (end < 0)
-			throw new IOException("No title end at " + idx + " in " + all);
-		String name = cleanStr(all.substring(idx + 1, end).trim());
-		if (name.contains("AP<sup>") && ignoreApCourses)
-			return null;
-
-		idx = all.indexOf(toDesc);
-		if (idx < 0)
-			throw new IOException("No description for course " + all);
-		// idx = all.indexOf("<p>", idx);
-		// if (idx < 0)
-		// throw new IOException("No <p> in description for course " + all);
-		end = all.indexOf("<", idx + 2);
-		if (end < 0)
-			throw new IOException("Tag at " + idx + " does not close " + all);
-		String descr = cleanStr(all.substring(idx + toDesc.length(), end)
-				.trim());
-
-		idx = all.indexOf(toDate);
-		if (idx < 0)
-			throw new IOException("No date for course " + all);
-		end = all.indexOf("</", idx + toDate.length() + 1);
-		if (end < 0)
-			throw new IOException("Tag at " + idx + " does not close " + all);
-		String dateStr = all.substring(idx + toDate.length(), end).trim();
-
-		idx = all.indexOf(toUni);
-		if (idx < 0)
-			throw new IOException("No university for course " + all);
-		end = all.indexOf("</", idx);
-		if (end < 0)
-			throw new IOException("Tag at " + idx + " does not close " + all);
-		String univer = all.substring(idx + toUni.length(), end).trim();
-		// Drop spaces in the university name. Otherwise we have problems
-		// forming space-separated attribute string. Also, get rid of
-		// "University of "
-		univer = univer.replace("University of ", "");
-		univer = univer.replace(" ", "");
-
-		// System.out.println(courseId + ", " + name + "\n\t" + descr + "\n\t"
-		// + univer + ", " + date + ", " + isNew);
-
-		Date start = EdxRecord.parseDate(dateStr);
-		int duration = 1;
-		// TODO they seem to have dropped end date
-		// if (home != null && start != null) {
-		// String endStr = extractEndDate(edxBase, home);
-		// Date endDate = EdxRecord.parseDate(endStr);
-		// if (endDate != null) {
-		// long mills = endDate.getTime() - start.getTime();
-		// duration = Math.round(mills / (1000 * 3600 * 24 * 7.0f));
-		// }
-		// }
-
-		return new EdxRecord(courseId, name, descr, univer, start, dateStr,
-				duration, home, isNew);
-	}
-
-	private String cleanStr(String str) {
-		str = str.replace("&amp;", "&");
-		return str;
-	}
-
-	/*
-	 * <article class="course-tile"><div class="left-col"> <div
-	 * class="new-course-ribbon"></div><div class="top"><div class="title">
-	 * <h1><span>24.00x:</span> Introduction to Philosophy: God, Knowledge and
-	 * Consciousness</h1> </div> <div class="subtitle">This course will focus on
-	 * big questions. You will learn how to ask them and how to answer them. <a
-	 * class="go-to-course"
-	 * href="/course/mit/24-00x/introduction-philosophy-god/888">more</a>
-	 * </div></div><div class="bottom"> <div class="detail"><ul
-	 * class="clearfix"><li> <span class="bold-title">Starts:</span> <span
-	 * class="date-display-single">1 Oct 2013</span> </li><li> • </li><li><div
-	 * class="instructor-list"> <span class="bold-title">Instructors:</span>
-	 * Caspar Hare</div></li> <li> • </li><li
-	 * class="school-list">MITx</li></ul></div></div></div> <div
-	 * class="right-col"> <div class="image"> <img src=
-	 * "https://www.edx.org/sites/default/files/styles/course_tile_image/public/2400x_262x136.jpg?itok=y3n29SDS"
-	 * width="277" height="136"
-	 * alt="Introduction to Philosophy: God, Knowledge and Consciousness" />
-	 * </div><div class="actions clearfix"> <div class="action"><div
-	 * class="iframe iframe-register action-register-course"> <iframe
-	 * src="https://courses.edx.org/mktg/MITx/24.00x/2013_SOND"></iframe>
-	 * </div></div></div></div><div class="clearfix"></div> <div style="hidden"
-	 * class="course-link"
-	 * href="/course/mit/24-00x/introduction-philosophy-god/888"></div>
-	 * </article> </div><div class="views-row views-row-2 views-row-even"> <!--
-	 * This is the template for every row in Courses Page -->
-	 */
-
-	/** Assuming everything is in a string buffer, pick out classes */
-	private HashMap<String, ArrayList<EdxRecord>> readHtml(StringBuffer all,
-			String baseUrl, boolean ignoreApCourses) throws IOException {
-		int offset = 0;
-		final int END = all.length();
-		while (offset < END) {
-			// Start of the next course description, if any
-			int start = findNextArticle(all, offset);
-			if (start < 0)
-				break;
-			// End of this article, will miss the last big blue button
-			int end = all.indexOf("<div class=\"col-both-courses\">", offset);
-			if (end < 0) {
-				System.err.println("Article at " + offset + " is not closed");
-				end = END;
-			}
-			// Parse this particular course info
-			EdxRecord rec = parseCourse(all.substring(start, end), baseUrl,
-					ignoreApCourses);
-			// Could be null if the course is ignored
-			if (rec != null) {
-				ArrayList<EdxRecord> list = records.get(rec.getCourseId());
-				if (list == null) {
-					list = new ArrayList<EdxRecord>();
-					records.put(rec.getCourseId(), list);
-				}
-				list.add(rec);
-			}
-			// Move past the end
-			offset = end + 10;
-		}
-		return records;
-	}
-
-	// Borrowed from https://code.google.com/p/misc-utils/wiki/JavaHttpsUrl
-	private static void makeAllTrustingManager() {
-		// Create a trust manager that does not validate certificate chains
-		final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-			@Override
-			public void checkClientTrusted(final X509Certificate[] chain,
-					final String authType) {
-			}
-
-			@Override
-			public void checkServerTrusted(final X509Certificate[] chain,
-					final String authType) {
-			}
-
-			@Override
-			public X509Certificate[] getAcceptedIssuers() {
-				return null;
-			}
-		} };
-
-		// Install the all-trusting trust manager
-		try {
-			SSLContext sslContext = SSLContext.getInstance("SSL");
-			sslContext.init(null, trustAllCerts,
-					new java.security.SecureRandom());
-			// Create an ssl socket factory with our all-trusting manager
-			sslSocketFactory = sslContext.getSocketFactory();
-		} catch (NoSuchAlgorithmException | KeyManagementException e) {
-			throw new RuntimeException(e);
-		}
-	}
+	private HashMap<String, ArrayList<HashMap<String, Object>>> courses = new HashMap<String, ArrayList<HashMap<String, Object>>>();
 
 	/**
 	 * This is the main read method called from the application. It puts data
 	 * into internal structure
 	 */
+	@SuppressWarnings("unchecked")
 	public void parse(String edxUrl, boolean ignoreSSL, boolean ignoreApCourses)
 			throws IOException {
-		records.clear();
-		int page = 0;
-		while (true) {
-			URL url = new URL(edxUrl
-					+ "/course-list/allschools/allsubjects/allcourses"
-					+ ((page == 0) ? "" : ("?page=" + page)));
-			// All set up, we can get a resource through https now:
-			URLConnection urlCon = url.openConnection();
-			// Tell the url connection object to use our socket factory which
-			// bypasses security checks
-			if (ignoreSSL)
-				((HttpsURLConnection) urlCon)
-						.setSSLSocketFactory(sslSocketFactory);
-			InputStream stream = urlCon.getInputStream();
-			InputStreamReader reader = new InputStreamReader(stream);
+		URL url = new URL(edxUrl);
+		// All set up, we can get a resource through https now:
+		URLConnection urlCon = url.openConnection();
+		// Tell the url connection object to use our socket factory which
+		// bypasses security checks
+		if (ignoreSSL)
+			((HttpsURLConnection) urlCon).setSSLSocketFactory(sslSocketFactory);
+		InputStream stream = urlCon.getInputStream();
+		InputStreamReader reader = new InputStreamReader(stream);
+		this.json = JsonParser.parse(reader);
+		stream.close();
 
-			StringBuffer buffer = readIntoBuffer(reader);
-			stream.close();
-
-			if (buffer.indexOf("courses-no-result-title") > 0)
-				break;
-
-			int before = records.size();
-			readHtml(buffer, edxUrl, ignoreApCourses);
-			if (records.size() == before) {
-				System.out.println("Found no records and no stop sign in page "
-						+ page);
-				break;
+		// Keys for each record:
+		// [guid, pace, schools, subjects, start, image, l, code, types, url,
+		// availability]
+		universities.clear();
+		categories.clear();
+		courses.clear();
+		for (Object o : json) {
+			HashMap<String, Object> map = (HashMap<String, Object>) o;
+			ArrayList<String> list = (ArrayList<String>) map.get("schools");
+			universities.addAll(list);
+			list = (ArrayList<String>) map.get("subjects");
+			categories.addAll(list);
+			String courseCode = getCleanCode(map);
+			ArrayList<HashMap<String, Object>> offerings = courses
+					.get(courseCode);
+			if (offerings == null) {
+				offerings = new ArrayList<HashMap<String, Object>>();
+				courses.put(courseCode, offerings);
 			}
-			page++;
+			offerings.add(map);
 		}
+	}
+
+	/**
+	 * Names of schools and categories have spaces, ampersands, etc. Make it
+	 * safe to appear in XML attribute.
+	 */
+	public static String makeIdSafe(String s) {
+		s = s.replaceAll(" ", "");
+		s = s.replaceAll("&", "-");
+		return s;
+	}
+
+	public static String makeCategoryId(String s) {
+		return "X" + makeIdSafe(s);
+	}
+
+	public static String getCleanUrl(HashMap<String, Object> map) {
+		String url = (String) map.get("url");
+		return url.replaceAll("\\\\/", "/");
+	}
+
+	public static String getCleanCode(HashMap<String, Object> map) {
+		String code = (String) map.get("code");
+		return code.trim();
+	}
+
+	public static boolean getActiveStatus(HashMap<String, Object> map) {
+		return "Current".equals(map.get("availability"));
+	}
+
+	private void collectUniversityChanges(CourseModel courseModel,
+			ArrayList<Change> changes) {
+		// TODO: is there some API to get university descriptions? They do have
+		// numeric codes in facets.
+		for (String u : universities) {
+			String code = makeIdSafe(u);
+			if (courseModel.getUniversity(code) == null)
+				changes.add(new DescChange(DescChange.UNIVERSITY, Change.ADD,
+						"EdX University", null,
+						makeUniversityJsonForId(code, u)));
+		}
+		// TODO: check for deleted universities.
+	}
+
+	private void collectCategoryChanges(CourseModel courseModel,
+			ArrayList<Change> changes) {
+		// TODO: category names are long, and they are mapped to numeric codes
+		// in facets. Something to use in description?
+		for (String c : categories) {
+			String code = makeCategoryId(c);
+			if (courseModel.getCategory(code) == null)
+				changes.add(new DescChange(DescChange.CATEGORY, Change.ADD,
+						"EdX Category", null, makeCategoryJsonForId(code, c)));
+		}
+		// TODO: check for deleted categories.
 	}
 
 	/**
@@ -332,191 +148,160 @@ public class EdxModelAdapter {
 		System.out.println("Will keep all offerings older than " + tooOldInDays
 				+ " days: " + tooOld);
 
-		ArrayList<Change> res = new ArrayList<Change>();
+		ArrayList<Change> changes = new ArrayList<Change>();
+		collectUniversityChanges(courseModel, changes);
+		collectCategoryChanges(courseModel, changes);
 
-		// There are no categories for Edx, but there are universities. For
-		// categories we'll just set EdX, unless manually specified otherwise
-		HashSet<String> uniFromFile = new HashSet<String>();
-		// Just check the first record. Assume the list is not empty
-		for (ArrayList<EdxRecord> lr : records.values())
-			uniFromFile.add(lr.get(0).getUniversity());
-		for (String u : uniFromFile) {
-			if (courseModel.getUniversity(u) == null)
-				res.add(new DescChange(DescChange.UNIVERSITY, Change.ADD,
-						"EdX University", null, makeUniJsonForId(u)));
-		}
-
-		// EdX is not particularly consistent with naming, hence this hack.
-		// Note that this will only work for simplification of ids.
-		ArrayList<String> names = new ArrayList<String>(records.keySet());
-		for (String s : names) {
-			CourseRec oldRec = courseModel.getClassByShortName(s);
-			if (oldRec != null)
-				continue;
-			// Try to locate by both course name and university
-			EdxRecord r = records.get(s).get(0);
-			oldRec = courseModel.getClassByLongNameAndUni(r.getName(),
-					r.getUniversity());
-
-			// Now two options: reuse old id or change the id in the DB
-			// Usually it's better to change the short name in the DB, except
-			// "Foundations of Computer Graphics" from BerkleyX exists as
-			// CS-184.1x
-			// and CS184.1x at the same time!
-			if (oldRec != null) {
-				// Change existing id to the new one
-				oldRec.setShortName(s);
-			} else if ("CS-184.1x".equals(s)) {
-				// Very ugly hack to deal with CS184.1x
-				System.err.println("Berkley CS-184.1x hack active");
-				ArrayList<EdxRecord> list = records.remove(s);
-				String s1 = s.replace(" ", "").replace("-", "");
-				for (EdxRecord r1 : list)
-					r1.setCourseId(s1);
-				ArrayList<EdxRecord> list1 = records.get(s1);
-				if (list1 == null)
-					records.put(s1, list);
-				else
-					list1.addAll(list);
-			}
-
-		}
-
-		// Go over all course bundles, pick those that don't yet exist
-		for (ArrayList<EdxRecord> list : records.values()) {
-			String courseId = list.get(0).getCourseId();
-			CourseRec oldRec = courseModel.getClassByShortName(courseId);
+		// Short codes are used as keys. We hope they don't collide across
+		// universities, but who knows what EdX uses inside.
+		for (String code : courses.keySet()) {
+			CourseRec oldRec = courseModel.getClassByShortName(code);
+			ArrayList<HashMap<String, Object>> course = courses.get(code);
+			// Fishing here. Should not be necessary once everything converts to
+			// guids on the EdX side.
 			if (oldRec == null) {
-				res.add(new EdxCourseChange(Change.ADD, null, null, list,
-						courseModel));
+				HashMap<String, Object> first = course.get(0);
+				String name = (String) first.get("l");
+				@SuppressWarnings("unchecked")
+				String uni = ((ArrayList<String>) first.get("schools")).get(0);
+				oldRec = courseModel.getClassByLongNameAndUni(name, uni);
+				if (oldRec != null) {
+					System.out.println("Changing course code from ["
+							+ oldRec.getShortName() + "] to [" + code + "]");
+					oldRec.setShortName(code);
+				}
+			}
+			if (oldRec != null) {
+				diffCourse(course, oldRec, changes, courseModel, tooOld);
 			} else {
-				diffCourse(list, oldRec, res, courseModel, tooOld);
+				changes.add(new EdxCourseChange(Change.ADD, null, null, course,
+						courseModel));
 			}
 		}
+
+		// TODO deleted courses.
+		return changes;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void diffCourse(ArrayList<HashMap<String, Object>> offerings,
+			CourseRec oldRec, ArrayList<Change> changes, CourseModel model,
+			Date tooOld) {
+		// From the first record pull universities, categories, and long name.
+		// There is no description here. Maybe in another query?
+		HashMap<String, Object> first = offerings.get(0);
+		String longName = (String) first.get("l");
+
+		// Long name.
+		String oldLongName = oldRec.getName();
+		if (oldLongName == null && longName != null || oldLongName != null
+				&& !oldLongName.equals(longName))
+			changes.add(new EdxCourseChange(Change.MODIFY, "Name", oldRec,
+					longName, model));
+		// No description for now.
+
+		// Categories.
+		ArrayList<String> incoming = new ArrayList<String>();
+		for (String s : (ArrayList<String>) first.get("subjects"))
+			incoming.add(makeCategoryId(s));
+		HashSet<String> existing = CourseRec.idSet(oldRec.getCategories());
+		if (incoming.size() != existing.size()
+				|| !existing.containsAll(incoming)) {
+			changes.add(new EdxCourseChange(Change.MODIFY, "Categories",
+					oldRec, incoming, model));
+		}
+
+		// Universities
+		incoming = new ArrayList<String>();
+		for (String s : (ArrayList<String>) first.get("schools"))
+			incoming.add(makeIdSafe(s));
+		existing = CourseRec.idSet(oldRec.getUniversities());
+		if (incoming.size() != existing.size()
+				|| !existing.containsAll(incoming)) {
+			changes.add(new EdxCourseChange(Change.MODIFY, "Universities",
+					oldRec, incoming, model));
+		}
+
+		// EdX offerings now have guids, finally! We will flip them to negative
+		// values until TODO source flags are introduced.
+		ArrayList<OffRec> oldOffs = new ArrayList<OffRec>(oldRec.getOfferings());
+		for (HashMap<String, Object> newOff : offerings) {
+			// TODO negate ints until have source flags.
+			int newId = -(Integer) newOff.get("guid");
+			Date newDate = HttpHelper.parseDate((String) newOff.get("start"));
+			// Find it by id or, for now, date.
+			OffRec oldOff = null;
+			for (OffRec o : oldOffs)
+				if (o.getId() == newId || o.getStart() != null
+						&& o.getStart().equals(newDate)) {
+					// Quietly change id. TODO temporary!
+					if (o.getId() != newId) {
+						System.out.println("Changing offering id " + o.getId()
+								+ " to " + newId);
+						o.updateId(newId);
+					}
+					oldOff = o;
+					break;
+				}
+			if (oldOff != null) {
+				oldOffs.remove(oldOff); // Accounted for
+				diffOffering(oldRec, oldOff, newOff, changes);
+			} else {
+				changes.add(new EdxOfferingChange(Change.ADD, oldRec, null,
+						null, newOff));
+			}
+		}
+		// Remove old offerings if any left.
+		for (OffRec o : oldOffs) {
+			if (o.getStart() == null || o.getStart().after(tooOld)) {
+				changes.add(new EdxOfferingChange(Change.DELETE, oldRec, null,
+						o, null));
+			}
+		}
+	}
+
+	private void diffOffering(CourseRec oldRec, OffRec oldOff,
+			HashMap<String, Object> newOff, ArrayList<Change> changes) {
+		// Start date. TODO self-paced.
+		Date newDate = HttpHelper.parseDate((String) newOff.get("start"));
+		if (oldOff.getStart() == null && newDate != null
+				|| oldOff.getStart() != null
+				&& !oldOff.getStart().equals(newDate)) {
+			// Save as a string.
+			changes.add(new EdxOfferingChange(Change.MODIFY, oldRec, "Start",
+					oldOff, newOff.get("start")));
+		}
+
+		// URL. With some clean up.
+		String newUrl = getCleanUrl(newOff);
+		if (oldOff.getLink() == null || !oldOff.getLink().equals(newUrl)) {
+			changes.add(new EdxOfferingChange(Change.MODIFY, oldRec, "Link",
+					oldOff, newUrl));
+		}
+
+		// Active from availability.
+		Boolean active = getActiveStatus(newOff);
+		if (oldOff.isActive() != active) {
+			changes.add(new EdxOfferingChange(Change.MODIFY, oldRec, "Active",
+					oldOff, active));
+		}
+	}
+
+	private HashMap<String, Object> makeUniversityJsonForId(String code,
+			String name) {
+		HashMap<String, Object> res = new HashMap<String, Object>();
+		res.put("name", name);
+		res.put("short_name", code);
+		res.put("description", name + " on EdX");
 		return res;
 	}
 
-	private void diffCourse(ArrayList<EdxRecord> list, CourseRec oldRec,
-			ArrayList<Change> res, CourseModel model, Date tooOld) {
-		// The only things we have here are: name, description, offerings
-		String s1 = list.get(0).getName();
-		String s2 = oldRec.getName();
-		if (s1 == null && s2 != null || s1 != null && !s1.equals(s2))
-			res.add(new EdxCourseChange(Change.MODIFY, "Name", oldRec, list,
-					model));
-		s1 = list.get(0).getDescription();
-		s2 = oldRec.getDescription();
-		if (s1 == null && s2 != null || s1 != null && !s1.equals(s2))
-			res.add(new EdxCourseChange(Change.MODIFY, "Description", oldRec,
-					list, model));
-
-		// Compare offerings by date
-		ArrayList<Date> existing = new ArrayList<Date>();
-		ArrayList<Date> incoming = new ArrayList<Date>();
-		for (EdxRecord r : list)
-			if (r.getStart() != null)
-				incoming.add(r.getStart());
-			else if (!r.getStartStr().toLowerCase().contains("self"))
-				System.err.println("New EdX offering without start date: " + r);
-		for (OffRec r : oldRec.getOfferings())
-			if (r.getStart() != null)
-				existing.add(r.getStart());
-			else if (!r.getStartStr().toLowerCase().contains("self"))
-				System.err.println("Existing EdX offering without start date: "
-						+ r);
-
-		// Differences
-		ArrayList<Date> deleted = new ArrayList<Date>(existing);
-		deleted.removeAll(incoming);
-		ArrayList<Date> added = new ArrayList<Date>(incoming);
-		added.removeAll(existing);
-
-		// Remove deletes that are too old
-		for (Iterator<Date> it = deleted.iterator(); it.hasNext();) {
-			Date d = it.next();
-			if (d.before(tooOld))
-				it.remove();
-		}
-
-		// Possible date shift?
-		if (deleted.size() == 1 && added.size() == 1) {
-			OffRec rr = null;
-			for (OffRec r : oldRec.getOfferings())
-				if (r.getStart() != null && r.getStart().equals(deleted.get(0))) {
-					rr = r;
-					break;
-				}
-			EdxRecord er = null;
-			for (EdxRecord r : list)
-				if (r.getStart().equals(added.get(0))) {
-					er = r;
-					break;
-				}
-			// EdxOfferingChange(String type, CourseRec course, String field,
-			// OffRec offering, EdxRecord record
-			res.add(new EdxOfferingChange(Change.MODIFY, oldRec, "Start", rr,
-					er));
-			deleted.clear();
-			added.clear();
-		}
-
-		// Prune deleted things that are actually done: never delete those
-		// records
-		for (OffRec r : oldRec.getOfferings())
-			if (deleted.contains(r.getStart())
-					&& (Status.DONE.equals(r.getStatus()) || Status.REGISTERED
-							.equals(r.getStatus()))) {
-				deleted.remove(r.getStart());
-			}
-
-		// Deleted
-		for (OffRec r : oldRec.getOfferings())
-			if (deleted.contains(r.getStart()))
-				res.add(new EdxOfferingChange(Change.DELETE, oldRec, null, r,
-						null));
-		// Added
-		for (EdxRecord r : list)
-			if (added.contains(r.getStart()))
-				res.add(new EdxOfferingChange(Change.ADD, oldRec, null, null, r));
-
-		// For the intersection check link. No need to check the start date,
-		// since it's the key. Note: They no longer have duration
-		ArrayList<Date> diff = new ArrayList<Date>(existing);
-		diff.retainAll(incoming);
-		for (EdxRecord r : list)
-			if (diff.contains(r.getStart())) {
-				// Locate corresponding existing
-				OffRec r1 = null;
-				for (OffRec r2 : oldRec.getOfferings()) {
-					// Pick date that match exactly. Also pick empty slots.
-					// Since there are some time strings we cannot parse, check
-					// for the string version to be empty. This still leaves
-					// the case of unparsable but valid dates, but we'll deal
-					// with it some time in the future
-					if (r2.getStart() != null
-							&& r2.getStart().equals(r.getStart()))
-						r1 = r2;
-					else if (r1 == null
-							&& (r2.getStart() == null || r2.getStartStr()
-									.isEmpty()))
-						r1 = r2;
-				}
-				assert (r1 != null);
-
-				if (r1.getLink() == null && r.getHome() != null
-						|| r1.getLink() != null
-						&& !r1.getLink().equals(r.getHome())) {
-					res.add(new EdxOfferingChange(Change.MODIFY, oldRec,
-							"Link", r1, r));
-				}
-			}
-	}
-
-	private HashMap<String, Object> makeUniJsonForId(String u) {
+	private HashMap<String, Object> makeCategoryJsonForId(String code,
+			String name) {
 		HashMap<String, Object> res = new HashMap<String, Object>();
-		res.put("name", u);
-		res.put("short_name", u);
-		res.put("description", u + " on EdX");
+		res.put("name", name);
+		res.put("short_name", code);
+		res.put("description", name + " on EdX");
 		return res;
 	}
 
@@ -529,7 +314,7 @@ public class EdxModelAdapter {
 			InputStream stream = url.openStream();
 			InputStreamReader reader = new InputStreamReader(stream);
 
-			StringBuffer buffer = readIntoBuffer(reader);
+			StringBuffer buffer = HttpHelper.readIntoBuffer(reader);
 			stream.close();
 
 			int idx = buffer.indexOf(tag);
@@ -558,7 +343,7 @@ public class EdxModelAdapter {
 		InputStream stream = urlCon.getInputStream();
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		StringBuffer buffer = readIntoBuffer(reader);
+		StringBuffer buffer = HttpHelper.readIntoBuffer(reader);
 		stream.close();
 
 		// We are looking for the number of weeks. This code is specific to the
@@ -578,7 +363,7 @@ public class EdxModelAdapter {
 		String slice = buffer.substring(start, end).trim();
 		for (start = slice.length() - 1; start >= 0
 				&& Character.isDigit(slice.charAt(start)); start--)
-			;
+			continue;
 		int weeks = Integer.parseInt(slice.substring(start + 1));
 
 		off.setDuration(weeks);
