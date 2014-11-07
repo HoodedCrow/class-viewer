@@ -103,7 +103,6 @@ public class DetailsFrame extends NamedInternalFrame implements
 						EdxModelAdapter edx = new EdxModelAdapter();
 						try {
 							if (edx.loadClassDuration(
-									settings.getString(Settings.EDX_URL),
 									off,
 									new Boolean(
 											settings.getString(Settings.IGNORE_SSL_CERT)))) {

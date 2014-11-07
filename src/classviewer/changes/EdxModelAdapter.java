@@ -328,12 +328,12 @@ public class EdxModelAdapter {
 		return null;
 	}
 
-	public boolean loadClassDuration(String baseURL, OffRec off,
-			boolean ignoreSSL) throws IOException {
+	public boolean loadClassDuration(OffRec off, boolean ignoreSSL)
+			throws IOException {
 		String tail = off.getLink();
 		if (tail == null)
 			return false;
-		URL url = new URL(baseURL + tail);
+		URL url = new URL(tail);
 		// All set up, we can get a resource through https now:
 		URLConnection urlCon = url.openConnection();
 		// Tell the url connection object to use our socket factory which
