@@ -125,7 +125,9 @@ public class EdxModelAdapter {
 						Change.ADD, u, null,
 						makeUniversityJsonForId(code, u)));
 		}
-		HashSet<String> newIds = new HashSet<String>(this.universities);
+		HashSet<String> newIds = new HashSet<String>();
+		for (String s : this.universities)
+			newIds.add(makeIdSafe(s));
 		for (DescRec rec : courseModel.getUniversities(Source.EDX)) {
 			if (!newIds.contains(rec.getId())) {
 				changes.add(new DescChange(Source.EDX, DescChange.UNIVERSITY,
@@ -147,7 +149,9 @@ public class EdxModelAdapter {
 				changes.add(new DescChange(Source.EDX, DescChange.CATEGORY,
 						Change.ADD, c, null, makeCategoryJsonForId(code, c)));
 		}
-		HashSet<String> newIds = new HashSet<String>(this.categories);
+		HashSet<String> newIds = new HashSet<String>();
+		for (String s : this.categories)
+			newIds.add(makeIdSafe(s));
 		for (DescRec rec : courseModel.getCategories(Source.EDX)) {
 			if (!newIds.contains(rec.getId())) {
 				changes.add(new DescChange(Source.EDX, DescChange.CATEGORY,
@@ -249,8 +253,7 @@ public class EdxModelAdapter {
 		// values until TODO source flags are introduced.
 		ArrayList<OffRec> oldOffs = new ArrayList<OffRec>(oldRec.getOfferings());
 		for (HashMap<String, Object> newOff : offerings) {
-			// TODO negate ints until have source flags.
-			int newId = -(Integer) newOff.get("guid");
+			int newId = (Integer) newOff.get("guid");
 			Date newDate = HttpHelper.parseDate((String) newOff.get("start"));
 			// Find it by id or, for now, date.
 			OffRec oldOff = null;
@@ -315,7 +318,6 @@ public class EdxModelAdapter {
 		HashMap<String, Object> res = new HashMap<String, Object>();
 		res.put("name", name);
 		res.put("short_name", code);
-		res.put("description", name + " on EdX");
 		return res;
 	}
 
@@ -324,7 +326,6 @@ public class EdxModelAdapter {
 		HashMap<String, Object> res = new HashMap<String, Object>();
 		res.put("name", name);
 		res.put("short_name", code);
-		res.put("description", name + " on EdX");
 		return res;
 	}
 
