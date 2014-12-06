@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
+import classviewer.model.Source;
 
 /**
  * Add/delete course or change course field.
@@ -20,9 +21,9 @@ public class CourseChange extends Change {
 	private HashMap<String, Object> json = null;
 	protected CourseRec created = null;
 
-	public CourseChange(String type, String field, CourseRec course,
-			HashMap<String, Object> json, CourseModel model) {
-		super(type);
+	public CourseChange(Source source, String type, String field,
+			CourseRec course, HashMap<String, Object> json, CourseModel model) {
+		super(source, type);
 		this.field = field;
 		this.course = course;
 		this.json = json;
@@ -98,7 +99,7 @@ public class CourseChange extends Change {
 				created.addOffering(OfferingChange.makeOffering(map));
 			model.addCourse(created);
 		} else if (type == DELETE) {
-			model.removeCourse(course.getId());
+			model.removeCourse(source, course.getId());
 		} else {
 			// Assume we have a pointer to the record we can change in place.
 			assert (course != null);
@@ -130,7 +131,7 @@ public class CourseChange extends Change {
 		@SuppressWarnings("unchecked")
 		ArrayList<String> lst = (ArrayList<String>) json.get("category-ids");
 		for (String s : lst)
-			rec.addCategory(model.getCategory(s));
+			rec.addCategory(model.getCategory(source, s));
 	}
 
 	protected void setUniverisities(CourseRec rec, CourseModel model) {
@@ -138,7 +139,7 @@ public class CourseChange extends Change {
 		@SuppressWarnings("unchecked")
 		ArrayList<String> lst = (ArrayList<String>) json.get("university-ids");
 		for (String s : lst)
-			rec.addUniversity(model.getUniversity(s));
+			rec.addUniversity(model.getUniversity(source, s));
 	}
 
 	private CourseRec makeCourse(CourseModel model) {
@@ -149,8 +150,8 @@ public class CourseChange extends Change {
 		String instructor = (String) json.get("instructor");
 		String language = (String) json.get("language");
 		String link = (String) json.get("social_link");
-		CourseRec res = new CourseRec(id, shortName, name, dsc, instructor,
-				link, language);
+		CourseRec res = new CourseRec(source, id, shortName, name, dsc,
+				instructor, link, language);
 		return res;
 	}
 }

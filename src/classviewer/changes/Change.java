@@ -1,6 +1,7 @@
 package classviewer.changes;
 
 import classviewer.model.CourseModel;
+import classviewer.model.Source;
 
 /**
  * Parent class for changes to descriptions, courses, and offerings.
@@ -12,13 +13,19 @@ public abstract class Change implements Comparable<Change> {
 	public static final String DELETE = "-";
 	public static final String MODIFY = "*";
 
+	protected Source source;
 	protected String type;
 	protected int order;
 
-	public Change(String type) {
+	public Change(Source source, String type) {
+		this.source = source;
 		this.type = type;
 	}
 
+	public Source getSource() {
+		return source;
+	}
+	
 	public String getType() {
 		return type;
 	}

@@ -7,6 +7,8 @@ package classviewer.model;
  * @author TK
  */
 public interface Named {
+	public Source getSource();
+	
 	public String getName();
 
 	public String getDescription();

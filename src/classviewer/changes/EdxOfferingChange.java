@@ -6,6 +6,7 @@ import java.util.HashMap;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
+import classviewer.model.Source;
 
 public class EdxOfferingChange extends OfferingChange {
 
@@ -14,7 +15,7 @@ public class EdxOfferingChange extends OfferingChange {
 	public EdxOfferingChange(String type, CourseRec course, String field,
 			OffRec offering, Object newValue) {
 		// Pass NULL for JSON
-		super(type, course, field, offering, null);
+		super(Source.EDX, type, course, field, offering, null);
 		this.newValue = newValue;
 	}
 

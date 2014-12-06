@@ -15,7 +15,8 @@ public class StatusFileModelAdapter {
 	public void saveStatuses(Writer writer, Iterable<CourseRec> courses)
 			throws IOException {
 		for (CourseRec cr : courses) {
-			writer.append("c " + cr.getId() + " " + cr.getStatus() + "\n");
+			writer.append("c" + cr.getSource().oneLetter() + " " + cr.getId()
+					+ " " + cr.getStatus() + "\n");
 			for (OffRec or : cr.getOfferings())
 				writer.append("o " + or.getId() + " " + or.getStatus() + "\n");
 		}
@@ -33,8 +34,13 @@ public class StatusFileModelAdapter {
 				continue;
 			}
 			int id = new Integer(str[1]);
-			if ("c".equals(str[0])) {
-				rec = model.getClassById(id);
+			// Clean up. TODO Remove eventually.
+			if (id < 0) id = -id;
+			if ('c' == str[0].charAt(0)) {	
+				Source src = Source.MISSING;
+				if (str[0].length() > 1)
+					src = Source.fromStringOrNull(str[0].substring(1));
+				rec = model.getClassById(id, src);
 				if (rec == null)
 					System.err.println("Unknown class id in the status file: "
 							+ id);

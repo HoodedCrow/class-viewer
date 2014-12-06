@@ -6,12 +6,18 @@ package classviewer.model;
  * @author TK
  */
 public class DescRec implements Named, Comparable<DescRec> {
+	Source source;
 	String id, name, description;
 
-	public DescRec(String id, String name, String desc) {
+	public DescRec(Source source, String id, String name, String desc) {
+		this.source = source;
 		this.id = id;
 		this.name = name;
 		this.description = desc;
+	}
+
+	public Source getSource() {
+		return source;
 	}
 
 	public String getId() {
@@ -37,7 +43,8 @@ public class DescRec implements Named, Comparable<DescRec> {
 	@Override
 	public boolean equals(Object other) {
 		try {
-			return ((DescRec) other).id.equals(this.id);
+			DescRec o = (DescRec) other;
+			return o.source == this.source && o.id.equals(this.id);
 		} catch (ClassCastException e) {
 			return false;
 		}
@@ -45,7 +52,7 @@ public class DescRec implements Named, Comparable<DescRec> {
 
 	@Override
 	public String toString() {
-		return id;
+		return source.oneLetter() + "" + id;
 	}
 
 	/** Compare by name. Used for sorting in GUI */

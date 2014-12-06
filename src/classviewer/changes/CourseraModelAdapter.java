@@ -13,8 +13,9 @@ import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.DescRec;
 import classviewer.model.OffRec;
+import classviewer.model.Source;
 
-public class JsonModelAdapter {
+public class CourseraModelAdapter {
 
 	private ArrayList<Object> json;
 	private HashMap<String, HashMap<String, Object>> universities = new HashMap<String, HashMap<String, Object>>();
@@ -61,13 +62,10 @@ public class JsonModelAdapter {
 
 		// Changed universities
 		HashSet<String> newIds = new HashSet<String>(this.universities.keySet());
-		for (DescRec rec : model.getUniversities()) {
+		for (DescRec rec : model.getUniversities(Source.COURSERA)) {
 			if (!newIds.contains(rec.getId())) {
-				String d = rec.getDescription();
-				if (!rec.getId().equals("udacity")
-						&& (d == null || !d.contains("EdX")))
-					list.add(new DescChange(DescChange.UNIVERSITY,
-							Change.DELETE, "University", rec, null));
+				list.add(new DescChange(Source.COURSERA, DescChange.UNIVERSITY,
+						Change.DELETE, "University", rec, null));
 			} else {
 				diffDesc(DescChange.UNIVERSITY, list, rec,
 						this.universities.get(rec.getId()));
@@ -75,16 +73,16 @@ public class JsonModelAdapter {
 			newIds.remove(rec.getId());
 		}
 		for (String id : newIds) {
-			list.add(new DescChange(DescChange.UNIVERSITY, Change.ADD,
-					"University", null, this.universities.get(id)));
+			list.add(new DescChange(Source.COURSERA, DescChange.UNIVERSITY,
+					Change.ADD, "University", null, this.universities.get(id)));
 		}
 
 		// Changed categories
 		newIds = new HashSet<String>(this.categories.keySet());
-		for (DescRec rec : model.getCategories()) {
+		for (DescRec rec : model.getCategories(Source.COURSERA)) {
 			if (!newIds.contains(rec.getId())) {
-				list.add(new DescChange(DescChange.CATEGORY, Change.DELETE,
-						"Category", rec, null));
+				list.add(new DescChange(Source.COURSERA, DescChange.CATEGORY,
+						Change.DELETE, "Category", rec, null));
 			} else {
 				diffDesc(DescChange.CATEGORY, list, rec,
 						this.categories.get(rec.getId()));
@@ -92,25 +90,25 @@ public class JsonModelAdapter {
 			newIds.remove(rec.getId());
 		}
 		for (String id : newIds) {
-			list.add(new DescChange(DescChange.CATEGORY, Change.ADD,
-					"Category", null, this.categories.get(id)));
+			list.add(new DescChange(Source.COURSERA, DescChange.CATEGORY,
+					Change.ADD, "Category", null, this.categories.get(id)));
 		}
 
 		// Changed classes and offerings
 		HashSet<Integer> newCIds = new HashSet<Integer>(this.courses.keySet());
-		for (CourseRec rec : model.getCourses()) {
+		for (CourseRec rec : model.getCourses(Source.COURSERA)) {
 			if (!newCIds.contains(rec.getId())) {
 				if (rec.getId() > 0)
-					list.add(new CourseChange(Change.DELETE, null, rec, null,
-							model));
+					list.add(new CourseChange(Source.COURSERA, Change.DELETE,
+							null, rec, null, model));
 			} else {
 				diffCourse(list, rec, this.courses.get(rec.getId()), model);
 			}
 			newCIds.remove(rec.getId());
 		}
 		for (Integer id : newCIds) {
-			list.add(new CourseChange(Change.ADD, null, null, this.courses
-					.get(id), model));
+			list.add(new CourseChange(Source.COURSERA, Change.ADD, null, null,
+					this.courses.get(id), model));
 		}
 
 		return list;
@@ -126,7 +124,8 @@ public class JsonModelAdapter {
 		if (b != null && b.isEmpty())
 			b = null;
 		if (a == null && b != null || a != null && !a.equals(b)) {
-			list.add(new DescChange(what, Change.MODIFY, "Name", rec, map));
+			list.add(new DescChange(Source.COURSERA, what, Change.MODIFY,
+					"Name", rec, map));
 		}
 
 		a = rec.getDescription();
@@ -136,8 +135,8 @@ public class JsonModelAdapter {
 		if (b != null && b.isEmpty())
 			b = null;
 		if (a == null && b != null || a != null && !a.equals(b)) {
-			list.add(new DescChange(what, Change.MODIFY, "Description", rec,
-					map));
+			list.add(new DescChange(Source.COURSERA, what, Change.MODIFY,
+					"Description", rec, map));
 		}
 	}
 
@@ -165,16 +164,16 @@ public class JsonModelAdapter {
 		HashSet<String> existing = CourseRec.idSet(rec.getCategories());
 		if (incoming.size() != existing.size()
 				|| !existing.containsAll(incoming)) {
-			list.add(new CourseChange(Change.MODIFY, "Categories", rec, map,
-					model));
+			list.add(new CourseChange(Source.COURSERA, Change.MODIFY,
+					"Categories", rec, map, model));
 		}
 		// universities
 		incoming = (ArrayList<Object>) map.get("university-ids");
 		existing = CourseRec.idSet(rec.getUniversities());
 		if (incoming.size() != existing.size()
 				|| !existing.containsAll(incoming)) {
-			list.add(new CourseChange(Change.MODIFY, "Universities", rec, map,
-					model));
+			list.add(new CourseChange(Source.COURSERA, Change.MODIFY,
+					"Universities", rec, map, model));
 		}
 		// offerings
 		ArrayList<Object> lst = (ArrayList<Object>) map.get("courses");
@@ -184,8 +183,8 @@ public class JsonModelAdapter {
 		for (OffRec or : rec.getOfferings()) {
 			if (!newIds.contains(or.getId())) {
 				if (rec.getId() > 0)
-					list.add(new OfferingChange(Change.DELETE, rec, null, or,
-							null));
+					list.add(new OfferingChange(Source.COURSERA, Change.DELETE,
+							rec, null, or, null));
 			} else {
 				HashMap<String, Object> mp = null;
 				for (Object o : lst) {
@@ -204,7 +203,8 @@ public class JsonModelAdapter {
 				if (mp.get("id").equals(id))
 					break;
 			}
-			list.add(new OfferingChange(Change.ADD, rec, null, null, mp));
+			list.add(new OfferingChange(Source.COURSERA, Change.ADD, rec, null,
+					null, mp));
 		}
 	}
 
@@ -213,24 +213,24 @@ public class JsonModelAdapter {
 		// Use as a field parser
 		OffRec created = OfferingChange.makeOffering(map);
 		if (created.getSpread() != rec.getSpread())
-			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(),
-					"Spread", rec, map));
+			list.add(new OfferingChange(Source.COURSERA, Change.MODIFY, rec
+					.getCourse(), "Spread", rec, map));
 		if (created.isActive() != rec.isActive())
-			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(),
-					"Active", rec, map));
+			list.add(new OfferingChange(Source.COURSERA, Change.MODIFY, rec
+					.getCourse(), "Active", rec, map));
 		if (created.getStartStr() == null && rec.getStartStr() != null
 				|| created.getStartStr() != null
 				&& !created.getStartStr().equals(rec.getStartStr()))
-			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(),
-					"Start", rec, map));
+			list.add(new OfferingChange(Source.COURSERA, Change.MODIFY, rec
+					.getCourse(), "Start", rec, map));
 		if (created.getDuration() != rec.getDuration())
-			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(),
-					"Duration", rec, map));
+			list.add(new OfferingChange(Source.COURSERA, Change.MODIFY, rec
+					.getCourse(), "Duration", rec, map));
 		if (created.getLink() == null && rec.getLink() != null
 				|| created.getLink() != null
 				&& !created.getLink().equals(rec.getLink()))
-			list.add(new OfferingChange(Change.MODIFY, rec.getCourse(), "Link",
-					rec, map));
+			list.add(new OfferingChange(Source.COURSERA, Change.MODIFY, rec
+					.getCourse(), "Link", rec, map));
 	}
 
 	private void compareCourseField(ArrayList<Change> list, String existing,
@@ -242,7 +242,8 @@ public class JsonModelAdapter {
 			incoming = null;
 		if (existing == null && incoming != null || existing != null
 				&& !existing.equals(incoming)) {
-			list.add(new CourseChange(Change.MODIFY, tag, rec, map, model));
+			list.add(new CourseChange(Source.COURSERA, Change.MODIFY, tag, rec,
+					map, model));
 		}
 	}
 

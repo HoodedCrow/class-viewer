@@ -8,6 +8,7 @@ import java.util.HashSet;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.DescRec;
+import classviewer.model.Source;
 
 public class CategoryCourseFilter extends CourseFilter {
 	private HashSet<DescRec> selected = new HashSet<DescRec>();
@@ -23,14 +24,17 @@ public class CategoryCourseFilter extends CourseFilter {
 
 	@Override
 	public Collection<? extends Object> getOptions() {
-		ArrayList<DescRec> options = new ArrayList<DescRec>(model.getCategories());
+		ArrayList<DescRec> options = new ArrayList<DescRec>();
+		for (Source source : Source.values())
+			options.addAll(model.getCategories(source));
 		Collections.sort(options);
 		return options;
 	}
 
 	@Override
 	public String getDescription(Object option) {
-		return ((DescRec) option).getName();
+		DescRec o = (DescRec) option;
+		return o.getName() + "(" + o.getSource().oneLetter() + ")";
 	}
 
 	@Override

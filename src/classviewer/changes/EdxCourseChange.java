@@ -6,6 +6,7 @@ import java.util.HashMap;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
+import classviewer.model.Source;
 
 public class EdxCourseChange extends CourseChange {
 
@@ -14,7 +15,7 @@ public class EdxCourseChange extends CourseChange {
 
 	public EdxCourseChange(String type, String field, CourseRec course,
 			Object newValue, CourseModel model) {
-		super(type, field, course, null, model);
+		super(Source.EDX, type, field, course, null, model);
 		this.newValue = newValue;
 	}
 
@@ -43,7 +44,7 @@ public class EdxCourseChange extends CourseChange {
 		if (type == ADD) {
 			@SuppressWarnings("unchecked")
 			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) newValue;
-			CourseRec rec = makeEdxCourse(list.get(0), model);
+			CourseRec rec = makeEdxCourse(list.get(0), model, source);
 			for (HashMap<String, Object> map : list) {
 				OffRec off = EdxOfferingChange.makeOffering(map);
 				rec.addOffering(off);
@@ -101,7 +102,7 @@ public class EdxCourseChange extends CourseChange {
 	protected void setCategories(CourseRec rec, CourseModel model) {
 		rec.getCategories().clear();
 		for (String s : (ArrayList<String>) newValue)
-			rec.addCategory(model.getCategory(s));
+			rec.addCategory(model.getCategory(source, s));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -109,25 +110,25 @@ public class EdxCourseChange extends CourseChange {
 	protected void setUniverisities(CourseRec rec, CourseModel model) {
 		rec.getUniversities().clear();
 		for (String s : (ArrayList<String>) newValue)
-			rec.addUniversity(model.getUniversity(s));
+			rec.addUniversity(model.getUniversity(source, s));
 	}
 
 	@SuppressWarnings("unchecked")
 	public static CourseRec makeEdxCourse(HashMap<String, Object> map,
-			CourseModel model) {
-		Integer id = model.getNewNegativeId();
+			CourseModel model, Source src) {
+		Integer id = (Integer) map.get("guid"); // TODO Remove? model.getNewNegativeId();
 		String short_name = EdxModelAdapter.getCleanCode(map);
 		String name = (String) map.get("l");
 		String dsc = null; // TODO
 		String instructor = null;
 		String language = "en"; // until further notice
 		String link = null;
-		CourseRec res = new CourseRec(id, short_name, name, dsc, instructor,
-				link, language);
+		CourseRec res = new CourseRec(Source.EDX, id, short_name, name, dsc,
+				instructor, link, language);
 		for (String s : (ArrayList<String>) map.get("subjects"))
-			res.addCategory(model.getCategory(EdxModelAdapter.makeCategoryId(s)));
+			res.addCategory(model.getCategory(src, EdxModelAdapter.makeCategoryId(s)));
 		for (String s : (ArrayList<String>) map.get("schools"))
-			res.addUniversity(model.getUniversity(EdxModelAdapter.makeIdSafe(s)));
+			res.addUniversity(model.getUniversity(src, EdxModelAdapter.makeIdSafe(s)));
 		return res;
 	}
 

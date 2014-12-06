@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import classviewer.model.CourseModel;
 import classviewer.model.DescRec;
+import classviewer.model.Source;
 
 /**
  * Add/delete/modify university or category.
@@ -24,9 +25,9 @@ public class DescChange extends Change {
 	/** Affecting chunk of JSON, unless DELETE */
 	private HashMap<String, Object> json = null;
 
-	public DescChange(int what, String type, String field, DescRec desc,
+	public DescChange(Source source, int what, String type, String field, DescRec desc,
 			HashMap<String, Object> json) {
-		super(type);
+		super(source, type);
 		this.what = what;
 		this.field = field;
 		this.desc = desc;
@@ -87,10 +88,10 @@ public class DescChange extends Change {
 			String id =  desc.getId();
 			switch (what) {
 			case UNIVERSITY:
-				model.removeUniversity(id);
+				model.removeUniversity(source, id);
 				return;
 			case CATEGORY:
-				model.removeCategory(id);
+				model.removeCategory(source, id);
 				return;
 			default:
 				throw new UnsupportedOperationException("Unknown object type "
@@ -116,6 +117,6 @@ public class DescChange extends Change {
 		String id = (String) json.get("short_name");
 		String name = (String) json.get("name");
 		String dsc = (String) json.get("description");
-		return new DescRec(id, name, dsc);
+		return new DescRec(source, id, name, dsc);
 	}
 }

@@ -2,40 +2,40 @@ package classviewer.filters;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
-import classviewer.model.DescRec;
 import classviewer.model.Source;
 
-public class UniversityCourseFilter extends CourseFilter {
+/**
+ * Course filter by course status (unknown/done/etc).
+ * 
+ * @author TK
+ */
+public class SourceCourseFilter extends CourseFilter {
+	private HashSet<Source> selected = new HashSet<Source>();
 
-	private HashSet<DescRec> selected = new HashSet<DescRec>();
-
-	public UniversityCourseFilter(CourseModel courseModel) {
+	public SourceCourseFilter(CourseModel courseModel) {
 		super(courseModel);
 	}
 
 	@Override
 	public String getName() {
-		return "By university";
+		return "By source";
 	}
 
 	@Override
 	public Collection<? extends Object> getOptions() {
-		ArrayList<DescRec> options = new ArrayList<DescRec>();
-		for (Source source : Source.values())
-			options.addAll(model.getUniversities(source));
-		Collections.sort(options);
+		ArrayList<Source> options = new ArrayList<Source>();
+		for (Source s : Source.values())
+			options.add(s);
 		return options;
 	}
 
 	@Override
 	public String getDescription(Object option) {
-		DescRec o = (DescRec) option;
-		return o.getName() + "(" + o.getSource().oneLetter() + ")";
+		return ((Source) option).pretty();
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public class UniversityCourseFilter extends CourseFilter {
 	@Override
 	public void setSelected(Object option, boolean selected) {
 		if (selected)
-			this.selected.add((DescRec) option);
+			this.selected.add((Source) option);
 		else
 			this.selected.remove(option);
 		model.fireFiltersChanged(this);
@@ -54,11 +54,8 @@ public class UniversityCourseFilter extends CourseFilter {
 
 	@Override
 	public boolean accept(CourseRec rec) {
-		if (!this.active || rec.getUniversities().isEmpty())
+		if (!this.active)
 			return true;
-		for (DescRec r : rec.getUniversities())
-			if (selected.contains(r))
-				return true;
-		return false;
+		return selected.contains(rec.getSource());
 	}
 }

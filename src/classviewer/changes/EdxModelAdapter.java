@@ -15,7 +15,9 @@ import javax.net.ssl.SSLSocketFactory;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
+import classviewer.model.DescRec;
 import classviewer.model.OffRec;
+import classviewer.model.Source;
 
 /**
  * EdX html is weird. I could not find an off-the-shelf parser that would
@@ -67,8 +69,11 @@ public class EdxModelAdapter {
 		for (Object o : json) {
 			HashMap<String, Object> map = (HashMap<String, Object>) o;
 			ArrayList<String> list = (ArrayList<String>) map.get("schools");
+			while (list.remove(""));
 			universities.addAll(list);
 			list = (ArrayList<String>) map.get("subjects");
+			// EdX has empty subjects since they moved Verified into "types"
+			while (list.remove(""));
 			categories.addAll(list);
 			String courseCode = getCleanCode(map);
 			ArrayList<HashMap<String, Object>> offerings = courses
@@ -92,7 +97,7 @@ public class EdxModelAdapter {
 	}
 
 	public static String makeCategoryId(String s) {
-		return "X" + makeIdSafe(s);
+		return makeIdSafe(s);
 	}
 
 	public static String getCleanUrl(HashMap<String, Object> map) {
@@ -115,12 +120,21 @@ public class EdxModelAdapter {
 		// numeric codes in facets.
 		for (String u : universities) {
 			String code = makeIdSafe(u);
-			if (courseModel.getUniversity(code) == null)
-				changes.add(new DescChange(DescChange.UNIVERSITY, Change.ADD,
-						"EdX University", null,
+			if (courseModel.getUniversity(Source.EDX, code) == null)
+				changes.add(new DescChange(Source.EDX, DescChange.UNIVERSITY,
+						Change.ADD, u, null,
 						makeUniversityJsonForId(code, u)));
 		}
-		// TODO: check for deleted universities.
+		HashSet<String> newIds = new HashSet<String>(this.universities);
+		for (DescRec rec : courseModel.getUniversities(Source.EDX)) {
+			if (!newIds.contains(rec.getId())) {
+				changes.add(new DescChange(Source.EDX, DescChange.UNIVERSITY,
+						Change.DELETE, "University", rec, null));
+			} else {
+				// TODO Once we get description for universities, diff them.
+			}
+			newIds.remove(rec.getId());
+		}
 	}
 
 	private void collectCategoryChanges(CourseModel courseModel,
@@ -129,11 +143,20 @@ public class EdxModelAdapter {
 		// in facets. Something to use in description?
 		for (String c : categories) {
 			String code = makeCategoryId(c);
-			if (courseModel.getCategory(code) == null)
-				changes.add(new DescChange(DescChange.CATEGORY, Change.ADD,
-						"EdX Category", null, makeCategoryJsonForId(code, c)));
+			if (courseModel.getCategory(Source.EDX, code) == null)
+				changes.add(new DescChange(Source.EDX, DescChange.CATEGORY,
+						Change.ADD, c, null, makeCategoryJsonForId(code, c)));
 		}
-		// TODO: check for deleted categories.
+		HashSet<String> newIds = new HashSet<String>(this.categories);
+		for (DescRec rec : courseModel.getCategories(Source.EDX)) {
+			if (!newIds.contains(rec.getId())) {
+				changes.add(new DescChange(Source.EDX, DescChange.CATEGORY,
+						Change.DELETE, "Category", rec, null));
+			} else {
+				// TODO Once have descriptions, do diff.
+			}
+			newIds.remove(rec.getId());
+		}
 	}
 
 	/**
@@ -155,7 +178,7 @@ public class EdxModelAdapter {
 		// Short codes are used as keys. We hope they don't collide across
 		// universities, but who knows what EdX uses inside.
 		for (String code : courses.keySet()) {
-			CourseRec oldRec = courseModel.getClassByShortName(code);
+			CourseRec oldRec = courseModel.getClassByShortName(code, Source.EDX);
 			ArrayList<HashMap<String, Object>> course = courses.get(code);
 			// Fishing here. Should not be necessary once everything converts to
 			// guids on the EdX side.
@@ -164,11 +187,11 @@ public class EdxModelAdapter {
 				String name = (String) first.get("l");
 				@SuppressWarnings("unchecked")
 				String uni = ((ArrayList<String>) first.get("schools")).get(0);
-				oldRec = courseModel.getClassByLongNameAndUni(name, uni);
+				oldRec = courseModel.getClassByLongNameAndUni(name, uni, Source.EDX);
 				if (oldRec != null) {
-					System.out.println("Changing course code from ["
-							+ oldRec.getShortName() + "] to [" + code + "]");
-					oldRec.setShortName(code);
+					System.out.println("Code mismatch ["
+							+ oldRec.getShortName() + "] != [" + code + "]");
+					// oldRec.setShortName(code);
 				}
 			}
 			if (oldRec != null) {

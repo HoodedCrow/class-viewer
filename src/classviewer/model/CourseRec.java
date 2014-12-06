@@ -10,6 +10,7 @@ import java.util.HashSet;
  */
 public class CourseRec implements Named, Linked {
 
+	protected Source source;  // TODO Should be private once all is converted.
 	private int id;
 	private String shortName;
 	private String name;
@@ -22,8 +23,9 @@ public class CourseRec implements Named, Linked {
 	private ArrayList<DescRec> universities = new ArrayList<DescRec>();
 	private ArrayList<OffRec> offerings = new ArrayList<OffRec>();
 
-	public CourseRec(int id, String shortName, String name, String description,
-			String instructor, String link, String language) {
+	public CourseRec(Source source, int id, String shortName, String name,
+			String description, String instructor, String link, String language) {
+		this.source = source;
 		this.id = id;
 		this.shortName = shortName;
 		this.name = name == null ? "" : name;
@@ -108,6 +110,10 @@ public class CourseRec implements Named, Linked {
 		this.shortName = shortName;
 	}
 
+	public Source getSource() {
+		return source;
+	}
+	
 	public String getName() {
 		return name;
 	}
@@ -169,7 +175,7 @@ public class CourseRec implements Named, Linked {
 
 	public String getLongHtml() {
 		String str = "<b>" + name + "</b> (" + id + ", " + status.getName()
-				+ ", " + shortName + ")<br/>\n";
+				+ ", " + shortName + ") on " + getSource().pretty() + "<br/>\n";
 		str += "<b>Instructor(s):</b> " + instructor + "<br/>";
 		str += "<b>Categories:</b> " + recNames(categories) + "<br/>";
 		str += "<b>University:</b> " + recNames(universities) + "<br/>";

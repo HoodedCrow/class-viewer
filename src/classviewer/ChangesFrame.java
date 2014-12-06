@@ -31,7 +31,7 @@ import javax.swing.table.TableRowSorter;
 
 import classviewer.changes.Change;
 import classviewer.changes.EdxModelAdapter;
-import classviewer.changes.JsonModelAdapter;
+import classviewer.changes.CourseraModelAdapter;
 import classviewer.changes.OfferingChange;
 import classviewer.model.CourseModel;
 
@@ -250,7 +250,7 @@ public class ChangesFrame extends NamedInternalFrame {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				JsonModelAdapter json = new JsonModelAdapter();
+				CourseraModelAdapter json = new CourseraModelAdapter();
 				try {
 					json.load(settings.getString(Settings.COURSERA_URL));
 				} catch (IOException e) {

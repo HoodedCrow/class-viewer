@@ -7,6 +7,7 @@ import java.util.HashMap;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
+import classviewer.model.Source;
 
 public class OfferingChange extends Change {
 
@@ -16,9 +17,9 @@ public class OfferingChange extends Change {
 	private HashMap<String, Object> json;
 	protected OffRec created = null;
 
-	public OfferingChange(String type, CourseRec course, String field,
-			OffRec offering, HashMap<String, Object> json) {
-		super(type);
+	public OfferingChange(Source source, String type, CourseRec course,
+			String field, OffRec offering, HashMap<String, Object> json) {
+		super(source, type);
 		this.course = course;
 		this.field = field;
 		this.offering = offering;
