@@ -32,6 +32,7 @@ import classviewer.model.CourseModel;
 import classviewer.model.CourseModelListener;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
+import classviewer.model.Source;
 import classviewer.model.Status;
 
 /**
@@ -93,7 +94,7 @@ public class DetailsFrame extends NamedInternalFrame implements
 				int row = offeringTable.rowAtPoint(e.getPoint());
 				final OffRec off = tableModel.getOfferingAt(row);
 				// Only show for EdX
-				if (off.getId() >= 0)
+				if (off.getCourse().getSource() != Source.EDX)
 					return;
 				JPopupMenu offeringPopupMenu = new JPopupMenu();
 				AbstractAction askToLoadEdXDuration = new AbstractAction(
