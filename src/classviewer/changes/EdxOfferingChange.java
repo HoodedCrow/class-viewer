@@ -76,7 +76,7 @@ public class EdxOfferingChange extends OfferingChange {
 	}
 
 	public static OffRec makeOffering(HashMap<String, Object> map) {
-		int id = -(Integer) map.get("guid");
+		int id = (Integer) map.get("guid");
 		String startStr = (String) map.get("start");
 		Date start = HttpHelper.parseDate(startStr);
 		int duration = 1; // TODO

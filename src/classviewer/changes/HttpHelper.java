@@ -68,8 +68,17 @@ public class HttpHelper {
 		}
 	}
 	
-	public static Date parseDate(String str) {
+	public static boolean isSelfPaced(String str) {
 		if (str == null)
+			return false;
+		if (str.toLowerCase().contains("self")) {
+			return true;
+		}
+		return false;
+	}
+	
+	public static Date parseDate(String str) {
+		if (str == null || isSelfPaced(str))
 			return null;
 		str = str.replace(",", "");
 		str = str.replace("Sept ", "Sep "); // More of these?
@@ -79,10 +88,6 @@ public class HttpHelper {
 				return format.parse(str);
 			} catch (Exception e) {
 			}
-		}
-		if (str.toLowerCase().contains("self")) {
-			// Self-paced class, start whenever
-			return null;
 		}
 		try {
 			return parseQuarter(str);

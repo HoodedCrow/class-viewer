@@ -193,6 +193,7 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 			JCheckBox editor = (JCheckBox) (super.getComponent());
 			if (option != null) {
 				filter.setSelected(option, editor.isSelected());
+				editor.getParent().repaint();
 				return option;
 			} else {
 				filter.setActive(editor.isSelected());

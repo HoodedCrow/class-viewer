@@ -15,6 +15,7 @@ import classviewer.Settings;
 import classviewer.filters.CategoryCourseFilter;
 import classviewer.filters.CourseFilter;
 import classviewer.filters.LanguageCourseFilter;
+import classviewer.filters.SelfPacedCourseFilter;
 import classviewer.filters.SourceCourseFilter;
 import classviewer.filters.StatusCourseFilter;
 import classviewer.filters.UniversityCourseFilter;
@@ -86,6 +87,7 @@ public class CourseModel {
 		filters.add(new StatusCourseFilter(this));
 		filters.add(new CategoryCourseFilter(this));
 		filters.add(new UniversityCourseFilter(this));
+		filters.add(new SelfPacedCourseFilter(this));
 		filters.add(new LanguageCourseFilter(this));
 
 		for (int i = 0; i < submodel.length; i++)

@@ -3,12 +3,15 @@ package classviewer.model;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import classviewer.changes.HttpHelper;
+
 /**
  * Offering
  * 
  * @author TK
  */
 public class OffRec implements Linked {
+	public static final int SELF_PACE_DURATION = -1;
 	public static SimpleDateFormat dformat = new SimpleDateFormat("dd MMM yyyy");
 
 	private int id, duration, spread;
@@ -113,6 +116,15 @@ public class OffRec implements Linked {
 	public void setCourse(CourseRec course) {
 		this.course = course;
 	}
+	
+	public void setSelfPaced() {
+		this.duration = SELF_PACE_DURATION;
+	}
+
+	public boolean isSelfPaced() {
+		return this.duration == SELF_PACE_DURATION
+				|| HttpHelper.isSelfPaced(this.startStr);
+	}
 
 	public String asHTML() {
 		String ss = startStr;
@@ -139,7 +151,10 @@ public class OffRec implements Linked {
 			str = str + "<b>" + dformat.format(start) + "</b>";
 		else
 			str = str + "tba";
-		str = str + ", duration: <b>" + duration + "</b> weeks";
+		if (isSelfPaced())
+			str = str + ", self-paced";
+		else
+			str = str + ", duration: <b>" + duration + "</b> weeks";
 		if (active)
 			str = str + ", active";
 		if (home != null)

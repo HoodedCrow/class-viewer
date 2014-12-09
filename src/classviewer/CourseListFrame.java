@@ -117,6 +117,7 @@ public class CourseListFrame extends NamedInternalFrame implements
 		((CourseTableModel) table.getModel()).fireTableChanged(null);
 		setColumnWidth();
 		table.getRowSorter().setSortKeys(sortKeys);
+		setTitle("Courses (" + table.getRowCount() + ")");
 	}
 
 	public void addSelectionListener(CourseSelectionListener listener) {
