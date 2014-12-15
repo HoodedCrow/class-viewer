@@ -1,8 +1,6 @@
 package classviewer.filters;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
@@ -13,9 +11,7 @@ import classviewer.model.Status;
  * 
  * @author TK
  */
-public class StatusCourseFilter extends CourseFilter {
-	private HashSet<Status> selected = new HashSet<Status>();
-
+public class StatusCourseFilter extends SimpleCourseFilter<Status> {
 	public StatusCourseFilter(CourseModel courseModel) {
 		super(courseModel);
 	}
@@ -26,30 +22,18 @@ public class StatusCourseFilter extends CourseFilter {
 	}
 
 	@Override
-	public Collection<? extends Object> getOptions() {
-		ArrayList<Status> options = new ArrayList<Status>();
-		for (Status s : Status.getAll())
-			options.add(s);
-		return options;
-	}
-
-	@Override
 	public String getDescription(Object option) {
 		return ((Status) option).getName();
 	}
 
 	@Override
-	public boolean isSelected(Object option) {
-		return selected.contains(option);
-	}
-
-	@Override
-	public void setSelected(Object option, boolean selected) {
-		if (selected)
-			this.selected.add((Status) option);
-		else
-			this.selected.remove(option);
-		model.fireFiltersChanged(this);
+	public ArrayList<? extends Object> getOptions() {
+		if (options == null) {
+			options = new ArrayList<Status>();
+			for (Status s : Status.getAll())
+				options.add(s);
+		}
+		return options;
 	}
 
 	@Override

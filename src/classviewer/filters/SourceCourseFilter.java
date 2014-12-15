@@ -1,9 +1,9 @@
 package classviewer.filters;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 
+import classviewer.CourseFilterFrame;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.Source;
@@ -14,7 +14,9 @@ import classviewer.model.Source;
  * @author TK
  */
 public class SourceCourseFilter extends CourseFilter {
+	private ArrayList<Source> options = null;
 	private HashSet<Source> selected = new HashSet<Source>();
+	private CourseFilterFrame parentFrame;
 
 	public SourceCourseFilter(CourseModel courseModel) {
 		super(courseModel);
@@ -26,10 +28,12 @@ public class SourceCourseFilter extends CourseFilter {
 	}
 
 	@Override
-	public Collection<? extends Object> getOptions() {
-		ArrayList<Source> options = new ArrayList<Source>();
-		for (Source s : Source.values())
-			options.add(s);
+	public ArrayList<? extends Object> getOptions() {
+		if (options == null) {
+			options = new ArrayList<Source>();
+			for (Source s : Source.values())
+				options.add(s);
+		}
 		return options;
 	}
 
@@ -50,6 +54,13 @@ public class SourceCourseFilter extends CourseFilter {
 		else
 			this.selected.remove(option);
 		model.fireFiltersChanged(this);
+		parentFrame.sourceSelectionChanged(this.selected);
+	}
+
+	@Override
+	public void setActive(boolean value) {
+		super.setActive(value);
+		parentFrame.sourceSelectionChanged(value ? this.selected : null);
 	}
 
 	@Override
@@ -57,5 +68,15 @@ public class SourceCourseFilter extends CourseFilter {
 		if (!this.active)
 			return true;
 		return selected.contains(rec.getSource());
+	}
+
+	public void setParentFrame(CourseFilterFrame parentFrame) {
+		this.parentFrame = parentFrame;
+	}
+
+	@Override
+	public ArrayList<? extends Object> getVisibleOptions(
+			HashSet<Source> selectedSources) {
+		return getOptions();
 	}
 }

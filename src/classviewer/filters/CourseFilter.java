@@ -1,14 +1,15 @@
 package classviewer.filters;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
+import classviewer.model.Source;
 
 public abstract class CourseFilter {
 
 	protected boolean active = false;
-
 	protected CourseModel model;
 
 	public abstract String getName();
@@ -26,7 +27,7 @@ public abstract class CourseFilter {
 		model.fireFiltersChanged(this);
 	}
 
-	public abstract Collection<? extends Object> getOptions();
+	public abstract ArrayList<? extends Object> getOptions();
 
 	public abstract String getDescription(Object option);
 
@@ -35,4 +36,7 @@ public abstract class CourseFilter {
 	public abstract void setSelected(Object option, boolean selected);
 
 	public abstract boolean accept(CourseRec rec);
+
+	public abstract ArrayList<? extends Object> getVisibleOptions(
+			HashSet<Source> selectedSources);
 }

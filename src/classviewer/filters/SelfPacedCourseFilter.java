@@ -1,17 +1,14 @@
 package classviewer.filters;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
 
-public class SelfPacedCourseFilter extends CourseFilter {
+public class SelfPacedCourseFilter extends SimpleCourseFilter<String> {
 	private final String SELF_PACED = "Self-paced";
 	private final String ONLY_SCHEDULED = "Only scheduled";
-	private HashSet<String> selected = new HashSet<String>();
 
 	public SelfPacedCourseFilter(CourseModel courseModel) {
 		super(courseModel);
@@ -23,31 +20,13 @@ public class SelfPacedCourseFilter extends CourseFilter {
 	}
 
 	@Override
-	public Collection<? extends Object> getOptions() {
-		ArrayList<String> options = new ArrayList<String>();
-		options.add(SELF_PACED);
-		options.add(ONLY_SCHEDULED);
+	public ArrayList<? extends Object> getOptions() {
+		if (options == null) {
+			options = new ArrayList<String>();
+			options.add(SELF_PACED);
+			options.add(ONLY_SCHEDULED);
+		}
 		return options;
-	}
-
-	@Override
-	public String getDescription(Object option) {
-		return (String) option;
-	}
-
-	@Override
-	public boolean isSelected(Object option) {
-		return selected.contains(option);
-	}
-
-	@Override
-	public void setSelected(Object option, boolean selected) {
-		if (selected) {
-			this.selected.clear();
-			this.selected.add((String) option);
-		} else
-			this.selected.remove(option);
-		model.fireFiltersChanged(this);
 	}
 
 	@Override

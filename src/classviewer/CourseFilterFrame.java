@@ -2,20 +2,26 @@ package classviewer;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JCheckBox;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import classviewer.filters.CourseFilter;
+import classviewer.filters.SourceCourseFilter;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseModelListener;
 import classviewer.model.CourseRec;
+import classviewer.model.Source;
 
 /**
  * Frame for setting up filters.
@@ -32,6 +38,8 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 	private DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
 	private JTree tree;
 	private FilterTreeModel treeModel;
+	private HashSet<Source> selectedSources;
+	private HashMap<Object, DefaultMutableTreeNode> nodeCache = new HashMap<Object, DefaultMutableTreeNode>();
 
 	public CourseFilterFrame(CourseModel model) {
 		super("Filter", model);
@@ -39,7 +47,6 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 		Dimension dim = new Dimension(200, 200);
 		this.setMinimumSize(dim);
 		this.setSize(dim);
-
 		model.addListener(this);
 
 		// Make a root node
@@ -50,25 +57,39 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 				Object comp = path.getLastPathComponent();
 				if (getFilterOut(comp) != null)
 					return true;
-				if (getDescOut(comp) != null)
-					return true;
+				Object option = getDescOut(comp);
+				if (option != null) {
+					CourseFilter filter = getFilterOut(((DefaultMutableTreeNode) comp)
+							.getParent());
+					if (filter != null) {
+						return true;
+					}
+				}
 				return false;
 			}
 		};
 		tree.setCellRenderer(new FilterTreeRenderer());
 		tree.setCellEditor(new FilterCellEditor());
 		tree.setEditable(true);
-		tree.setRootVisible(true); // otherwise checkboxes are not visible in Win
+		tree.setRootVisible(true); // otherwise checkboxes are not visible in
+									// Win
+		tree.setRowHeight(-1);
 		this.add(new JScrollPane(tree));
 	}
 
-	protected void initTree() {
+	private void initTree() {
 		root.removeAllChildren();
+		nodeCache.clear();
 		for (CourseFilter f : courseModel.getFilters()) {
 			DefaultMutableTreeNode n = new DefaultMutableTreeNode(f);
+			if (f instanceof SourceCourseFilter)
+				((SourceCourseFilter) f).setParentFrame(this);
 			root.add(n);
-			for (Object el : f.getOptions())
-				n.add(new DefaultMutableTreeNode(el));
+			for (Object el : f.getOptions()) {
+				DefaultMutableTreeNode child = new DefaultMutableTreeNode(el);
+				nodeCache.put(el, child);
+				n.add(child);
+			}
 		}
 	}
 
@@ -107,9 +128,10 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 			if (option != null) {
 				filter = getFilterOut(((DefaultMutableTreeNode) value)
 						.getParent());
-				if (filter != null)
+				if (filter != null) {
 					return prepareCheckbox(filter.getDescription(option),
 							filter.isSelected(option), selected);
+				}
 			}
 			return super.getTreeCellRendererComponent(tree, value, selected,
 					expanded, leaf, row, hasFocus);
@@ -137,10 +159,30 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 		}
 
 		@Override
+		public Object getChild(Object parent, int index) {
+			CourseFilter filter = getFilterOut(parent);
+			if (filter != null) {
+				Object data = filter.getVisibleOptions(selectedSources).get(
+						index);
+				DefaultMutableTreeNode child = nodeCache.get(data);
+				if (child == null) {
+					child = new DefaultMutableTreeNode(data);
+					nodeCache.put(data, child);
+					((DefaultMutableTreeNode) parent).insert(child, index);
+				}
+				return child;
+			}
+			return super.getChild(parent, index);
+		}
+
+		@Override
 		public int getChildCount(Object parent) {
 			CourseFilter filter = getFilterOut(parent);
-			if (filter != null && !filter.isActive())
-				return 0;
+			if (filter != null) {
+				if (!filter.isActive())
+					return 0;
+				return filter.getVisibleOptions(selectedSources).size();
+			}
 			return super.getChildCount(parent);
 		}
 
@@ -190,7 +232,7 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 		}
 
 		public Object getCellEditorValue() {
-			JCheckBox editor = (JCheckBox) (super.getComponent());
+			final JCheckBox editor = (JCheckBox) (super.getComponent());
 			if (option != null) {
 				filter.setSelected(option, editor.isSelected());
 				editor.getParent().repaint();
@@ -198,11 +240,25 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 			} else {
 				filter.setActive(editor.isSelected());
 				treeModel.nodeStructureChanged(node);
-				// TODO Want to also open the node. The following does it, but
-				// prints a stack trace. Need a better approach.
-				// if (editor.isSelected())
-				// tree.expandPath(new TreePath(node.getPath()));
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						expandAllNodes();
+					}
+				});
 				return filter;
+			}
+		}
+	}
+
+	private void expandAllNodes() {
+		DefaultMutableTreeNode rt = (DefaultMutableTreeNode) treeModel
+				.getRoot();
+		for (int i = 0; i < rt.getChildCount(); i++) {
+			DefaultMutableTreeNode child = (DefaultMutableTreeNode) rt
+					.getChildAt(i);
+			if (!child.isLeaf()) {
+				TreePath path = new TreePath(child.getPath());
+				tree.expandPath(path);
 			}
 		}
 	}
@@ -221,5 +277,15 @@ public class CourseFilterFrame extends NamedInternalFrame implements
 	@Override
 	public void filtersUpdated() {
 		// Noop, we probably caused this event anyway
+	}
+
+	public void sourceSelectionChanged(final HashSet<Source> selected) {
+		selectedSources = selected;
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				treeModel.nodeStructureChanged((TreeNode) treeModel.getRoot());
+				expandAllNodes();
+			}
+		});
 	}
 }
