@@ -30,12 +30,18 @@ public class EdxOfferingChange extends OfferingChange {
 		return super.getField(rec);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Object getTarget() {
+		CourseRec cr;
 		if (offering != null)
-			return offering.getCourse().getName() + " [" + offering.getId()
-					+ "]";
-		return course.getName(); // TODO + " [" + record.getCourseId() + "]";
+			cr = offering.getCourse();
+		else
+			cr = course;
+		String res = "[" + cr.getStatus() + "] " + cr.getName();
+		if (offering != null)
+			return res + " [" + offering.getId() + "]";
+		return res + " [" + ((HashMap<String, Object>) newValue).get("guid") + "]";
 	}
 
 	@SuppressWarnings("unchecked")

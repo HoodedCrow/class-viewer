@@ -42,10 +42,15 @@ public class OfferingChange extends Change {
 	}
 
 	public Object getTarget() {
+		CourseRec cr;
 		if (offering != null)
-			return offering.getCourse().getName() + " [" + offering.getId()
-					+ "]";
-		return course.getName() + " [" + json.get("id") + "]";
+			cr = offering.getCourse();
+		else
+			cr = course;
+		String res = "[" + cr.getStatus() + "] " + cr.getName();
+		if (offering != null)
+			return res + " [" + offering.getId() + "]";
+		return res + " [" + json.get("id") + "]";
 	}
 
 	@Override
