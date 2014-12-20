@@ -43,7 +43,8 @@ public class CourseRec implements Named, Linked {
 	@Override
 	public boolean equals(Object other) {
 		try {
-			return ((CourseRec) other).id == this.id;
+			CourseRec o = (CourseRec) other; 
+			return o.id == this.id && o.source == this.source;
 		} catch (ClassCastException e) {
 			return false;
 		}
