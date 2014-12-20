@@ -128,22 +128,7 @@ public class XmlModelAdapter {
 		if (categories != null && !categories.isEmpty()) {
 			String[] parts = categories.split(" ");
 			for (String s : parts) {
-				// TODO Temporary clean up.
-				if (source == Source.EDX && s.startsWith("X"))
-					s = s.substring(1); 
 				DescRec cat = model.getCategory(source, s);
-				// TODO Temporary until all is converted
-				if (cat == null) {
-					for (Source src : Source.values()) {
-						cat = model.getCategory(src, s);
-						if (cat != null) {
-							System.out.println("Changing class " + shortName + " to " + src);
-							res.source = src;
-							source = src;
-							break;
-						}
-					}
-				}
 				if (cat == null)
 					System.err.println("Cannot find category " + s + ", specified in " + universities);
 				else
@@ -154,18 +139,6 @@ public class XmlModelAdapter {
 			String[] parts = universities.split(" ");
 			for (String s : parts) {
 				DescRec uni = model.getUniversity(source, s);
-				// TODO Temporary until all is converted
-				if (uni == null) {
-					for (Source src : Source.values()) {
-						uni = model.getUniversity(src, s);
-						if (uni != null) {
-							System.out.println("Changing class " + shortName + " to " + src);
-							res.source = src;
-							source = src;
-							break;
-						}
-					}
-				}
 				if (uni == null)
 					System.err.println("Cannot find university " + s + ", specified in " + universities);
 				else

@@ -9,8 +9,7 @@ import java.util.HashSet;
  * @author TK
  */
 public class CourseRec implements Named, Linked {
-
-	protected Source source;  // TODO Should be private once all is converted.
+	private Source source;
 	private int id;
 	private String shortName;
 	private String name;
