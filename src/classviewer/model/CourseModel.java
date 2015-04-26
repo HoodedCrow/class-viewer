@@ -30,9 +30,9 @@ public class CourseModel {
 	class Submodel {
 		private HashMap<String, DescRec> categories = new HashMap<String, DescRec>();
 		private HashMap<String, DescRec> universities = new HashMap<String, DescRec>();
-		private HashMap<Integer, CourseRec> courses = new HashMap<Integer, CourseRec>();
+		private HashMap<Long, CourseRec> courses = new HashMap<Long, CourseRec>();
 		/** Smallest (most negative) id ever assigned. */
-		private int smallestId = 0;
+		private long smallestId = 0;
 
 		private void addCategory(DescRec desc) {
 			if (categories.containsKey(desc.getId()))
@@ -60,7 +60,7 @@ public class CourseModel {
 		 * this method will not be called often.
 		 */
 		private void updateSmallestId() {
-			int value = 0; // default
+			long value = 0; // default
 			for (CourseRec cr : courses.values()) {
 				value = Math.min(value, cr.getId());
 				for (OffRec or : cr.getOfferings())
@@ -112,11 +112,11 @@ public class CourseModel {
 		submodel[course.getSource().ordinal()].addCourse(course);
 	}
 
-	public CourseRec getCourse(Source source, Integer id) {
+	public CourseRec getCourse(Source source, Long id) {
 		return submodel[source.ordinal()].courses.get(id);
 	}
 
-	public CourseRec removeCourse(Source source, Integer id) {
+	public CourseRec removeCourse(Source source, Long id) {
 		return submodel[source.ordinal()].courses.remove(id);
 	}
 
@@ -215,7 +215,7 @@ public class CourseModel {
 		return filteredCourses;
 	}
 
-	public CourseRec getClassById(int id, Source source) {
+	public CourseRec getClassById(long id, Source source) {
 		// TODO Temporary until all is converted
 		CourseRec res = submodel[source.ordinal()].courses.get(id);
 		if (res == null)
@@ -293,7 +293,7 @@ public class CourseModel {
 			int bySource = Integer.compare(o1.getSource().ordinal(), o2
 					.getSource().ordinal());
 			if (bySource == 0)
-				return Integer.compare(o1.getId(), o2.getId());
+				return Long.compare(o1.getId(), o2.getId());
 			return bySource;
 		}
 	}

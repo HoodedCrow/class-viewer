@@ -33,7 +33,7 @@ public class StatusFileModelAdapter {
 						+ str.length);
 				continue;
 			}
-			int id = new Integer(str[1]);
+			long id = new Long(str[1]);
 			// Clean up. TODO Remove eventually.
 			if (id < 0) id = -id;
 			if ('c' == str[0].charAt(0)) {	

@@ -143,7 +143,7 @@ public class CourseChange extends Change {
 	}
 
 	private CourseRec makeCourse(CourseModel model) {
-		Integer id = (Integer) json.get("id");
+		Long id = (Long) json.get("id");
 		String shortName = (String) json.get("short_name");
 		String name = (String) json.get("name");
 		String dsc = (String) json.get("short_description");
@@ -151,7 +151,7 @@ public class CourseChange extends Change {
 		String language = (String) json.get("language");
 		String link = (String) json.get("social_link");
 		CourseRec res = new CourseRec(source, id, shortName, name, dsc,
-				instructor, link, language);
+				instructor, link, language, false);  // TODO by default all scheduled
 		return res;
 	}
 }

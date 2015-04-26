@@ -57,7 +57,7 @@ public class EdxModelAdapter {
 			((HttpsURLConnection) urlCon).setSSLSocketFactory(sslSocketFactory);
 		InputStream stream = urlCon.getInputStream();
 		InputStreamReader reader = new InputStreamReader(stream);
-		this.json = JsonParser.parse(reader);
+		this.json = (ArrayList<Object>) JsonParser.parse(reader);
 		stream.close();
 
 		// Keys for each record:
@@ -253,7 +253,7 @@ public class EdxModelAdapter {
 		// values until TODO source flags are introduced.
 		ArrayList<OffRec> oldOffs = new ArrayList<OffRec>(oldRec.getOfferings());
 		for (HashMap<String, Object> newOff : offerings) {
-			int newId = (Integer) newOff.get("guid");
+			long newId = (Long) newOff.get("guid");
 			Date newDate = HttpHelper.parseDate((String) newOff.get("start"));
 			// Find it by id or, for now, date.
 			OffRec oldOff = null;
@@ -264,7 +264,7 @@ public class EdxModelAdapter {
 					if (o.getId() != newId) {
 						System.out.println("Changing offering id " + o.getId()
 								+ " to " + newId);
-						o.updateId(newId);
+						o.updateId((int) newId);
 					}
 					oldOff = o;
 					break;

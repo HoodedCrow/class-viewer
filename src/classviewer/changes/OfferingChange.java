@@ -112,29 +112,29 @@ public class OfferingChange extends Change {
 	}
 
 	public static OffRec makeOffering(HashMap<String, Object> json) {
-		Integer id = (Integer) json.get("id");
+		Long id = (Long) json.get("id");
 
 		// Some of these might be missing
-		Integer startDay = (Integer) json.get("start_day");
-		Integer startMon = (Integer) json.get("start_month");
-		Integer startYear = (Integer) json.get("start_year");
+		Long startDay = (Long) json.get("start_day");
+		Long startMon = (Long) json.get("start_month");
+		Long startYear = (Long) json.get("start_year");
 		int spread = 1;
 		Date start = null;
 		String startStr = (String) json.get("start_date_string");
 
 		Calendar cal = Calendar.getInstance();
 		if (startDay == null)
-			startDay = 1;
-		cal.set(Calendar.DAY_OF_MONTH, startDay);
+			startDay = 1L;
+		cal.set(Calendar.DAY_OF_MONTH, startDay.intValue());
 		if (startMon == null) {
 			// TODO: pull season?
 			spread = 4;
-			startMon = 1;
+			startMon = 1L;
 		}
-		cal.set(Calendar.MONTH, startMon - 1);
+		cal.set(Calendar.MONTH, startMon.intValue() - 1);
 		if (startYear != null) {
 			// No year => no date
-			cal.set(Calendar.YEAR, startYear);
+			cal.set(Calendar.YEAR, startYear.intValue());
 			start = cal.getTime();
 		} else {
 			spread = 1; // no data

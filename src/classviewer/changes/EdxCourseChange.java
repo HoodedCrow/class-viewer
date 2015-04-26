@@ -124,7 +124,7 @@ public class EdxCourseChange extends CourseChange {
 		String language = "en"; // until further notice
 		String link = null;
 		CourseRec res = new CourseRec(Source.EDX, id, short_name, name, dsc,
-				instructor, link, language);
+				instructor, link, language, false);  // TODO until further notice
 		for (String s : (ArrayList<String>) map.get("subjects"))
 			res.addCategory(model.getCategory(src, EdxModelAdapter.makeCategoryId(s)));
 		for (String s : (ArrayList<String>) map.get("schools"))

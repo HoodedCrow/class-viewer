@@ -120,9 +120,10 @@ public class XmlModelAdapter {
 		String desc = valueOrNull(item, "Long");
 		String prof = valueOrNull(item, "Prof");
 		String link = valueOrNull(item, "Link");
+		boolean selfStudy = "true".equals(attrOrNull(attrs, "ondem"));
 
 		CourseRec res = new CourseRec(source, id, shortName, name, desc, prof,
-				link, language);
+				link, language, selfStudy);
 
 		// Dereference categories and universities
 		if (categories != null && !categories.isEmpty()) {
@@ -290,7 +291,7 @@ public class XmlModelAdapter {
 			Collections.sort(list2, new Comparator<CourseRec>() {
 				@Override
 				public int compare(CourseRec o1, CourseRec o2) {
-					return Integer.compare(o1.getId(), o2.getId());
+					return Long.compare(o1.getId(), o2.getId());
 				}
 			});
 			for (CourseRec rec : list2) {
@@ -333,6 +334,8 @@ public class XmlModelAdapter {
 		node.setAttribute("short", rec.getShortName());
 		node.setAttribute("lang", rec.getLanguage());
 		node.setAttribute("src", "" + rec.getSource().oneLetter());
+		if (rec.isSelfStudy())
+			node.setAttribute("ondem", "true");
 		String str = "";
 		for (DescRec dr : rec.getCategories())
 			str = str + " " + dr.getId();

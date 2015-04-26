@@ -13,8 +13,8 @@ import java.util.HashMap;
  * @author TK
  */
 public class JsonParser {
-	/** Parse JSON from the reader (file or URL) into a list */
-	public static ArrayList<Object> parse(Reader reader) throws IOException {
+	/** Parse JSON from the reader (file or URL) */
+	public static Object parse(Reader reader) throws IOException {
 		BufferedReader br = new BufferedReader(reader);
 		StringBuffer buf = new StringBuffer();
 		while (true) {
@@ -26,9 +26,7 @@ public class JsonParser {
 
 		int[] index = new int[1];
 		index[0] = 0;
-		@SuppressWarnings("unchecked")
-		ArrayList<Object> mainList = (ArrayList<Object>) parseObject(buf, index);
-		return mainList;
+		return parseObject(buf, index);
 	}
 
 	/**
@@ -96,7 +94,7 @@ public class JsonParser {
 				if (isDouble)
 					val = new Double(buf.substring(idx[0], next));
 				else
-					val = new Integer(buf.substring(idx[0], next));
+					val = new Long(buf.substring(idx[0], next));
 				idx[0] = next;
 				return val;
 			} catch (NumberFormatException e) {

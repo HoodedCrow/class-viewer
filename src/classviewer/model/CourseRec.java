@@ -10,20 +10,22 @@ import java.util.HashSet;
  */
 public class CourseRec implements Named, Linked {
 	private Source source;
-	private int id;
+	private long id;
 	private String shortName;
 	private String name;
 	private String description;
 	private String instructor;
 	private String link;
 	private String language;
+	private boolean selfStudy = false; // Set default for backward compatibility.
 	private Status status = Status.UNKNOWN;
 	private ArrayList<DescRec> categories = new ArrayList<DescRec>();
 	private ArrayList<DescRec> universities = new ArrayList<DescRec>();
 	private ArrayList<OffRec> offerings = new ArrayList<OffRec>();
 
-	public CourseRec(Source source, int id, String shortName, String name,
-			String description, String instructor, String link, String language) {
+	public CourseRec(Source source, long id, String shortName, String name,
+			String description, String instructor, String link, String language,
+			boolean selfStudy) {
 		this.source = source;
 		this.id = id;
 		this.shortName = shortName;
@@ -32,6 +34,7 @@ public class CourseRec implements Named, Linked {
 		this.instructor = instructor == null ? "" : instructor;
 		this.link = link == null ? "" : link;
 		this.setLanguage(language);
+		this.selfStudy = selfStudy;
 	}
 
 	public void updateId(int newId) {
@@ -67,7 +70,7 @@ public class CourseRec implements Named, Linked {
 		r.setCourse(this);
 	}
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
@@ -153,6 +156,10 @@ public class CourseRec implements Named, Linked {
 	public void setLanguage(String language) {
 		this.language = language;
 	}
+	
+	public boolean isSelfStudy() {
+		return selfStudy;
+	}
 
 	public ArrayList<DescRec> getCategories() {
 		return categories;
@@ -166,7 +173,7 @@ public class CourseRec implements Named, Linked {
 		return offerings;
 	}
 
-	public OffRec removeOffering(int offId) {
+	public OffRec removeOffering(long offId) {
 		for (int i = 0; i < offerings.size(); i++)
 			if (offerings.get(i).getId() == offId)
 				return offerings.remove(i);
@@ -174,8 +181,9 @@ public class CourseRec implements Named, Linked {
 	}
 
 	public String getLongHtml() {
-		String str = "<b>" + name + "</b> (" + id + ", " + status.getName()
-				+ ", " + shortName + ") on " + getSource().pretty() + "<br/>\n";
+		String str = "<b>" + (selfStudy ? "#" : "") + name + "</b> (" + id
+				+ ", " + status.getName() + ", " + shortName + ") on "
+				+ getSource().pretty() + "<br/>\n";
 		str += "<b>Instructor(s):</b> " + instructor + "<br/>";
 		str += "<b>Categories:</b> " + recNames(categories) + "<br/>";
 		str += "<b>University:</b> " + recNames(universities) + "<br/>";
@@ -195,7 +203,7 @@ public class CourseRec implements Named, Linked {
 		return res;
 	}
 
-	public OffRec getOffering(int id) {
+	public OffRec getOffering(long id) {
 		for (OffRec r : offerings)
 			if (r.getId() == id)
 				return r;

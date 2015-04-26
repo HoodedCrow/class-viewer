@@ -32,6 +32,8 @@ import javax.swing.table.TableRowSorter;
 import classviewer.changes.Change;
 import classviewer.changes.EdxModelAdapter;
 import classviewer.changes.CourseraModelAdapter;
+import classviewer.changes.CourseraModelAdapter1;
+import classviewer.changes.CourseraModelAdapter2;
 import classviewer.changes.OfferingChange;
 import classviewer.model.CourseModel;
 
@@ -46,8 +48,6 @@ public class ChangesFrame extends NamedInternalFrame {
 	private JTable table;
 	private Settings settings;
 
-	/** Debug JSON data? Should be settings configurable */
-	private boolean debugJson = false;
 	private ArrayList<Change> changes = null;
 	private ArrayList<Boolean> changeSelected = new ArrayList<Boolean>();
 	/**
@@ -57,7 +57,7 @@ public class ChangesFrame extends NamedInternalFrame {
 	private boolean pruneDropLinkProf = false;
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public ChangesFrame(CourseModel model, Settings settings) {
+	public ChangesFrame(CourseModel model, final Settings settings) {
 		super("Changes", model);
 
 		Dimension dim = new Dimension(400, 200);
@@ -71,16 +71,26 @@ public class ChangesFrame extends NamedInternalFrame {
 		JPanel buttons = new JPanel();
 		this.add(buttons, BorderLayout.NORTH);
 
-		JButton but = new JButton("Load Coursera");
+		JButton but = new JButton("Coursera Sessions");
 		but.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				loadCoursera();
+				loadCoursera(new CourseraModelAdapter1(),
+						settings.getString(Settings.COURSERA_URL1));
+			}
+		});
+		buttons.add(but);
+		but = new JButton("Coursera Anytime");
+		but.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				loadCoursera(new CourseraModelAdapter2(),
+						settings.getString(Settings.COURSERA_URL2));
 			}
 		});
 		buttons.add(but);
 
-		but = new JButton("Load EdX");
+		but = new JButton("EdX");
 		but.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -245,14 +255,14 @@ public class ChangesFrame extends NamedInternalFrame {
 		}
 	}
 
-	protected void loadCoursera() {
+	protected void loadCoursera(final CourseraModelAdapter adapter,
+			final String url) {
 		final WaitDialog wait = new WaitDialog();
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				CourseraModelAdapter json = new CourseraModelAdapter();
 				try {
-					json.load(settings.getString(Settings.COURSERA_URL));
+					adapter.load(url);
 				} catch (IOException e) {
 					wait.setVisible(false);
 					JOptionPane.showMessageDialog(null,
@@ -260,14 +270,7 @@ public class ChangesFrame extends NamedInternalFrame {
 					return;
 				}
 
-				if (debugJson) {
-					System.out.println("Course-level keys");
-					System.out.println(json.getCourseLevelKeys());
-					System.out.println("Offering-level keys");
-					System.out.println(json.getOfferingLevelKeys());
-				}
-
-				changes = json.collectChanges(courseModel);
+				changes = adapter.collectChanges(courseModel);
 				Collections.sort(changes);
 				changeSelected.clear();
 				for (int i = 0; i < changes.size(); i++)
