@@ -121,17 +121,15 @@ public class EdxModelAdapter {
 		for (String u : universities) {
 			String code = makeIdSafe(u);
 			if (courseModel.getUniversity(Source.EDX, code) == null)
-				changes.add(new DescChange(Source.EDX, DescChange.UNIVERSITY,
-						Change.ADD, u, null,
-						makeUniversityJsonForId(code, u)));
+				changes.add(DescChange.add(DescChange.UNIVERSITY, Source.EDX,
+						code, u, null));
 		}
 		HashSet<String> newIds = new HashSet<String>();
 		for (String s : this.universities)
 			newIds.add(makeIdSafe(s));
 		for (DescRec rec : courseModel.getUniversities(Source.EDX)) {
 			if (!newIds.contains(rec.getId())) {
-				changes.add(new DescChange(Source.EDX, DescChange.UNIVERSITY,
-						Change.DELETE, "University", rec, null));
+				changes.add(DescChange.delete(DescChange.UNIVERSITY, rec));
 			} else {
 				// TODO Once we get description for universities, diff them.
 			}
@@ -146,16 +144,15 @@ public class EdxModelAdapter {
 		for (String c : categories) {
 			String code = makeCategoryId(c);
 			if (courseModel.getCategory(Source.EDX, code) == null)
-				changes.add(new DescChange(Source.EDX, DescChange.CATEGORY,
-						Change.ADD, c, null, makeCategoryJsonForId(code, c)));
+				changes.add(DescChange.add(DescChange.CATEGORY, Source.EDX,
+						code, c, null));
 		}
 		HashSet<String> newIds = new HashSet<String>();
 		for (String s : this.categories)
 			newIds.add(makeIdSafe(s));
 		for (DescRec rec : courseModel.getCategories(Source.EDX)) {
 			if (!newIds.contains(rec.getId())) {
-				changes.add(new DescChange(Source.EDX, DescChange.CATEGORY,
-						Change.DELETE, "Category", rec, null));
+				changes.add(DescChange.delete(DescChange.CATEGORY, rec));
 			} else {
 				// TODO Once have descriptions, do diff.
 			}
@@ -167,6 +164,7 @@ public class EdxModelAdapter {
 	 * Compare the internal structure produced by the parse method to the given
 	 * model and return the set of differences
 	 */
+	@SuppressWarnings("unchecked")
 	public ArrayList<Change> collectChanges(CourseModel courseModel,
 			int tooOldInDays) {
 		// Build a date before which we do not remove offerings
@@ -189,7 +187,6 @@ public class EdxModelAdapter {
 			if (oldRec == null) {
 				HashMap<String, Object> first = course.get(0);
 				String name = (String) first.get("l");
-				@SuppressWarnings("unchecked")
 				String uni = ((ArrayList<String>) first.get("schools")).get(0);
 				oldRec = courseModel.getClassByLongNameAndUni(name, uni, Source.EDX);
 				if (oldRec != null) {
@@ -201,8 +198,29 @@ public class EdxModelAdapter {
 			if (oldRec != null) {
 				diffCourse(course, oldRec, changes, courseModel, tooOld);
 			} else {
-				changes.add(new EdxCourseChange(Change.ADD, null, null, course,
-						courseModel));
+				HashMap<String, Object> map = course.get(0);
+				String id = String.valueOf(map.get("guid")); // TODO Remove?
+																// model.getNewNegativeId();
+				String short_name = EdxModelAdapter.getCleanCode(map);
+				String name = (String) map.get("l");
+				String dsc = null; // TODO
+				String instructor = null; // TODO (ArrayList<String>) map.get("staff");
+				String language = "en"; // TODO until further notice. "languages"
+				String link = null; // TODO "url"
+				CourseRec record = new CourseRec(Source.EDX, id, short_name,
+					name, dsc, instructor, link, language, false); // TODO until further notice
+				for (HashMap<String, Object> m : course) {
+					record.addOffering(makeOffering(m));
+				}
+				ArrayList<String> categories = new ArrayList<String>();
+				for (String s : (ArrayList<String>) map.get("subjects")) {
+					categories.add(makeCategoryId(s));
+				}
+				ArrayList<String> universities = new ArrayList<String>();
+				for (String s : (ArrayList<String>) map.get("schools")) {
+					universities.add(makeIdSafe(s));
+				}
+				changes.add(CourseChange.add(record, categories, universities));
 			}
 		}
 
@@ -223,8 +241,7 @@ public class EdxModelAdapter {
 		String oldLongName = oldRec.getName();
 		if (oldLongName == null && longName != null || oldLongName != null
 				&& !oldLongName.equals(longName))
-			changes.add(new EdxCourseChange(Change.MODIFY, "Name", oldRec,
-					longName, model));
+			changes.add(CourseChange.setName(oldRec, longName));
 		// No description for now.
 
 		// Categories.
@@ -234,8 +251,7 @@ public class EdxModelAdapter {
 		HashSet<String> existing = CourseRec.idSet(oldRec.getCategories());
 		if (incoming.size() != existing.size()
 				|| !existing.containsAll(incoming)) {
-			changes.add(new EdxCourseChange(Change.MODIFY, "Categories",
-					oldRec, incoming, model));
+			changes.add(CourseChange.setCategories(oldRec, incoming));
 		}
 
 		// Universities
@@ -245,8 +261,7 @@ public class EdxModelAdapter {
 		existing = CourseRec.idSet(oldRec.getUniversities());
 		if (incoming.size() != existing.size()
 				|| !existing.containsAll(incoming)) {
-			changes.add(new EdxCourseChange(Change.MODIFY, "Universities",
-					oldRec, incoming, model));
+			changes.add(CourseChange.setUniversities(oldRec, incoming));
 		}
 
 		// EdX offerings now have guids, finally! We will flip them to negative
@@ -273,17 +288,26 @@ public class EdxModelAdapter {
 				oldOffs.remove(oldOff); // Accounted for
 				diffOffering(oldRec, oldOff, newOff, changes);
 			} else {
-				changes.add(new EdxOfferingChange(Change.ADD, oldRec, null,
-						null, newOff));
+				changes.add(OfferingChange.add(oldRec, makeOffering(newOff)));
 			}
 		}
 		// Remove old offerings if any left.
 		for (OffRec o : oldOffs) {
 			if (o.getStart() == null || o.getStart().after(tooOld)) {
-				changes.add(new EdxOfferingChange(Change.DELETE, oldRec, null,
-						o, null));
+				changes.add(OfferingChange.delete(o));
 			}
 		}
+	}
+
+	private OffRec makeOffering(HashMap<String, Object> map) {
+		long id = (Long) map.get("guid");
+		String startStr = (String) map.get("start");
+		Date start = HttpHelper.parseDate(startStr);
+		int duration = 1; // TODO
+		int spread = 1; // TODO
+		String home = getCleanUrl(map);
+		boolean active = getActiveStatus(map);
+		return new OffRec(id, start, duration, spread, home, active, startStr);
 	}
 
 	private void diffOffering(CourseRec oldRec, OffRec oldOff,
@@ -293,40 +317,21 @@ public class EdxModelAdapter {
 		if (oldOff.getStart() == null && newDate != null
 				|| oldOff.getStart() != null
 				&& !oldOff.getStart().equals(newDate)) {
-			// Save as a string.
-			changes.add(new EdxOfferingChange(Change.MODIFY, oldRec, "Start",
-					oldOff, newOff.get("start")));
+			// TODO? Save as a string.
+			changes.add(OfferingChange.setStart(oldOff, newDate));
 		}
 
 		// URL. With some clean up.
 		String newUrl = getCleanUrl(newOff);
-		if (oldOff.getLink() == null || !oldOff.getLink().equals(newUrl)) {
-			changes.add(new EdxOfferingChange(Change.MODIFY, oldRec, "Link",
-					oldOff, newUrl));
+		if (Change.fieldChanged(newUrl, oldOff.getLink())) {
+			changes.add(OfferingChange.setLink(oldOff, newUrl));
 		}
 
 		// Active from availability.
 		Boolean active = getActiveStatus(newOff);
 		if (oldOff.isActive() != active) {
-			changes.add(new EdxOfferingChange(Change.MODIFY, oldRec, "Active",
-					oldOff, active));
+			changes.add(OfferingChange.setActive(oldOff, active));
 		}
-	}
-
-	private HashMap<String, Object> makeUniversityJsonForId(String code,
-			String name) {
-		HashMap<String, Object> res = new HashMap<String, Object>();
-		res.put("name", name);
-		res.put("short_name", code);
-		return res;
-	}
-
-	private HashMap<String, Object> makeCategoryJsonForId(String code,
-			String name) {
-		HashMap<String, Object> res = new HashMap<String, Object>();
-		res.put("name", name);
-		res.put("short_name", code);
-		return res;
 	}
 
 	public String extractEndDate(String baseUrl, String home) {

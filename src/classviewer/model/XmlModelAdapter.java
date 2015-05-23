@@ -102,14 +102,12 @@ public class XmlModelAdapter {
 		if (!"Class".equals(item.getNodeName()))
 			return null;
 		NamedNodeMap attrs = item.getAttributes();
-		Integer id;
+		String id;
 		String shortName, categories, universities, language;
 		try {
-			id = Integer.parseInt(attrs.getNamedItem("id").getNodeValue());
-			// Clean up. TODO Remove eventually.
-			if (id < 0) id = -id;
+			id = attrs.getNamedItem("id").getNodeValue();
 		} catch (Exception e) {
-			throw new IOException("Cannot have a course without id");
+			throw new IOException("Cannot have a course without id: " + e);
 		}
 		shortName = attrOrNull(attrs, "short");
 		categories = attrOrNull(attrs, "categories");
@@ -120,10 +118,10 @@ public class XmlModelAdapter {
 		String desc = valueOrNull(item, "Long");
 		String prof = valueOrNull(item, "Prof");
 		String link = valueOrNull(item, "Link");
-		boolean selfStudy = "true".equals(attrOrNull(attrs, "ondem"));
+		boolean selfStudy = "1".equals(attrOrNull(attrs, "ondem"));
 
-		CourseRec res = new CourseRec(source, id, shortName, name, desc, prof,
-				link, language, selfStudy);
+		CourseRec res = new CourseRec(source, String.valueOf(id), shortName,
+				name, desc, prof, link, language, selfStudy);
 
 		// Dereference categories and universities
 		if (categories != null && !categories.isEmpty()) {
@@ -291,7 +289,7 @@ public class XmlModelAdapter {
 			Collections.sort(list2, new Comparator<CourseRec>() {
 				@Override
 				public int compare(CourseRec o1, CourseRec o2) {
-					return Long.compare(o1.getId(), o2.getId());
+					return o1.getId().compareTo(o2.getId());
 				}
 			});
 			for (CourseRec rec : list2) {
@@ -335,7 +333,7 @@ public class XmlModelAdapter {
 		node.setAttribute("lang", rec.getLanguage());
 		node.setAttribute("src", "" + rec.getSource().oneLetter());
 		if (rec.isSelfStudy())
-			node.setAttribute("ondem", "true");
+			node.setAttribute("ondem", "1");
 		String str = "";
 		for (DescRec dr : rec.getCategories())
 			str = str + " " + dr.getId();

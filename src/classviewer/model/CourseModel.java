@@ -30,9 +30,7 @@ public class CourseModel {
 	class Submodel {
 		private HashMap<String, DescRec> categories = new HashMap<String, DescRec>();
 		private HashMap<String, DescRec> universities = new HashMap<String, DescRec>();
-		private HashMap<Long, CourseRec> courses = new HashMap<Long, CourseRec>();
-		/** Smallest (most negative) id ever assigned. */
-		private long smallestId = 0;
+		private HashMap<String, CourseRec> courses = new HashMap<String, CourseRec>();
 
 		private void addCategory(DescRec desc) {
 			if (categories.containsKey(desc.getId()))
@@ -52,21 +50,7 @@ public class CourseModel {
 			if (courses.containsKey(course.getId()))
 				System.err.println("Ignoring duplicate course id "
 						+ course.getId());
-			courses.put(course.getId(), course);
-		}
-
-		/**
-		 * Get the smallest int value mentioned in class or offering ids. Assume
-		 * this method will not be called often.
-		 */
-		private void updateSmallestId() {
-			long value = 0; // default
-			for (CourseRec cr : courses.values()) {
-				value = Math.min(value, cr.getId());
-				for (OffRec or : cr.getOfferings())
-					value = Math.min(value, or.getId());
-			}
-			this.smallestId = value;
+			else courses.put(course.getId(), course);
 		}
 	}
 
@@ -116,7 +100,7 @@ public class CourseModel {
 		return submodel[source.ordinal()].courses.get(id);
 	}
 
-	public CourseRec removeCourse(Source source, Long id) {
+	public CourseRec removeCourse(Source source, String id) {
 		return submodel[source.ordinal()].courses.remove(id);
 	}
 
@@ -171,8 +155,6 @@ public class CourseModel {
 	}
 
 	public void fireModelReloaded() {
-		for (Source source : Source.values())
-			submodel[source.ordinal()].updateSmallestId(); // TODO Remove?
 		applyCourseFilters();
 		for (CourseModelListener lnr : listeners)
 			lnr.modelUpdated();
@@ -215,7 +197,7 @@ public class CourseModel {
 		return filteredCourses;
 	}
 
-	public CourseRec getClassById(long id, Source source) {
+	public CourseRec getClassById(String id, Source source) {
 		// TODO Temporary until all is converted
 		CourseRec res = submodel[source.ordinal()].courses.get(id);
 		if (res == null)
@@ -293,7 +275,7 @@ public class CourseModel {
 			int bySource = Integer.compare(o1.getSource().ordinal(), o2
 					.getSource().ordinal());
 			if (bySource == 0)
-				return Long.compare(o1.getId(), o2.getId());
+				return o1.getId().compareTo(o2.getId());
 			return bySource;
 		}
 	}

@@ -34,7 +34,7 @@ public class SelfPacedCourseFilter extends SimpleCourseFilter<String> {
 		if (!this.active)
 			return true;
 		// Has at least one self-paced offering.
-		boolean selfPaced = false;
+		boolean selfPaced = rec.isSelfStudy();
 		for (OffRec ofr : rec.getOfferings())
 			selfPaced = selfPaced || ofr.isSelfPaced();
 		if (selfPaced && selected.contains(SELF_PACED))

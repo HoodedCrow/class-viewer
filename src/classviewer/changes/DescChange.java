@@ -1,7 +1,5 @@
 package classviewer.changes;
 
-import java.util.HashMap;
-
 import classviewer.model.CourseModel;
 import classviewer.model.DescRec;
 import classviewer.model.Source;
@@ -11,112 +9,111 @@ import classviewer.model.Source;
  * 
  * @author TK
  */
-public class DescChange extends Change {
+public final class DescChange {
 	public static final int UNIVERSITY = 1;
 	public static final int CATEGORY = 2;
-	/**
-	 * Is this University or Category? Don't want to subclass for just 2 options
-	 */
-	private int what;
-	/** Field that changed, NULL of ADD/DELETE */
-	private String field = null;
-	/** Affected description, if exists */
-	private DescRec desc = null;
-	/** Affecting chunk of JSON, unless DELETE */
-	private HashMap<String, Object> json = null;
 
-	public DescChange(Source source, int what, String type, String field, DescRec desc,
-			HashMap<String, Object> json) {
-		super(source, type);
-		this.what = what;
-		this.field = field;
-		this.desc = desc;
-		this.json = json;
-		if (type == ADD)
-			order = 1;
-		else if (type == DELETE)
-			order = 7;
-		else
-			order = 4;
+	private DescChange() {
 	}
 
-	public String getDescription() {
-		return field;
-	}
-
-	public Object getTarget() {
-		if (desc != null)
-			return desc.getId();
-		return json.get("short_name");
-	}
-
-	public Object getNewValue() {
-		if (type == ADD)
-			return json.get("name");
-		if (type == DELETE)
-			return desc.getName();
-		if ("Name".equals(field))
-			return json.get("name");
-		return json.get("description");
-	}
-
-	public Object getOldValue() {
-		if (type == ADD || type == DELETE)
-			return null;
-		if ("Name".equals(field))
-			return desc.getName();
-		return desc.getDescription();
-	}
-
-	@Override
-	public void apply(CourseModel model) {
-		if (type == ADD) {
-			DescRec dr = makeDesc();
-			switch (what) {
-			case UNIVERSITY:
-				model.addUniversity(dr);
-				return;
-			case CATEGORY:
-				model.addCategory(dr);
-				return;
-			default:
-				throw new UnsupportedOperationException("Unknown object type "
-						+ what);
+	public static Change add(final int what, Source source, final String id,
+			final String name, final String description) {
+		final DescRec record = new DescRec(source, id, name, description);
+		Change change = new Change(source, Change.ADD) {
+			@Override
+			public String getDescription() {
+				return what == UNIVERSITY ? "University" : "Category";
 			}
-		} else if (type == DELETE) {
-			// This is deletion, so we have a record but no JSON
-			String id =  desc.getId();
-			switch (what) {
-			case UNIVERSITY:
-				model.removeUniversity(source, id);
-				return;
-			case CATEGORY:
-				model.removeCategory(source, id);
-				return;
-			default:
-				throw new UnsupportedOperationException("Unknown object type "
-						+ what);
+
+			@Override
+			public String getTarget() {
+				return id;
 			}
-		} else {
-			// Assume we have a pointer to the record we can change in place.
-			// Assume short-name is the same, since it acts as an id.
-			assert (json != null);
-			assert (desc != null);
-			if ("Name".equals(field)) {
-				desc.setName((String) json.get("name"));
-			} else if ("Description".equals(field)) {
-				desc.setDescription((String) json.get("description"));
-			} else {
-				throw new UnsupportedOperationException("Unknown field "
-						+ field);
+
+			@Override
+			public String getNewValue() {
+				return name;
 			}
-		}
+
+			@Override
+			public String getOldValue() {
+				return null;
+			}
+
+			@Override
+			public void apply(CourseModel model) {
+				if (what == UNIVERSITY)
+					model.addUniversity(record);
+				else
+					model.addCategory(record);
+			}
+		};
+		return change.setOrder(1);
 	}
 
-	private DescRec makeDesc() {
-		String id = (String) json.get("short_name");
-		String name = (String) json.get("name");
-		String dsc = (String) json.get("description");
-		return new DescRec(source, id, name, dsc);
+	public static Change delete(final int what, final DescRec record) {
+		Change change = new Change(record.getSource(), Change.DELETE) {
+			@Override
+			public String getDescription() {
+				return what == UNIVERSITY ? "University" : "Category";
+			}
+
+			@Override
+			public String getTarget() {
+				return record.getId();
+			}
+
+			@Override
+			public String getNewValue() {
+				return null;
+			}
+
+			@Override
+			public String getOldValue() {
+				return record.getName();
+			}
+
+			@Override
+			public void apply(CourseModel model) {
+				if (what == UNIVERSITY)
+					model.removeUniversity(record.getSource(), record.getId());
+				else
+					model.removeCategory(record.getSource(), record.getId());
+			}
+		};
+		return change.setOrder(7);
+	}
+
+	public static Change setName(final DescRec record, final String newName) {
+		Change change = new FieldChange<String>(record.getSource(), "Name",
+				newName, record.getName()) {
+			@Override
+			public Object getTarget() {
+				return record.getId();
+			}
+
+			@Override
+			public void apply(CourseModel model) {
+				record.setName(newName);
+			}
+		};
+		return change.setOrder(4);
+	}
+
+	public static Change setDescription(final DescRec record,
+			final String newDescription) {
+		Change change = new FieldChange<String>(record.getSource(),
+				"Description", newDescription, record.getDescription()) {
+			@Override
+			public Object getTarget() {
+				return record.getId();
+			}
+
+			@Override
+			public void apply(CourseModel model) {
+				record.setDescription(newDescription);
+			}
+		};
+		return change.setOrder(4);
 	}
 }

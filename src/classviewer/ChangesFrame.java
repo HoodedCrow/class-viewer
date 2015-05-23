@@ -34,7 +34,6 @@ import classviewer.changes.EdxModelAdapter;
 import classviewer.changes.CourseraModelAdapter;
 import classviewer.changes.CourseraModelAdapter1;
 import classviewer.changes.CourseraModelAdapter2;
-import classviewer.changes.OfferingChange;
 import classviewer.model.CourseModel;
 
 /**
@@ -198,9 +197,7 @@ public class ChangesFrame extends NamedInternalFrame {
 	protected void applyActiveChanges() {
 		boolean changed = false;
 		for (int i = 0; i < changes.size(); i++) {
-			if (!(changes.get(i) instanceof OfferingChange))
-				continue;
-			if (((OfferingChange) changes.get(i)).isActivationChange()) {
+			if (changes.get(i).isActivation()) {
 				changes.get(i).apply(courseModel);
 				changes.remove(i);
 				changeSelected.remove(i);

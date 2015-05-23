@@ -33,9 +33,7 @@ public class StatusFileModelAdapter {
 						+ str.length);
 				continue;
 			}
-			long id = new Long(str[1]);
-			// Clean up. TODO Remove eventually.
-			if (id < 0) id = -id;
+			String id = str[1];
 			if ('c' == str[0].charAt(0)) {	
 				Source src = Source.MISSING;
 				if (str[0].length() > 1)
@@ -48,7 +46,7 @@ public class StatusFileModelAdapter {
 					rec.setStatusDirect(Status.parse(str[2]));
 			} else if ("o".equals(str[0])) {
 				if (rec != null) {
-					OffRec r = rec.getOffering(id);
+					OffRec r = rec.getOffering(new Long(id));
 					if (r == null)
 						System.out.println("No offering " + id + " in class "
 								+ rec);

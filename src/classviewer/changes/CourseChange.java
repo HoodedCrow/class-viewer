@@ -1,157 +1,219 @@
 package classviewer.changes;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
-import classviewer.model.Source;
+import classviewer.model.DescRec;
 
 /**
  * Add/delete course or change course field.
  * 
  * @author TK
  */
-public class CourseChange extends Change {
-	/** Field that changed */
-	protected String field = null;
-	/** Affected existing course, if any */
-	protected CourseRec course = null;
-	/** Incoming chunk of JSON, unless deletion */
-	private HashMap<String, Object> json = null;
-	protected CourseRec created = null;
-
-	public CourseChange(Source source, String type, String field,
-			CourseRec course, HashMap<String, Object> json, CourseModel model) {
-		super(source, type);
-		this.field = field;
-		this.course = course;
-		this.json = json;
-		if (json != null)
-			created = makeCourse(model);
-		if (type == ADD)
-			order = 2;
-		else if (type == DELETE)
-			order = 6;
-		else
-			order = 4;
+public final class CourseChange {
+	private CourseChange() {
 	}
 
-	public String getDescription() {
-		return field;
-	}
-
-	public Object getTarget() {
-		if (course != null)
-			return course.getName();
-		return created.getName();
-	}
-
-	public Object getNewValue() {
-		if (type == ADD)
-			return created.getName();
-		if (type == DELETE)
-			return course.getName();
-		if ("Categories".equals(field))
-			return json.get("category-ids");
-		if ("Universities".equals(field))
-			return json.get("university-ids");
-		return valueOf(created);
-	}
-
-	public Object valueOf(CourseRec rec) {
-		if ("Name".equals(field))
-			return rec.getName();
-		if ("Description".equals(field))
-			return rec.getDescription();
-		if ("Short name".equals(field))
-			return rec.getShortName();
-		if ("Instructor".equals(field))
-			return rec.getInstructor();
-		if ("Language".equals(field))
-			return rec.getLanguage();
-		if ("Link".equals(field))
-			return rec.getLink();
-		return "??? " + field;
-	}
-
-	public Object getOldValue() {
-		if (type == ADD || type == DELETE)
-			return null;
-		if ("Categories".equals(field))
-			return CourseRec.idSet(course.getCategories());
-		if ("Universities".equals(field))
-			return CourseRec.idSet(course.getUniversities());
-		return valueOf(course);
-	}
-
-	@Override
-	public void apply(CourseModel model) {
-		if (type == ADD) {
-			setCategories(created, model);
-			setUniverisities(created, model);
-			// Add offerings
-			created.getOfferings().clear();
-			@SuppressWarnings("unchecked")
-			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) json
-					.get("courses");
-			for (HashMap<String, Object> map : list)
-				created.addOffering(OfferingChange.makeOffering(map));
-			model.addCourse(created);
-		} else if (type == DELETE) {
-			model.removeCourse(source, course.getId());
-		} else {
-			// Assume we have a pointer to the record we can change in place.
-			assert (course != null);
-			if ("Name".equals(field)) {
-				course.setName(created.getName());
-			} else if ("Description".equals(field)) {
-				course.setDescription(created.getDescription());
-			} else if ("Short name".equals(field)) {
-				course.setShortName(created.getShortName());
-			} else if ("Instructor".equals(field)) {
-				course.setInstructor(created.getInstructor());
-			} else if ("Language".equals(field)) {
-				course.setLanguage(created.getLanguage());
-			} else if ("Link".equals(field)) {
-				course.setLink(created.getLink());
-			} else if ("Categories".equals(field)) {
-				setCategories(course, model);
-			} else if ("Universities".equals(field)) {
-				setUniverisities(course, model);
-			} else {
-				throw new UnsupportedOperationException("Unknown field "
-						+ field);
+	public static Change add(final CourseRec record,
+			final Collection<String> categories,
+			final Collection<String> universities) {
+		Change change = new Change(record.getSource(), Change.ADD) {
+			@Override
+			public String getDescription() {
+				return (record.isSelfStudy() ? "#" : "") + "Class";
 			}
+
+			@Override
+			public String getTarget() {
+				return record.getName();
+			}
+
+			@Override
+			public String getNewValue() {
+				return record.getId();
+			}
+
+			@Override
+			public String getOldValue() {
+				return null;
+			}
+
+			@Override
+			public void apply(CourseModel model) {
+				for (String s : categories)
+					record.addCategory(model.getCategory(record.getSource(), s));
+				for (String s : universities)
+					record.addUniversity(model.getUniversity(
+							record.getSource(), s));
+				model.addCourse(record);
+			}
+		};
+		return change.setOrder(2);
+	}
+
+	public static Change delete(final CourseRec record) {
+		Change change = new Change(record.getSource(), Change.DELETE) {
+			@Override
+			public String getDescription() {
+				return (record.isSelfStudy() ? "#" : "") + "Class";
+			}
+
+			@Override
+			public String getTarget() {
+				return "[" + record.getStatus() + "]" + record.getName();
+			}
+
+			@Override
+			public String getNewValue() {
+				return null;
+			}
+
+			@Override
+			public String getOldValue() {
+				return record.getId();
+			}
+
+			@Override
+			public void apply(CourseModel model) {
+				model.removeCourse(record.getSource(), record.getId());
+			}
+		};
+		return change.setOrder(6);
+	}
+
+	private static abstract class StringCourseChange extends
+			FieldChange<String> {
+		private String id;
+
+		StringCourseChange(CourseRec record, String field, String newValue,
+				String oldValue) {
+			super(record.getSource(), field, newValue, oldValue);
+			this.id = "[" + record.getStatus() + "]" + record.getName();
+			setOrder(4);
+		}
+
+		@Override
+		public Object getTarget() {
+			return id;
 		}
 	}
 
-	protected void setCategories(CourseRec rec, CourseModel model) {
-		rec.getCategories().clear();
-		@SuppressWarnings("unchecked")
-		ArrayList<String> lst = (ArrayList<String>) json.get("category-ids");
-		for (String s : lst)
-			rec.addCategory(model.getCategory(source, s));
+	public static Change setName(final CourseRec record, final String newValue) {
+		return new StringCourseChange(record, "Name", newValue,
+				record.getName()) {
+			@Override
+			public void apply(CourseModel model) {
+				record.setName(newValue);
+			}
+		};
 	}
 
-	protected void setUniverisities(CourseRec rec, CourseModel model) {
-		rec.getUniversities().clear();
-		@SuppressWarnings("unchecked")
-		ArrayList<String> lst = (ArrayList<String>) json.get("university-ids");
-		for (String s : lst)
-			rec.addUniversity(model.getUniversity(source, s));
+	public static Change setDescription(final CourseRec record,
+			final String newValue) {
+		return new StringCourseChange(record, "Description", newValue,
+				record.getDescription()) {
+			@Override
+			public void apply(CourseModel model) {
+				record.setDescription(newValue);
+			}
+		};
 	}
 
-	private CourseRec makeCourse(CourseModel model) {
-		Long id = (Long) json.get("id");
-		String shortName = (String) json.get("short_name");
-		String name = (String) json.get("name");
-		String dsc = (String) json.get("short_description");
-		String instructor = (String) json.get("instructor");
-		String language = (String) json.get("language");
-		String link = (String) json.get("social_link");
-		CourseRec res = new CourseRec(source, id, shortName, name, dsc,
-				instructor, link, language, false);  // TODO by default all scheduled
-		return res;
+	public static Change setShortName(final CourseRec record,
+			final String newValue) {
+		return new StringCourseChange(record, "Short name", newValue,
+				record.getShortName()) {
+			@Override
+			public void apply(CourseModel model) {
+				record.setShortName(newValue);
+			}
+		};
+	}
+
+	public static Change setInstructor(final CourseRec record,
+			final String newValue) {
+		return new StringCourseChange(record, "Instructor", newValue,
+				record.getInstructor()) {
+			@Override
+			public void apply(CourseModel model) {
+				record.setInstructor(newValue);
+			}
+		};
+	}
+
+	public static Change setLink(final CourseRec record, final String newValue) {
+		return new StringCourseChange(record, "Link", newValue,
+				record.getLink()) {
+			@Override
+			public void apply(CourseModel model) {
+				record.setLink(newValue);
+			}
+		};
+	}
+
+	public static Change setLanguage(final CourseRec record,
+			final String newValue) {
+		return new StringCourseChange(record, "Language", newValue,
+				record.getLanguage()) {
+			@Override
+			public void apply(CourseModel model) {
+				record.setLanguage(newValue);
+			}
+		};
+	}
+
+	private static abstract class IdSetCourseChange extends
+			FieldChange<Collection<String>> {
+		private String id;
+
+		IdSetCourseChange(CourseRec record, String field,
+				Collection<String> newValue, Collection<String> oldValue) {
+			super(record.getSource(), field, newValue, oldValue);
+			this.id = "[" + record.getStatus() + "]" + record.getName();
+			setOrder(4);
+		}
+
+		@Override
+		public Object getTarget() {
+			return id;
+		}
+	}
+
+	public static Change setCategories(final CourseRec record,
+			final Collection<String> newValue) {
+		return new IdSetCourseChange(record, "Categories", newValue,
+				CourseRec.idSet(record.getCategories())) {
+			@Override
+			public void apply(CourseModel model) {
+				record.getCategories().clear();
+				for (String s : newValue) {
+					DescRec cat = model.getCategory(record.getSource(), s);
+					if (cat == null)
+						System.err.println("Cannot find category for id " + s);
+					else
+						record.addCategory(cat);
+				}
+			}
+		};
+	}
+
+	public static Change setUniversities(final CourseRec record,
+			final Collection<String> newValue) {
+		return new IdSetCourseChange(record, "Universities", newValue,
+				CourseRec.idSet(record.getUniversities())) {
+			@Override
+			public void apply(CourseModel model) {
+				record.getUniversities().clear();
+				for (String s : newValue) {
+					DescRec uni = model.getUniversity(record.getSource(), s);
+					if (uni == null)
+						System.err
+								.println("Cannot find university for id " + s);
+					else
+						record.addUniversity(uni);
+				}
+			}
+		};
 	}
 }

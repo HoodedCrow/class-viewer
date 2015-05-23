@@ -10,7 +10,7 @@ import java.util.HashSet;
  */
 public class CourseRec implements Named, Linked {
 	private Source source;
-	private long id;
+	private String id;
 	private String shortName;
 	private String name;
 	private String description;
@@ -23,7 +23,7 @@ public class CourseRec implements Named, Linked {
 	private ArrayList<DescRec> universities = new ArrayList<DescRec>();
 	private ArrayList<OffRec> offerings = new ArrayList<OffRec>();
 
-	public CourseRec(Source source, long id, String shortName, String name,
+	public CourseRec(Source source, String id, String shortName, String name,
 			String description, String instructor, String link, String language,
 			boolean selfStudy) {
 		this.source = source;
@@ -35,11 +35,6 @@ public class CourseRec implements Named, Linked {
 		this.link = link == null ? "" : link;
 		this.setLanguage(language);
 		this.selfStudy = selfStudy;
-	}
-
-	public void updateId(int newId) {
-		assert (this.id == 0);
-		this.id = newId;
 	}
 
 	@Override
@@ -70,7 +65,7 @@ public class CourseRec implements Named, Linked {
 		r.setCourse(this);
 	}
 
-	public long getId() {
+	public String getId() {
 		return id;
 	}
 

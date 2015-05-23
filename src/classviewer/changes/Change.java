@@ -29,6 +29,11 @@ public abstract class Change implements Comparable<Change> {
 	public String getType() {
 		return type;
 	}
+	
+	public Change setOrder(int order) {
+		this.order = order;
+		return this;
+	}
 
 	public abstract String getDescription();
 
@@ -43,6 +48,10 @@ public abstract class Change implements Comparable<Change> {
 	public int getOrder() {
 		return order;
 	}
+	
+	public boolean isActivation() {
+		return false;
+	}
 
 	@Override
 	public int compareTo(Change other) {
@@ -54,5 +63,14 @@ public abstract class Change implements Comparable<Change> {
 		// Delete class
 		// Delete category/uni
 		return Integer.compare(this.getOrder(), other.getOrder());
+	}
+
+	public static boolean fieldChanged(String existing, String incoming) {
+		if (existing != null && existing.isEmpty())
+			existing = null;
+		if (incoming != null && incoming.isEmpty())
+			incoming = null;
+		return (existing == null && incoming != null || existing != null
+				&& !existing.equals(incoming));
 	}
 }
