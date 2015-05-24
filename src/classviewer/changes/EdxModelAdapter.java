@@ -304,10 +304,9 @@ public class EdxModelAdapter {
 		String startStr = (String) map.get("start");
 		Date start = HttpHelper.parseDate(startStr);
 		int duration = 1; // TODO
-		int spread = 1; // TODO
 		String home = getCleanUrl(map);
 		boolean active = getActiveStatus(map);
-		return new OffRec(id, start, duration, spread, home, active, startStr);
+		return new OffRec(id, start, duration, home, active, startStr);
 	}
 
 	private void diffOffering(CourseRec oldRec, OffRec oldOff,

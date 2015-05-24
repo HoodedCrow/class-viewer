@@ -189,7 +189,7 @@ public class CalendarFrame extends NamedInternalFrame implements
 				// Start in weeks
 				int stw = (int) ((toWeekStart(start).getTime() - today
 						.getTime()) / WEEK_MS + lookBackWeeks);
-				int len = (int) (or.getDuration() + or.getSpread() - 1);
+				int len = (int) or.getDuration();
 				if (stw + len < 1)
 					continue;
 

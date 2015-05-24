@@ -166,7 +166,7 @@ public class XmlModelAdapter {
 		if (!"Off".equals(item.getNodeName()))
 			return null;
 		NamedNodeMap attrs = item.getAttributes();
-		int id, duration, spread, active;
+		int id, duration, active;
 		try {
 			id = Integer.parseInt(attrs.getNamedItem("id").getNodeValue());
 			// Clean up. TODO Remove eventually.
@@ -176,12 +176,11 @@ public class XmlModelAdapter {
 		}
 		Date start = dateOrNull(item, "Start");
 		duration = attrOrInt(attrs, "dur");
-		spread = attrOrInt(attrs, "spread");
 		active = attrOrInt(attrs, "active");
 		String startStr = valueOrNull(item, "StartS");
 		String link = valueOrNull(item, "Home");
 
-		return new OffRec(id, start, duration, spread, link, active > 0,
+		return new OffRec(id, start, duration, link, active > 0,
 				startStr);
 	}
 
@@ -365,7 +364,6 @@ public class XmlModelAdapter {
 		Element node = dom.createElement("Off");
 		node.setAttribute("id", String.valueOf(rec.getId()));
 		node.setAttribute("dur", String.valueOf(rec.getDuration()));
-		node.setAttribute("spread", String.valueOf(rec.getSpread()));
 		node.setAttribute("active", String.valueOf(rec.isActive() ? 1 : 0));
 		addChildIfNotNull(rec.getStartStr(), "StartS", node, dom);
 		addChildIfNotNull(rec.getLink(), "Home", node, dom);

@@ -192,10 +192,9 @@ public class CourseraModelAdapter2 implements CourseraModelAdapter {
 	}
 
 	private OffRec makeOffering(HashMap<String, Object> map) {
-		long spread = 1; // TODO Deprecate!
 		Date start = getStartDate(map);
 		Long id = (Long) map.get("id");
-		return new OffRec(id, start, getDurationWeeks(map), spread,
+		return new OffRec(id, start, getDurationWeeks(map), 
 				(String) map.get("homeLink"), (Boolean) map.get("active"), null);
 	}
 
