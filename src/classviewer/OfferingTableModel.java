@@ -2,6 +2,8 @@ package classviewer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -17,6 +19,7 @@ public class OfferingTableModel extends DefaultTableModel implements
 
 	private CourseModel model;
 	private CourseRec selected = null;
+	private ArrayList<OffRec> sortedElements = new ArrayList<OffRec>();
 	private ArrayList<CourseModelListener> listeners = new ArrayList<CourseModelListener>();
 	private final String[] names = { " ", "Start", "Weeks (edit)", "Id" };
 	private final Class<?>[] classes = { Status.class, String.class,
@@ -54,12 +57,12 @@ public class OfferingTableModel extends DefaultTableModel implements
 	public int getRowCount() {
 		if (selected == null)
 			return 0;
-		return selected.getOfferings().size();
+		return sortedElements.size();
 	}
 
 	@Override
 	public Object getValueAt(int row, int col) {
-		OffRec off = selected.getOfferings().get(row);
+		OffRec off = sortedElements.get(row);
 		if (col == 0)
 			return off.getStatus();
 		if (col == 1)
@@ -70,7 +73,7 @@ public class OfferingTableModel extends DefaultTableModel implements
 	}
 
 	public OffRec getOfferingAt(int row) {
-		return selected.getOfferings().get(row);
+		return sortedElements.get(row);
 	}
 
 	@Override
@@ -82,7 +85,7 @@ public class OfferingTableModel extends DefaultTableModel implements
 	public void setValueAt(Object value, int row, int col) {
 		switch (col) {
 		case 0:
-			selected.getOfferings().get(row).setStatus((Status) value);
+			sortedElements.get(row).setStatus((Status) value);
 			try {
 				model.saveStatusFile();
 			} catch (IOException e) {
@@ -92,7 +95,7 @@ public class OfferingTableModel extends DefaultTableModel implements
 			model.fireCourseStatusChanged(selected);
 			break;
 		case 2:
-			selected.getOfferings().get(row).setDuration((Integer) value);
+			sortedElements.get(row).setDuration((Integer) value);
 			saveModelAndInform();
 			break;
 
@@ -120,6 +123,23 @@ public class OfferingTableModel extends DefaultTableModel implements
 	@Override
 	public void courseSelected(CourseRec course) {
 		selected = course;
+		sortedElements.clear();
+		if (selected != null)
+			sortedElements.addAll(selected.getOfferings());
+		Collections.sort(sortedElements, new Comparator<OffRec>() {
+			@Override
+			public int compare(OffRec o1, OffRec o2) {
+				if (o1.getStart() == null) {
+					if (o2.getStart() != null)
+						return 1;
+					return Long.compare(o1.getId(), o2.getId());
+				} else {
+					if (o2.getStart() == null)
+						return -1;
+					return o1.getStart().compareTo(o2.getStart());
+				}
+			}
+		});
 		this.fireTableDataChanged();
 	}
 }
