@@ -5,6 +5,7 @@ import java.util.Collection;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.DescRec;
+import classviewer.model.OffRec;
 
 /**
  * Add/delete course or change course field.
@@ -49,7 +50,30 @@ public final class CourseChange {
 				model.addCourse(record);
 			}
 		};
-		return change.setOrder(2);
+		StringBuffer b = new StringBuffer("<html><b>New class: ");
+		b.append(record.getName()).append("<br/>");
+		if (!universities.isEmpty())
+			b.append("From ").append(universities);
+		if (record.getInstructor() != null && !record.getInstructor().isEmpty())
+			b.append(" by ").append(record.getInstructor());
+		if (!categories.isEmpty())
+			b.append(" ").append(categories);
+		b.append("</b><br/>");
+		boolean first = true;
+		if (!record.getOfferings().isEmpty()) {
+			b.append("Sessions:");
+			for (OffRec or : record.getOfferings())
+				if (or.getStart() != null) {
+					if (!first)
+						b.append(",");
+					else
+						first = false;
+					b.append(" ").append(OffRec.dformat.format(or.getStart()));
+				}
+			b.append("<br/>");
+		}
+		b.append("<div width=500px>").append(record.getDescription()).append("</div>");
+		return change.setOrder(2).setToolTop(b.toString());
 	}
 
 	public static Change delete(final CourseRec record) {
@@ -79,7 +103,27 @@ public final class CourseChange {
 				model.removeCourse(record.getSource(), record.getId());
 			}
 		};
-		return change.setOrder(6);
+		StringBuffer b = new StringBuffer("<html><b>Drop class: ");
+		b.append(record.getName()).append("[").append(record.getStatus()).append("]<br/>");
+		b.append("From ").append(CourseRec.idSet(record.getUniversities()));
+		if (record.getInstructor() != null && !record.getInstructor().isEmpty())
+			b.append(" by ").append(record.getInstructor());
+		b.append("</b><br/>");
+		boolean first = true;
+		if (!record.getOfferings().isEmpty()) {
+			b.append("Sessions:");
+			for (OffRec or : record.getOfferings()) {
+				if (!first) 
+					b.append(",");
+				else
+					first = false;
+				if (or.getStart() != null)
+					b.append(" ").append(OffRec.dformat.format(or.getStart()));
+			}
+			b.append("<br/>");
+		}
+		b.append("<div width=500px>").append(record.getDescription()).append("</div>");
+		return change.setOrder(6).setToolTop(b.toString());
 	}
 
 	private static abstract class StringCourseChange extends
@@ -90,7 +134,14 @@ public final class CourseChange {
 				String oldValue) {
 			super(record.getSource(), field, newValue, oldValue);
 			this.id = "[" + record.getStatus() + "]" + record.getName();
+			StringBuffer b = new StringBuffer("<html><b>Change ");
+			b.append(field).append(" for ").append(record.getName())
+					.append("[").append(record.getStatus()).append("]<br/>");
+			b.append("New value: <div width=400px>").append(newValue);
+			b.append("</div><br/>Old value: <div width=400px>")
+					.append(oldValue).append("</div>");
 			setOrder(4);
+			setToolTop(b.toString());
 		}
 
 		@Override

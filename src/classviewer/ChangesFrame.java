@@ -6,6 +6,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,10 +32,10 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import classviewer.changes.Change;
-import classviewer.changes.EdxModelAdapter;
 import classviewer.changes.CourseraModelAdapter;
 import classviewer.changes.CourseraModelAdapter1;
 import classviewer.changes.CourseraModelAdapter2;
+import classviewer.changes.EdxModelAdapter;
 import classviewer.model.CourseModel;
 
 /**
@@ -156,6 +158,18 @@ public class ChangesFrame extends NamedInternalFrame {
 		};
 		RowSorter<? extends TableModel> sorter = table.getRowSorter();
 		((TableRowSorter) sorter).setRowFilter(rf);
+		table.addMouseMotionListener(new MouseAdapter() {
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				int row = table.rowAtPoint(e.getPoint());
+				row = table.getRowSorter().convertRowIndexToModel(row);
+				Change change = changes.get(row);
+				if (change != null)
+					table.setToolTipText(change.getToolTip());
+				else
+					table.setToolTipText(null);
+			}
+		});
 		this.add(new JScrollPane(table), BorderLayout.CENTER);
 		setColumnWidth();
 	}

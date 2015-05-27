@@ -16,6 +16,7 @@ public abstract class Change implements Comparable<Change> {
 	protected Source source;
 	protected String type;
 	protected int order;
+	protected String toolTip = null;
 
 	public Change(Source source, String type) {
 		this.source = source;
@@ -32,6 +33,11 @@ public abstract class Change implements Comparable<Change> {
 	
 	public Change setOrder(int order) {
 		this.order = order;
+		return this;
+	}
+	
+	public Change setToolTop(String toolTip) {
+		this.toolTip = toolTip;
 		return this;
 	}
 
@@ -72,5 +78,9 @@ public abstract class Change implements Comparable<Change> {
 			incoming = null;
 		return (existing == null && incoming != null || existing != null
 				&& !existing.equals(incoming));
+	}
+
+	public String getToolTip() {
+		return toolTip;
 	}
 }

@@ -7,6 +7,30 @@ import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
 
 public final class OfferingChange {
+	private static void appendCourse(StringBuffer b, CourseRec record) {
+		b.append(record.getName()).append("[").append(record.getStatus())
+				.append("]<br/>");
+		b.append("From ").append(CourseRec.idSet(record.getUniversities()));
+		if (record.getInstructor() != null && !record.getInstructor().isEmpty())
+			b.append(" by ").append(record.getInstructor());
+		b.append("</b><br/>");
+		boolean first = true;
+		if (!record.getOfferings().isEmpty()) {
+			b.append("Sessions:");
+			for (OffRec or : record.getOfferings()) {
+				if (!first)
+					b.append(",");
+				else
+					first = false;
+				if (or.getStart() != null)
+					b.append(" ").append(OffRec.dformat.format(or.getStart()));
+			}
+			b.append("<br/>");
+		}
+		b.append("<div width=500px>").append(record.getDescription())
+				.append("</div>");
+	}
+	
 	public static Change add(final CourseRec course, final OffRec offering) {
 		Change change = new Change(course.getSource(), Change.ADD) {
 			@Override
@@ -34,7 +58,12 @@ public final class OfferingChange {
 				course.addOffering(offering);
 			}
 		};
-		return change.setOrder(3);
+		StringBuffer b = new StringBuffer("<html><b>New offerring");
+		if (offering.getStart() != null)
+			b.append(" on ").append(OffRec.dformat.format(offering.getStart()));
+		b.append("<br/>for ");
+		appendCourse(b, course);
+		return change.setOrder(3).setToolTop(b.toString());
 	}
 
 	public static Change delete(final OffRec offering) {
@@ -66,7 +95,12 @@ public final class OfferingChange {
 				course.removeOffering(offering.getId());
 			}
 		};
-		return change.setOrder(5);
+		StringBuffer b = new StringBuffer("<html><b>Delete offerring");
+		if (offering.getStart() != null)
+			b.append(" on ").append(OffRec.dformat.format(offering.getStart()));
+		b.append("<br/>from ");
+		appendCourse(b, course);
+		return change.setOrder(5).setToolTop(b.toString());
 	}
 
 	private static abstract class OffFieldChange<T> extends FieldChange<T> {
@@ -75,6 +109,16 @@ public final class OfferingChange {
 		OffFieldChange(OffRec offering, String field, T newValue, T oldValue) {
 			super(offering.getCourse().getSource(), field, newValue, oldValue);
 			this.offering = offering;
+			StringBuffer b = new StringBuffer("<html><b>Change ");
+			b.append(field).append("<br/>from ").append(oldValue)
+					.append("<br/>to ").append(newValue).append("<br/>");
+			if (offering.getStart() != null)
+				b.append("for session starting on ")
+						.append(OffRec.dformat.format(offering.getStart()))
+						.append("<br/>");
+			b.append("of ");
+			appendCourse(b, offering.getCourse());
+			setToolTop(b.toString());
 		}
 
 		@Override
@@ -110,7 +154,15 @@ public final class OfferingChange {
 				offering.setStartStr(null);
 			}
 		};
-		return change.setOrder(4);
+		StringBuffer b = new StringBuffer("<html><b>Change Start<br/>from ");
+		if (offering.getStart() != null)
+			b.append(OffRec.dformat.format(offering.getStart()));
+		b.append("<br/>to ");
+		if (start != null)
+			b.append(OffRec.dformat.format(start));
+		b.append("<br/>for a session of ");
+		appendCourse(b, offering.getCourse());
+		return change.setOrder(4).setToolTop(b.toString());
 	}
 
 	public static Change setStartStr(final OffRec offering,
