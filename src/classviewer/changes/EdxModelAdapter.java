@@ -3,12 +3,14 @@ package classviewer.changes;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
@@ -358,10 +360,14 @@ public class EdxModelAdapter {
 
 	public boolean loadClassDuration(OffRec off, boolean ignoreSSL)
 			throws IOException {
-		String tail = off.getLink();
-		if (tail == null)
-			return false;
-		URL url = new URL(tail);
+		// https://www.edx.org/api/catalog/v2/courses/course-v1:DelftX+TP101x+3T2015
+		String newUrl = "https://www.edx.org/api/catalog/v2/courses/course-v1:";
+		CourseRec course = off.getCourse();
+		if (course.getUniversities().isEmpty()) return false;
+		newUrl += off.getCourse().getUniversities().get(0).getId() + "+" + course.getShortName();
+		// TODO Quarter?
+		newUrl += "+3T2015";
+		URL url = new URL(newUrl);
 		// All set up, we can get a resource through https now:
 		URLConnection urlCon = url.openConnection();
 		// Tell the url connection object to use our socket factory which
@@ -373,28 +379,21 @@ public class EdxModelAdapter {
 
 		StringBuffer buffer = HttpHelper.readIntoBuffer(reader);
 		stream.close();
-
-		// We are looking for the number of weeks. This code is specific to the
-		// EdX format
-		final String startLabel = "Course Length:";
-		int start = buffer.indexOf(startLabel);
-		if (start < 0) {
+		
+		Object data = JsonParser.parse(new StringReader(buffer.toString()));
+		try {
+			@SuppressWarnings("unchecked")
+			String value = (String) ((Map<String, Object>) data).get("length");
+			value = value.trim();
+			int end = value.indexOf(' ');
+			if (end >=0)
+				value = value.substring(0, end);
+			int weeks = Integer.parseInt(value);
+			off.setDuration(weeks);
+			return true;
+		} catch (Exception e) {
+			System.out.println("Cannot get course length: " + e);
 			return false;
 		}
-		start += startLabel.length();
-		int end = buffer.indexOf(" week", start);
-		if (end < 0) {
-			return false;
-		}
-
-		// This slice should end with the number we are looking for
-		String slice = buffer.substring(start, end).trim();
-		for (start = slice.length() - 1; start >= 0
-				&& Character.isDigit(slice.charAt(start)); start--)
-			continue;
-		int weeks = Integer.parseInt(slice.substring(start + 1));
-
-		off.setDuration(weeks);
-		return true;
 	}
 }
