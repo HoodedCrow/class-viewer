@@ -31,6 +31,7 @@ public class CourseModel {
 		private HashMap<String, DescRec> categories = new HashMap<String, DescRec>();
 		private HashMap<String, DescRec> universities = new HashMap<String, DescRec>();
 		private HashMap<String, CourseRec> courses = new HashMap<String, CourseRec>();
+		private long maxOfferingId = 0;
 
 		private void addCategory(DescRec desc) {
 			if (categories.containsKey(desc.getId()))
@@ -51,6 +52,14 @@ public class CourseModel {
 				System.err.println("Ignoring duplicate course id "
 						+ course.getId());
 			else courses.put(course.getId(), course);
+			for (OffRec ofr : course.getOfferings()) {
+				if (ofr.getId() > maxOfferingId)
+					maxOfferingId = ofr.getId();
+			}
+		}
+		
+		public long makeNewOfferingId() {
+			return ++maxOfferingId;
 		}
 	}
 
@@ -104,6 +113,10 @@ public class CourseModel {
 		return submodel[source.ordinal()].courses.remove(id);
 	}
 
+	public long makeNewOfferingId(Source source) {
+		return submodel[source.ordinal()].makeNewOfferingId();
+	}
+	
 	public DescRec getCategory(Source source, String id) {
 		// TODO Temporary until all is converted
 		DescRec res = submodel[source.ordinal()].categories.get(id);
@@ -198,15 +211,7 @@ public class CourseModel {
 	}
 
 	public CourseRec getClassById(String id, Source source) {
-		// TODO Temporary until all is converted
-		CourseRec res = submodel[source.ordinal()].courses.get(id);
-		if (res == null)
-			for (Submodel sm : submodel) {
-				res = sm.courses.get(id);
-				if (res != null)
-					break;
-			}
-		return res;
+		return submodel[source.ordinal()].courses.get(id);
 	}
 
 	/**

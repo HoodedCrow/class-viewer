@@ -70,7 +70,8 @@ public class Settings {
 				"languages.v1(englishName),v1Details.v1(sessionIds)&includes=categories," +
 				"instructorIds,partnerIds,primaryLanguages,v1Details.v1(sessionIds)," +
 				"v1Sessions.v1(active),instructors.v1(lastName)&courseType=v2.ondemand");
-		settings.put(EDX_URL, "https://www.edx.org/search/api/all");
+		settings.put(EDX_URL, "https://www.edx.org/api/discovery/v1/cards");
+		// TODO "https://www.edx.org/search/api/all");
 
 		// How many weeks from today to look back in the calendar
 		settings.put(LOOK_BACK_WEEKS, "10");

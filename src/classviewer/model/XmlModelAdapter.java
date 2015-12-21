@@ -179,9 +179,10 @@ public class XmlModelAdapter {
 		active = attrOrInt(attrs, "active");
 		String startStr = valueOrNull(item, "StartS");
 		String link = valueOrNull(item, "Home");
+		String key = valueOrNull(item, "Key");
 
 		return new OffRec(id, start, duration, link, active > 0,
-				startStr);
+				startStr).setKey(key);
 	}
 
 	private DescRec parseDesc(Node item) throws IOException {
@@ -366,6 +367,7 @@ public class XmlModelAdapter {
 		node.setAttribute("dur", String.valueOf(rec.getDuration()));
 		node.setAttribute("active", String.valueOf(rec.isActive() ? 1 : 0));
 		addChildIfNotNull(rec.getStartStr(), "StartS", node, dom);
+		addChildIfNotNull(rec.getKey(), "Key", node, dom);
 		addChildIfNotNull(rec.getLink(), "Home", node, dom);
 		if (rec.getStart() != null)
 			addChildIfNotNull(dformat.format(rec.getStart()), "Start", node,

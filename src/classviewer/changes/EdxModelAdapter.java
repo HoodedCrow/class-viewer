@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -62,7 +63,37 @@ public class EdxModelAdapter {
 		this.json = (ArrayList<Object>) JsonParser.parse(reader);
 		stream.close();
 
-		// Keys for each record:
+		// The list contains entries for both 'xseries' and 'course'. Keep only
+		// courses.
+		int countDeleted = 0;
+		for (Iterator<Object> it = this.json.iterator(); it.hasNext();) {
+			Map<String, Object> rec = (Map<String, Object>) it.next();
+			if (!"course".equals(rec.get("card_type"))) {
+				it.remove();
+				countDeleted++;
+			}
+		}
+		System.out.println("Dropped " + countDeleted + " records, kept "
+				+ json.size());
+
+		// Top level keys: 'organizations', 'subtitle', 'title', 'url', 'image',
+		// 'card_type', 'attributes'. We already pruned by card_type.
+		// 'title' and 'url' give a string. 'subtitle' has inside 'short' and
+		// 'long'.
+		//
+		// 'organizations' is a list of maps with 'display_name', which looks
+		// like
+		// 'HarvardX', and 'id', which is UUID.
+		//
+		// 'attributes' is a map with 'start_datetime' (2014-12-30T00:00:00Z) ,
+		// 'start_display_date' (e.g., Self-Paced) , 'instructors' (list of
+		// maps with 'id' UUID and 'name'), 'course_key' (magic path, keep it),
+		// 'course_type' ('verified', ignore for now), 'subjects' (list of maps
+		// with 'id' UUID and string 'title'), 'course_number' (string, use as
+		// id),
+		// 'self_paced' (boolean), 'availability' ('Current'), 'course_org'
+		// ('HarvardX' again, string)
+
 		// [guid, pace, schools, subjects, start, image, l, code, types, url,
 		// availability]
 		universities.clear();
@@ -70,14 +101,25 @@ public class EdxModelAdapter {
 		courses.clear();
 		for (Object o : json) {
 			HashMap<String, Object> map = (HashMap<String, Object>) o;
-			ArrayList<String> list = (ArrayList<String>) map.get("schools");
-			while (list.remove(""));
-			universities.addAll(list);
-			list = (ArrayList<String>) map.get("subjects");
-			// EdX has empty subjects since they moved Verified into "types"
-			while (list.remove(""));
-			categories.addAll(list);
-			String courseCode = getCleanCode(map);
+			ArrayList<Object> list = (ArrayList<Object>) map
+					.get("organizations");
+			for (Object m : list) {
+				String name = ((Map<String, String>) m).get("display_name");
+				if (name != null && !name.isEmpty())
+					universities.add(name);
+			}
+			Map<String, Object> attrs = (Map<String, Object>) map
+					.get("attributes");
+			list = (ArrayList<Object>) attrs.get("subjects");
+			for (Object m : list) {
+				String name = ((Map<String, String>) m).get("title");
+				if (name != null && !name.isEmpty()) {
+					// Will make a safe code from it later.
+					categories.add(name);
+				}
+			}
+
+			String courseCode = ((String) attrs.get("course_number")).trim();
 			ArrayList<HashMap<String, Object>> offerings = courses
 					.get(courseCode);
 			if (offerings == null) {
@@ -98,22 +140,15 @@ public class EdxModelAdapter {
 		return s;
 	}
 
-	public static String makeCategoryId(String s) {
-		return makeIdSafe(s);
-	}
-
 	public static String getCleanUrl(HashMap<String, Object> map) {
 		String url = (String) map.get("url");
 		return url.replaceAll("\\\\/", "/");
 	}
 
-	public static String getCleanCode(HashMap<String, Object> map) {
-		String code = (String) map.get("code");
-		return code.trim();
-	}
-
 	public static boolean getActiveStatus(HashMap<String, Object> map) {
-		return "Current".equals(map.get("availability"));
+		@SuppressWarnings("unchecked")
+		Map<String, Object> attrs = (Map<String, Object>) map.get("attributes");
+		return "Current".equals(attrs.get("availability"));
 	}
 
 	private void collectUniversityChanges(CourseModel courseModel,
@@ -144,7 +179,7 @@ public class EdxModelAdapter {
 		// TODO: category names are long, and they are mapped to numeric codes
 		// in facets. Something to use in description?
 		for (String c : categories) {
-			String code = makeCategoryId(c);
+			String code = makeIdSafe(c);
 			if (courseModel.getCategory(Source.EDX, code) == null)
 				changes.add(DescChange.add(DescChange.CATEGORY, Source.EDX,
 						code, c, null));
@@ -166,7 +201,6 @@ public class EdxModelAdapter {
 	 * Compare the internal structure produced by the parse method to the given
 	 * model and return the set of differences
 	 */
-	@SuppressWarnings("unchecked")
 	public ArrayList<Change> collectChanges(CourseModel courseModel,
 			int tooOldInDays) {
 		// Build a date before which we do not remove offerings
@@ -182,46 +216,29 @@ public class EdxModelAdapter {
 		// Short codes are used as keys. We hope they don't collide across
 		// universities, but who knows what EdX uses inside.
 		for (String code : courses.keySet()) {
-			CourseRec oldRec = courseModel.getClassByShortName(code, Source.EDX);
+			CourseRec oldRec = courseModel.getClassById(code, Source.EDX);
+			if (oldRec == null)
+				oldRec = courseModel.getClassByShortName(code, Source.EDX);
 			ArrayList<HashMap<String, Object>> course = courses.get(code);
-			// Fishing here. Should not be necessary once everything converts to
-			// guids on the EdX side.
-			if (oldRec == null) {
-				HashMap<String, Object> first = course.get(0);
-				String name = (String) first.get("l");
-				String uni = ((ArrayList<String>) first.get("schools")).get(0);
-				oldRec = courseModel.getClassByLongNameAndUni(name, uni, Source.EDX);
-				if (oldRec != null) {
-					System.out.println("Code mismatch ["
-							+ oldRec.getShortName() + "] != [" + code + "]");
-					// oldRec.setShortName(code);
-				}
-			}
 			if (oldRec != null) {
 				diffCourse(course, oldRec, changes, courseModel, tooOld);
 			} else {
 				HashMap<String, Object> map = course.get(0);
-				String id = String.valueOf(map.get("guid")); // TODO Remove?
-																// model.getNewNegativeId();
-				String short_name = EdxModelAdapter.getCleanCode(map);
-				String name = (String) map.get("l");
-				String dsc = null; // TODO
-				String instructor = null; // TODO (ArrayList<String>) map.get("staff");
-				String language = "en"; // TODO until further notice. "languages"
-				String link = null; // TODO "url"
-				CourseRec record = new CourseRec(Source.EDX, id, short_name,
-					name, dsc, instructor, link, language, false); // TODO until further notice
+				// Id and short name are both code.
+				String name = getLongName(map);
+				String dsc = null; // Comes from a separate file. Not using for
+									// now.
+				String instructor = null; // TODO
+				String language = "en"; // TODO in a separate file.
+				String link = null; // Will use per offering urls.
+				CourseRec record = new CourseRec(Source.EDX, code, code, name,
+						dsc, instructor, link, language, getSelfStudy(map));
 				for (HashMap<String, Object> m : course) {
-					record.addOffering(makeOffering(m));
+					record.addOffering(makeOffering(
+							courseModel.makeNewOfferingId(Source.EDX), m));
 				}
-				ArrayList<String> categories = new ArrayList<String>();
-				for (String s : (ArrayList<String>) map.get("subjects")) {
-					categories.add(makeCategoryId(s));
-				}
-				ArrayList<String> universities = new ArrayList<String>();
-				for (String s : (ArrayList<String>) map.get("schools")) {
-					universities.add(makeIdSafe(s));
-				}
+				ArrayList<String> categories = getCategoryCodes(map);
+				ArrayList<String> universities = getUniversityCodes(map);
 				changes.add(CourseChange.add(record, categories, universities));
 			}
 		}
@@ -230,16 +247,64 @@ public class EdxModelAdapter {
 		return changes;
 	}
 
+	private static String getLongName(HashMap<String, Object> map) {
+		return (String) map.get("title");
+	}
+
 	@SuppressWarnings("unchecked")
-	private void diffCourse(ArrayList<HashMap<String, Object>> offerings,
+	private static ArrayList<String> getCategoryCodes(
+			HashMap<String, Object> map) {
+		ArrayList<String> list = new ArrayList<String>();
+		Map<String, Object> attrs = (Map<String, Object>) map.get("attributes");
+		for (Object m : (ArrayList<Object>) attrs.get("subjects")) {
+			String name = ((Map<String, String>) m).get("title");
+			if (name != null && !name.isEmpty())
+				list.add(makeIdSafe(name));
+		}
+		return list;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static ArrayList<String> getUniversityCodes(
+			HashMap<String, Object> map) {
+		ArrayList<String> list = new ArrayList<String>();
+		for (Object m : (ArrayList<Object>) map.get("organizations")) {
+			String name = ((Map<String, String>) m).get("display_name");
+			if (name != null && !name.isEmpty())
+				list.add(makeIdSafe(name));
+		}
+		return list;
+	}
+
+	private static String getKey(HashMap<String, Object> map) {
+		@SuppressWarnings("unchecked")
+		Map<String, Object> attrs = (Map<String, Object>) map.get("attributes");
+		return (String) attrs.get("course_key");
+	}
+
+	private static Date getStartDate(HashMap<String, Object> map) {
+		@SuppressWarnings("unchecked")
+		Map<String, Object> attrs = (Map<String, Object>) map.get("attributes");
+		String string = (String) attrs.get("start_datetime");
+		int index = string.indexOf("T");
+		if (index > 0)
+			string = string.substring(0, index);
+		return HttpHelper.parseDate(string);
+	}
+
+	private static boolean getSelfStudy(HashMap<String, Object> map) {
+		@SuppressWarnings("unchecked")
+		Map<String, Object> attrs = (Map<String, Object>) map.get("attributes");
+		return Boolean.TRUE.equals(attrs.get("self_paced"));
+	}
+
+	private void diffCourse(ArrayList<HashMap<String, Object>> classJson,
 			CourseRec oldRec, ArrayList<Change> changes, CourseModel model,
 			Date tooOld) {
-		// From the first record pull universities, categories, and long name.
-		// There is no description here. Maybe in another query?
-		HashMap<String, Object> first = offerings.get(0);
-		String longName = (String) first.get("l");
+		HashMap<String, Object> first = classJson.get(0);
 
 		// Long name.
+		String longName = getLongName(first);
 		String oldLongName = oldRec.getName();
 		if (oldLongName == null && longName != null || oldLongName != null
 				&& !oldLongName.equals(longName))
@@ -247,9 +312,7 @@ public class EdxModelAdapter {
 		// No description for now.
 
 		// Categories.
-		ArrayList<String> incoming = new ArrayList<String>();
-		for (String s : (ArrayList<String>) first.get("subjects"))
-			incoming.add(makeCategoryId(s));
+		ArrayList<String> incoming = getCategoryCodes(first);
 		HashSet<String> existing = CourseRec.idSet(oldRec.getCategories());
 		if (incoming.size() != existing.size()
 				|| !existing.containsAll(incoming)) {
@@ -257,31 +320,26 @@ public class EdxModelAdapter {
 		}
 
 		// Universities
-		incoming = new ArrayList<String>();
-		for (String s : (ArrayList<String>) first.get("schools"))
-			incoming.add(makeIdSafe(s));
+		incoming = getUniversityCodes(first);
 		existing = CourseRec.idSet(oldRec.getUniversities());
 		if (incoming.size() != existing.size()
 				|| !existing.containsAll(incoming)) {
 			changes.add(CourseChange.setUniversities(oldRec, incoming));
 		}
-
-		// EdX offerings now have guids, finally! We will flip them to negative
-		// values until TODO source flags are introduced.
 		ArrayList<OffRec> oldOffs = new ArrayList<OffRec>(oldRec.getOfferings());
-		for (HashMap<String, Object> newOff : offerings) {
-			long newId = (Long) newOff.get("guid");
-			Date newDate = HttpHelper.parseDate((String) newOff.get("start"));
-			// Find it by id or, for now, date.
+		for (HashMap<String, Object> newOff : classJson) {
+			String key = getKey(newOff);
+			Date newDate = getStartDate(newOff);
+			// Find it by key or, for now, date.
 			OffRec oldOff = null;
 			for (OffRec o : oldOffs)
-				if (o.getId() == newId || o.getStart() != null
+				if (key.equals(o.getKey()) || o.getStart() != null
 						&& o.getStart().equals(newDate)) {
-					// Quietly change id. TODO temporary!
-					if (o.getId() != newId) {
-						System.out.println("Changing offering id " + o.getId()
-								+ " to " + newId);
-						o.updateId((int) newId);
+					if (o.getKey() == null) {
+						System.out
+								.println("Setting key to existing offering found by date: "
+										+ key);
+						o.setKey(key);
 					}
 					oldOff = o;
 					break;
@@ -290,7 +348,10 @@ public class EdxModelAdapter {
 				oldOffs.remove(oldOff); // Accounted for
 				diffOffering(oldRec, oldOff, newOff, changes);
 			} else {
-				changes.add(OfferingChange.add(oldRec, makeOffering(newOff)));
+				changes.add(OfferingChange.add(
+						oldRec,
+						makeOffering(model.makeNewOfferingId(Source.EDX),
+								newOff)));
 			}
 		}
 		// Remove old offerings if any left.
@@ -301,24 +362,23 @@ public class EdxModelAdapter {
 		}
 	}
 
-	private OffRec makeOffering(HashMap<String, Object> map) {
-		long id = (Long) map.get("guid");
-		String startStr = (String) map.get("start");
-		Date start = HttpHelper.parseDate(startStr);
-		int duration = 1; // TODO
+	private OffRec makeOffering(long id, HashMap<String, Object> map) {
+		String startStr = null; // Will not use anymore.
+		Date start = getStartDate(map);
+		int duration = 1; // This will come later from a separate load.
 		String home = getCleanUrl(map);
 		boolean active = getActiveStatus(map);
-		return new OffRec(id, start, duration, home, active, startStr);
+		return new OffRec(id, start, duration, home, active, startStr)
+				.setKey(getKey(map));
 	}
 
 	private void diffOffering(CourseRec oldRec, OffRec oldOff,
 			HashMap<String, Object> newOff, ArrayList<Change> changes) {
-		// Start date. TODO self-paced.
-		Date newDate = HttpHelper.parseDate((String) newOff.get("start"));
+		// Start date.
+		Date newDate = getStartDate(newOff);
 		if (oldOff.getStart() == null && newDate != null
 				|| oldOff.getStart() != null
 				&& !oldOff.getStart().equals(newDate)) {
-			// TODO? Save as a string.
 			changes.add(OfferingChange.setStart(oldOff, newDate));
 		}
 
@@ -335,38 +395,14 @@ public class EdxModelAdapter {
 		}
 	}
 
-	public String extractEndDate(String baseUrl, String home) {
-		final String tag = "<span class=\"final-date\">";
-
-		String addr = baseUrl + home;
-		try {
-			URL url = new URL(addr);
-			InputStream stream = url.openStream();
-			InputStreamReader reader = new InputStreamReader(stream);
-
-			StringBuffer buffer = HttpHelper.readIntoBuffer(reader);
-			stream.close();
-
-			int idx = buffer.indexOf(tag);
-			if (idx < 0)
-				return null;
-			int end = buffer.indexOf("</span>", idx);
-			return buffer.substring(idx + tag.length(), end).trim();
-		} catch (Exception e) {
-			System.err.println("Cannot get end date from " + addr);
-		}
-		return null;
-	}
-
 	public boolean loadClassDuration(OffRec off, boolean ignoreSSL)
 			throws IOException {
+		if (off.getKey() == null)
+			return false;
 		// https://www.edx.org/api/catalog/v2/courses/course-v1:DelftX+TP101x+3T2015
-		String newUrl = "https://www.edx.org/api/catalog/v2/courses/course-v1:";
-		CourseRec course = off.getCourse();
-		if (course.getUniversities().isEmpty()) return false;
-		newUrl += off.getCourse().getUniversities().get(0).getId() + "+" + course.getShortName();
-		// TODO Quarter?
-		newUrl += "+3T2015";
+		// "https://www.edx.org/api/catalog/v2/courses/course-v1:";
+		String newUrl = "https://www.edx.org/api/catalog/v2/courses/"
+				+ off.getKey();
 		URL url = new URL(newUrl);
 		// All set up, we can get a resource through https now:
 		URLConnection urlCon = url.openConnection();
@@ -379,20 +415,21 @@ public class EdxModelAdapter {
 
 		StringBuffer buffer = HttpHelper.readIntoBuffer(reader);
 		stream.close();
-		
+
 		Object data = JsonParser.parse(new StringReader(buffer.toString()));
 		try {
 			@SuppressWarnings("unchecked")
 			String value = (String) ((Map<String, Object>) data).get("length");
 			value = value.trim();
 			int end = value.indexOf(' ');
-			if (end >=0)
+			if (end >= 0)
 				value = value.substring(0, end);
 			int weeks = Integer.parseInt(value);
 			off.setDuration(weeks);
 			return true;
 		} catch (Exception e) {
-			System.out.println("Cannot get course length: " + e);
+			System.out.println("Cannot get course length from " + newUrl + ": "
+					+ e);
 			return false;
 		}
 	}
