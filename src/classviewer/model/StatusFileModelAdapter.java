@@ -46,7 +46,7 @@ public class StatusFileModelAdapter {
 					rec.setStatusDirect(Status.parse(str[2]));
 			} else if ("o".equals(str[0])) {
 				if (rec != null) {
-					OffRec r = rec.getOffering(new Long(id));
+					OffRec r = rec.getOffering(id);
 					if (r == null)
 						System.out.println("No offering " + id + " in class "
 								+ rec);

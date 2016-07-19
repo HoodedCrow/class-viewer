@@ -132,7 +132,7 @@ public class OfferingTableModel extends DefaultTableModel implements
 				if (o1.getStart() == null) {
 					if (o2.getStart() != null)
 						return 1;
-					return Long.compare(o1.getId(), o2.getId());
+					return o1.getId().compareTo(o2.getId());
 				} else {
 					if (o2.getStart() == null)
 						return -1;

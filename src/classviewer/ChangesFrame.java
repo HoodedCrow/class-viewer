@@ -34,7 +34,6 @@ import javax.swing.table.TableRowSorter;
 import classviewer.changes.Change;
 import classviewer.changes.CourseraModelAdapter;
 import classviewer.changes.CourseraModelAdapter1;
-import classviewer.changes.CourseraModelAdapter2;
 import classviewer.changes.EdxModelAdapter;
 import classviewer.model.CourseModel;
 
@@ -72,20 +71,11 @@ public class ChangesFrame extends NamedInternalFrame {
 		JPanel buttons = new JPanel();
 		this.add(buttons, BorderLayout.NORTH);
 
-		JButton but = new JButton("Coursera Sessions");
+		JButton but = new JButton("Coursera");
 		but.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				loadCoursera(new CourseraModelAdapter1(),
-						settings.getString(Settings.COURSERA_URL1));
-			}
-		});
-		buttons.add(but);
-		but = new JButton("Coursera Anytime");
-		but.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				loadCoursera(new CourseraModelAdapter2(),
 						settings.getString(Settings.COURSERA_URL2));
 			}
 		});

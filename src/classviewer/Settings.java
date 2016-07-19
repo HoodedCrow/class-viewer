@@ -63,13 +63,18 @@ public class Settings {
 		settings.put(STATUS_DATA_FNAME, "statuses.txt");
 		settings.put(COURSERA_URL1, "https://www.coursera.org/maestro/api/topic/list?full=1");
 		settings.put(COURSERA_URL2,
-				"https://www.coursera.org/api/courses.v1?fields=categories,description,display," +
-				"instructorIds,partnerIds,primaryLanguages,workload,partners.v1(homeLink,name," +
-				"shortName,description),v1Sessions.v1(active,durationString,selfStudy,startDay," +
-				"startMonth,startYear,status),instructors.v1(firstName,lastName)," +
-				"languages.v1(englishName),v1Details.v1(sessionIds)&includes=categories," +
-				"instructorIds,partnerIds,primaryLanguages,v1Details.v1(sessionIds)," +
-				"v1Sessions.v1(active),instructors.v1(lastName)&courseType=v2.ondemand");
+				"https://www.coursera.org/api/courses.v1?fields=description," +
+				"categories,partnerIds,v2Details,partners.v1(name,description)" +
+				",v2Details.v1(onDemandSessions)&includes=partnerIds,v2Details" +
+				",v2Details.v1(onDemandSessions)&q=search");
+//		settings.put(COURSERA_URL2,
+//				"https://www.coursera.org/api/courses.v1?fields=categories,description,display," +
+//				"instructorIds,partnerIds,primaryLanguages,workload,partners.v1(homeLink,name," +
+//				"shortName,description),v1Sessions.v1(active,durationString,selfStudy,startDay," +
+//				"startMonth,startYear,status),instructors.v1(firstName,lastName)," +
+//				"languages.v1(englishName),v1Details.v1(sessionIds)&includes=categories," +
+//				"instructorIds,partnerIds,primaryLanguages,v1Details.v1(sessionIds)," +
+//				"v1Sessions.v1(active),instructors.v1(lastName)&courseType=v2.ondemand");
 		settings.put(EDX_URL, "https://www.edx.org/api/discovery/v1/cards");
 		// TODO "https://www.edx.org/search/api/all");
 

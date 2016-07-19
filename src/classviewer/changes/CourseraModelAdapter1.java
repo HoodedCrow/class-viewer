@@ -5,12 +5,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
@@ -20,8 +17,11 @@ import classviewer.model.Source;
 
 public class CourseraModelAdapter1 implements CourseraModelAdapter {
 
-	private ArrayList<Object> json;
+	private static final long MSEC_IN_WEEK = 24 * 7 * 3600 * 1000;
+
+	private HashMap<String, Object> json;
 	private HashMap<String, HashMap<String, Object>> universities = new HashMap<String, HashMap<String, Object>>();
+	private HashMap<String, String> uniIdsByShortName = new HashMap<String, String>();
 	private HashMap<String, HashMap<String, Object>> categories = new HashMap<String, HashMap<String, Object>>();
 	private HashMap<String, HashMap<String, Object>> courses = new HashMap<String, HashMap<String, Object>>();
 
@@ -30,33 +30,56 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 		URL url = new URL(courseraUrl);
 		InputStream stream = url.openStream();
 		InputStreamReader reader = new InputStreamReader(stream);
-		this.json = (ArrayList<Object>) JsonParser.parse(reader);
+		this.json = (HashMap<String, Object>) JsonParser.parse(reader);
 		stream.close();
 
-		// Extract all universities and categories
+		// Extract all universities and categories.
 		universities.clear();
-		for (Object o : json) {
-			HashMap<String, Object> map = (HashMap<String, Object>) o;
-			ArrayList<Object> list = (ArrayList<Object>) map
-					.get("universities");
-			for (Object u : list) {
-				map = (HashMap<String, Object>) u;
-				universities.put((String) map.get("short_name"), map);
-			}
+		uniIdsByShortName.clear();
+		HashMap<String, Object> map = (HashMap<String, Object>) json
+				.get("linked");
+		ArrayList<Object> list = (ArrayList<Object>) map.get("partners.v1");
+		for (Object o : list) {
+			map = (HashMap<String, Object>) o;
+			String id = String.valueOf(map.get("id"));
+			universities.put(id, map);
+			uniIdsByShortName.put((String) map.get("shortName"), id);
 		}
 		categories.clear();
-		for (Object o : json) {
-			HashMap<String, Object> map = (HashMap<String, Object>) o;
-			ArrayList<Object> list = (ArrayList<Object>) map.get("categories");
-			for (Object u : list) {
-				map = (HashMap<String, Object>) u;
-				categories.put((String) map.get("short_name"), map);
-			}
+		map = (HashMap<String, Object>) json.get("paging");
+		map = (HashMap<String, Object>) map.get("facets");
+		map = (HashMap<String, Object>) map.get("categories");
+		list = (ArrayList<Object>) map.get("facetEntries");
+		for (Object o : list) {
+			map = (HashMap<String, Object>) o;
+			categories.put((String) map.get("id"), map);
 		}
+
+		// Extract courses.
+		list = (ArrayList<Object>) json.get("elements");
 		courses.clear();
-		for (Object o : json) {
-			HashMap<String, Object> map = (HashMap<String, Object>) o;
+		for (Object o : list) {
+			map = (HashMap<String, Object>) o;
 			courses.put(String.valueOf(map.get("id")), map);
+		}
+
+		// Attach sessions to the courses. 
+		map = (HashMap<String, Object>) json.get("linked");
+		list = (ArrayList<Object>) map.get("onDemandSessions.v1");
+		for (Object o : list) {
+			map = (HashMap<String, Object>) o;
+			HashMap<String, Object> course = courses.get(map.get("courseId"));
+			if (course == null) {
+				System.err.println("Have session without a class: " + map);
+				continue;
+			}
+			ArrayList<Object> sessions = (ArrayList<Object>) course
+					.get("sessions");
+			if (sessions == null) {
+				sessions = new ArrayList<Object>();
+				course.put("sessions", sessions);
+			}
+			sessions.add(o);
 		}
 	}
 
@@ -64,18 +87,19 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 		ArrayList<Change> list = new ArrayList<Change>();
 
 		// Changed universities
-		HashSet<String> newIds = new HashSet<String>(this.universities.keySet());
+		HashSet<String> newIds = new HashSet<String>(this.uniIdsByShortName.keySet());
 		for (DescRec rec : model.getUniversities(Source.COURSERA)) {
 			if (!newIds.contains(rec.getId())) {
 				list.add(DescChange.delete(DescChange.UNIVERSITY, rec));
 			} else {
 				diffDesc(DescChange.UNIVERSITY, list, rec,
-						this.universities.get(rec.getId()));
+						 this.universities.get(this.uniIdsByShortName.get(rec.getId())));
 			}
 			newIds.remove(rec.getId());
 		}
 		for (String id : newIds) {
-			HashMap<String, Object> map = this.universities.get(id);
+			HashMap<String, Object> map = this.universities
+					.get(this.uniIdsByShortName.get(id));
 			list.add(DescChange.add(DescChange.UNIVERSITY, Source.COURSERA, id,
 					(String) map.get("name"), (String) map.get("description")));
 		}
@@ -109,25 +133,24 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 		}
 		for (String id : newCIds) {
 			HashMap<String, Object> map = this.courses.get(id);
-			// selfStudy == false in this parser.
-			CourseRec record = new CourseRec(Source.COURSERA, id,
-					(String) map.get("short_name"), (String) map.get("name"),
-					(String) map.get("description"),
-					(String) map.get("instructor"),
-					(String) map.get("social_link"),
-					(String) map.get("language"), false);
 			@SuppressWarnings("unchecked")
 			ArrayList<HashMap<String, Object>> lst = (ArrayList<HashMap<String, Object>>) map
-					.get("courses");
-			for (HashMap<String, Object> mp : lst) {
-				record.addOffering(makeOffering(mp));
+					.get("sessions");
+			boolean selfStudy = lst == null || lst.isEmpty();
+			CourseRec record = new CourseRec(Source.COURSERA, id,
+					(String) map.get("slug"), (String) map.get("name"),
+					(String) map.get("description"), null, null, null, selfStudy);
+			if (lst != null) {
+				for (HashMap<String, Object> mp : lst) {
+					OffRec off = makeOffering(mp);
+					if (newEnough(off))
+						record.addOffering(off);
+				}
 			}
 			@SuppressWarnings("unchecked")
 			ArrayList<String> categories = (ArrayList<String>) map
-					.get("category-ids");
-			@SuppressWarnings("unchecked")
-			ArrayList<String> universities = (ArrayList<String>) map
-					.get("university-ids");
+					.get("categories");
+			ArrayList<String> universities = getIncomingUniversities(map);
 			list.add(CourseChange.add(record, categories, universities));
 		}
 
@@ -148,52 +171,58 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 	}
 
 	@SuppressWarnings("unchecked")
+	private ArrayList<String> getIncomingUniversities(
+			HashMap<String, Object> map) {
+		ArrayList<String> incoming = new ArrayList<String>();
+		for (Object key : (ArrayList<Object>) map.get("partnerIds")) {
+			HashMap<String, Object> uni = universities.get(key);
+			if (uni == null) {
+				System.err.println("Class refers to unknown university: " + map);
+				continue;
+			}
+			incoming.add((String) uni.get("shortName"));
+		}
+		return incoming;
+	}
+
+	@SuppressWarnings("unchecked")
 	private void diffCourse(ArrayList<Change> list, CourseRec rec,
 			HashMap<String, Object> map, CourseModel model) {
 		// Individual fields
-		String nv = (String) map.get("short_name");
+		String nv = (String) map.get("slug");
 		if (Change.fieldChanged(rec.getShortName(), nv))
 			list.add(CourseChange.setShortName(rec, nv));
 		nv = (String) map.get("name");
 		if (Change.fieldChanged(rec.getName(), nv))
 			list.add(CourseChange.setName(rec, nv));
-		nv = (String) map.get("short_description");
+		nv = (String) map.get("description");
 		if (Change.fieldChanged(rec.getDescription(), nv))
 			list.add(CourseChange.setDescription(rec, nv));
-		nv = (String) map.get("instructor");
-		// Old Coursera interface no longer includes instructors.
-		if (nv != null && Change.fieldChanged(rec.getInstructor(), nv))
-			list.add(CourseChange.setInstructor(rec, nv));
-		nv = (String) map.get("social_link");
-		if (Change.fieldChanged(rec.getLink(), nv))
-			list.add(CourseChange.setLink(rec, nv));
-		nv = (String) map.get("language");
-		if (Change.fieldChanged(rec.getLanguage(), nv))
-			list.add(CourseChange.setLanguage(rec, nv));
 
-		// categories
-		ArrayList<Object> incoming = (ArrayList<Object>) map
-				.get("category-ids");
+		// Categories
+		ArrayList<String> incoming = (ArrayList<String>) map.get("categories");
 		HashSet<String> existing = CourseRec.idSet(rec.getCategories());
 		if (incoming.size() != existing.size()
 				|| !existing.containsAll(incoming)) {
-			list.add(CourseChange.setCategories(rec,
-					(Collection<String>) map.get("category-ids")));
+			list.add(CourseChange.setCategories(rec, incoming));
 		}
-		// universities
-		incoming = (ArrayList<Object>) map.get("university-ids");
+
+		// Universities
+		incoming = getIncomingUniversities(map);
 		existing = CourseRec.idSet(rec.getUniversities());
 		if (incoming.size() != existing.size()
 				|| !existing.containsAll(incoming)) {
-			list.add(CourseChange.setUniversities(rec,
-					(Collection<String>) map.get("university-ids")));
+			list.add(CourseChange.setUniversities(rec, incoming));
 		}
-		// offerings
+
+		// Offerings
 		ArrayList<HashMap<String, Object>> lst = (ArrayList<HashMap<String, Object>>) map
-				.get("courses");
-		HashSet<Long> newIds = new HashSet<Long>();
+				.get("sessions");
+		if (lst == null)
+			lst = new ArrayList<HashMap<String, Object>>();
+		HashSet<String> newIds = new HashSet<String>();
 		for (HashMap<String, Object> o : lst)
-			newIds.add((Long) o.get("id"));
+			newIds.add((String) o.get("id"));
 		for (OffRec or : rec.getOfferings()) {
 			if (!newIds.contains(or.getId())) {
 				list.add(OfferingChange.delete(or));
@@ -208,137 +237,54 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 			}
 			newIds.remove(or.getId());
 		}
-		for (Long id : newIds) {
+		for (String id : newIds) {
 			HashMap<String, Object> mp = null;
 			for (Object o : lst) {
 				mp = (HashMap<String, Object>) o;
 				if (mp.get("id").equals(id)) {
-					list.add(OfferingChange.add(rec, makeOffering(mp)));
+					OffRec off = makeOffering(mp);
+					if (newEnough(off))
+						list.add(OfferingChange.add(rec, off));
 					break;
 				}
 			}
 		}
 	}
 
+	private boolean newEnough(OffRec off) {
+		Date date = off.getStart();
+		if (date == null)
+			return true;
+		date = new Date(date.getTime() + off.getDuration() * MSEC_IN_WEEK);
+		return date.after(new Date()); // Class ends after today.
+	}
+
+	@SuppressWarnings("deprecation")
 	private OffRec makeOffering(HashMap<String, Object> map) {
-		Date start = getDate(map);
-		return new OffRec((Long) map.get("id"), start, getDuration(map),
-				getHome(map), getActive(map), getStartStr(map, start));
+		Long start = (Long) map.get("startedAt");
+		start = (start / 1000) * 1000; // Get rid of milliseconds.
+		Long end = (Long) map.get("endedAt");
+		Date startDate = new Date(start);
+		// Cut to day start.
+		startDate.setHours(0);
+		startDate.setMinutes(0);
+		startDate.setSeconds(0);
+		int dur = 1;
+		if (end != null) {
+			dur = (int) Math.ceil((end - start) / (double) MSEC_IN_WEEK);
+		}
+		return new OffRec((String) map.get("id"), startDate, dur, null, false,
+				null);
 	}
 
 	private void diffOffering(ArrayList<Change> list, OffRec rec,
 			HashMap<String, Object> map) {
-		// Use as a field parser
-		boolean active = getActive(map);
-		if (active != rec.isActive())
-			list.add(OfferingChange.setActive(rec, active));
-		Date start = getDate(map);
-		if (start != null) {
-			if (!start.equals(rec.getStart()))
-				list.add(OfferingChange.setStart(rec, start));
-		} else {
-			String startStr = getStartStr(map, start);
-			if (Change.fieldChanged(startStr, rec.getStartStr()))
-				list.add(OfferingChange.setStartStr(rec, startStr));
+		OffRec inc = makeOffering(map);
+		if (inc.getStart() != null) {
+			if (!inc.getStart().equals(rec.getStart()))
+				list.add(OfferingChange.setStart(rec, inc.getStart()));
 		}
-		long dur = getDuration(map);
-		if (dur != rec.getDuration())
-			list.add(OfferingChange.setDuration(rec, dur));
-		String link = getHome(map);
-		if (Change.fieldChanged(link, rec.getLink()))
-			list.add(OfferingChange.setLink(rec, link));
-	}
-
-	public HashSet<String> getCourseLevelKeys() {
-		HashSet<String> keys = new HashSet<String>();
-		for (Object o : json) {
-			// try {
-			@SuppressWarnings("unchecked")
-			Map<String, Object> map = (Map<String, Object>) o;
-			keys.addAll(map.keySet());
-			// } catch (ClassCastException e) {
-			// Huh?
-			// }
-		}
-		return keys;
-	}
-
-	@SuppressWarnings("unchecked")
-	public HashSet<String> getOfferingLevelKeys() {
-		HashSet<String> keys = new HashSet<String>();
-		for (Object o : json) {
-			try {
-				HashMap<String, Object> map = (HashMap<String, Object>) o;
-				ArrayList<Object> list = (ArrayList<Object>) map.get("courses");
-				map = (HashMap<String, Object>) list.get(0);
-				keys.addAll(map.keySet());
-				// } catch (ClassCastException e) {
-				// Huh?
-			} catch (NullPointerException e) {
-				System.err.println("Got a high level map in JSON "
-						+ "without 'courses' key. "
-						+ "Please check if Coursera's format has changed.");
-			}
-		}
-		return keys;
-	}
-
-	private Date getDate(HashMap<String, Object> json) {
-		// Some of these might be missing
-		Long startDay = (Long) json.get("start_day");
-		Long startMon = (Long) json.get("start_month");
-		Long startYear = (Long) json.get("start_year");
-
-		Calendar cal = Calendar.getInstance();
-		cal.set(Calendar.HOUR_OF_DAY, 0);
-		cal.set(Calendar.MINUTE, 0);
-		cal.set(Calendar.SECOND, 0);
-		cal.set(Calendar.MILLISECOND, 0);
-		if (startDay == null)
-			startDay = 1L;
-		cal.set(Calendar.DAY_OF_MONTH, startDay.intValue());
-		if (startMon == null) {
-			startMon = 1L;
-		}
-		cal.set(Calendar.MONTH, startMon.intValue() - 1);
-		if (startYear != null) {
-			cal.set(Calendar.YEAR, startYear.intValue());
-			return cal.getTime();
-		}
-		// No year => no date
-		return null;
-	}
-
-	private long getDuration(HashMap<String, Object> json) {
-		String durStr = (String) json.get("duration_string");
-		if ("".equals(durStr))
-			durStr = null;
-		if (durStr != null)
-			try {
-				String s = durStr.trim();
-				if (s.indexOf(" ") > 0)
-					s = s.substring(0, s.indexOf(" "));
-				if (s.indexOf("-") > 0)
-					s = s.substring(0, s.indexOf("-"));
-				return Integer.parseInt(s);
-			} catch (Exception e) {
-				System.err.println("Cannot parse duration " + durStr);
-			}
-		return 1;
-	}
-
-	public String getStartStr(HashMap<String, Object> json, Date start) {
-		String startStr = (String) json.get("start_date_string");
-		if (startStr == null && start != null)
-			startStr = OffRec.dformat.format(start);
-		return startStr;
-	}
-
-	private boolean getActive(HashMap<String, Object> json) {
-		return (Boolean) json.get("active");
-	}
-
-	private String getHome(HashMap<String, Object> json) {
-		return (String) json.get("home_link");
+		if (inc.getDuration() != rec.getDuration())
+			list.add(OfferingChange.setDuration(rec, inc.getDuration()));
 	}
 }

@@ -168,9 +168,9 @@ public class CourseRec implements Named, Linked {
 		return offerings;
 	}
 
-	public OffRec removeOffering(long offId) {
+	public OffRec removeOffering(String offId) {
 		for (int i = 0; i < offerings.size(); i++)
-			if (offerings.get(i).getId() == offId)
+			if (offerings.get(i).getId().equals(offId))
 				return offerings.remove(i);
 		return null;
 	}
@@ -198,9 +198,9 @@ public class CourseRec implements Named, Linked {
 		return res;
 	}
 
-	public OffRec getOffering(long id) {
+	public OffRec getOffering(String id) {
 		for (OffRec r : offerings)
-			if (r.getId() == id)
+			if (r.getId().equals(id))
 				return r;
 		return null;
 	}

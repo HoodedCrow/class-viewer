@@ -14,14 +14,15 @@ public class OffRec implements Linked {
 	public static final int SELF_PACE_DURATION = -1;
 	public static SimpleDateFormat dformat = new SimpleDateFormat("dd MMM yyyy");
 
-	private long id, duration;
+	private String id;
+	private long duration;
 	private Status status = Status.UNKNOWN;
 	private Date start;
 	private String home, startStr, key;
 	private boolean active;
 	private CourseRec course;
 
-	public OffRec(long id, Date start, long duration, String home,
+	public OffRec(String id, Date start, long duration, String home,
 			boolean active, String startStr) {
 		this.id = id;
 		this.start = start;
@@ -31,8 +32,7 @@ public class OffRec implements Linked {
 		this.startStr = startStr == null ? "" : startStr;
 	}
 
-	public void updateId(int newId) {
-		// TODO temporary disabling this check. assert (this.id == 0);
+	public void updateId(String newId) {
 		this.id = newId;
 	}
 
@@ -56,7 +56,7 @@ public class OffRec implements Linked {
 			course.setStatus(cs);
 	}
 
-	public long getId() {
+	public String getId() {
 		return id;
 	}
 

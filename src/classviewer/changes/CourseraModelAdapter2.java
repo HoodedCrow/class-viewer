@@ -168,8 +168,8 @@ public class CourseraModelAdapter2 implements CourseraModelAdapter {
 		for (OffRec or : rec.getOfferings()) {
 			HashMap<String, Object> session = null;
 			for (HashMap<String, Object> map : ses) {
-				Long id = (Long) map.get("id");
-				if (id == or.getId()) {
+				String id = (String) map.get("id");
+				if (id.equals(or.getId())) {
 					session = map;
 					break;
 				}
@@ -193,7 +193,7 @@ public class CourseraModelAdapter2 implements CourseraModelAdapter {
 
 	private OffRec makeOffering(HashMap<String, Object> map) {
 		Date start = getStartDate(map);
-		Long id = (Long) map.get("id");
+		String id = (String) map.get("id");
 		return new OffRec(id, start, getDurationWeeks(map), 
 				(String) map.get("homeLink"), (Boolean) map.get("active"), null);
 	}

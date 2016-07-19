@@ -53,13 +53,18 @@ public class CourseModel {
 						+ course.getId());
 			else courses.put(course.getId(), course);
 			for (OffRec ofr : course.getOfferings()) {
-				if (ofr.getId() > maxOfferingId)
-					maxOfferingId = ofr.getId();
+				try {
+					int num = Integer.parseInt(ofr.getId());
+					if (num > maxOfferingId)
+						maxOfferingId = num;
+				} catch (NumberFormatException e) {
+					// Okay, ids switched to strings in most places.
+				}
 			}
 		}
 		
-		public long makeNewOfferingId() {
-			return ++maxOfferingId;
+		public String makeNewOfferingId() {
+			return String.valueOf(++maxOfferingId);
 		}
 	}
 
@@ -113,7 +118,7 @@ public class CourseModel {
 		return submodel[source.ordinal()].courses.remove(id);
 	}
 
-	public long makeNewOfferingId(Source source) {
+	public String makeNewOfferingId(Source source) {
 		return submodel[source.ordinal()].makeNewOfferingId();
 	}
 	

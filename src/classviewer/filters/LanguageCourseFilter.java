@@ -30,6 +30,7 @@ public class LanguageCourseFilter extends SimpleCourseFilter<String> {
 	@Override
 	public ArrayList<? extends Object> getOptions() {
 		options = new ArrayList<String>(model.getLanguages());
+		options.remove(null);
 		Collections.sort(options);
 		return options;
 	}

@@ -362,7 +362,7 @@ public class EdxModelAdapter {
 		}
 	}
 
-	private OffRec makeOffering(long id, HashMap<String, Object> map) {
+	private OffRec makeOffering(String id, HashMap<String, Object> map) {
 		String startStr = null; // Will not use anymore.
 		Date start = getStartDate(map);
 		int duration = 1; // This will come later from a separate load.

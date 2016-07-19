@@ -166,14 +166,8 @@ public class XmlModelAdapter {
 		if (!"Off".equals(item.getNodeName()))
 			return null;
 		NamedNodeMap attrs = item.getAttributes();
-		int id, duration, active;
-		try {
-			id = Integer.parseInt(attrs.getNamedItem("id").getNodeValue());
-			// Clean up. TODO Remove eventually.
-			if (id < 0) id = -id;
-		} catch (Exception e) {
-			throw new IOException("Cannot have an offering without id");
-		}
+		String id = attrs.getNamedItem("id").getNodeValue();
+		int duration, active;
 		Date start = dateOrNull(item, "Start");
 		duration = attrOrInt(attrs, "dur");
 		active = attrOrInt(attrs, "active");
