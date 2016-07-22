@@ -76,8 +76,8 @@ public final class OfferingChange {
 
 			@Override
 			public Object getTarget() {
-				return "[" + course.getStatus() + "]" + course.getName() + "("
-						+ offering.getId() + ")";
+				return "[" + course.getStatus() + offering.getStatus() + "]"
+						+ course.getName() + "(" + offering.getId() + ")";
 			}
 
 			@Override
