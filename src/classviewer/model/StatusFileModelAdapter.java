@@ -27,10 +27,11 @@ public class StatusFileModelAdapter {
 		BufferedReader br = new BufferedReader(reader);
 		CourseRec rec = null;
 		while (br.ready()) {
-			String[] str = br.readLine().split(" ");
+			String srcstr = br.readLine();
+			String[] str = srcstr.split(" ");
 			if (str.length != 3) {
 				System.out.println("Expected exactly 3 items per line, got "
-						+ str.length);
+						+ str.length + ": " + srcstr);
 				continue;
 			}
 			String id = str[1];
