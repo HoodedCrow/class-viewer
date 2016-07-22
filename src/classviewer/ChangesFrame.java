@@ -151,6 +151,11 @@ public class ChangesFrame extends NamedInternalFrame {
 		table.addMouseMotionListener(new MouseAdapter() {
 			@Override
 			public void mouseMoved(MouseEvent e) {
+				int col = table.columnAtPoint(e.getPoint());
+				if (col != 1) {
+					table.setToolTipText(null);
+					return;
+				}
 				int row = table.rowAtPoint(e.getPoint());
 				row = table.getRowSorter().convertRowIndexToModel(row);
 				Change change = changes.get(row);
