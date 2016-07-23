@@ -39,6 +39,7 @@ public class Merger extends JFrame {
 	private JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private JTextPane left, right;
 	private JButton takeLeft, takeRight, skipIt, save;
+	static Source source = Source.COURSERA;
 
 	private Merger(Settings settings) {
 		super("Course record merger");
@@ -155,7 +156,7 @@ public class Merger extends JFrame {
 		}
 		oldRec.getOfferings().clear();
 		newRec.setStatus(oldRec.getStatus());
-		model.removeCourse(Source.COURSERA, oldRec.getId());
+		model.removeCourse(source, oldRec.getId());
 
 		left.setText(summarize(newRec));
 		right.setText("");
@@ -204,7 +205,7 @@ public class Merger extends JFrame {
 			}
 		}
 
-		courses = new ArrayList<CourseRec>(model.getCourses(Source.COURSERA));
+		courses = new ArrayList<CourseRec>(model.getCourses(source));
 		Collections.sort(courses, new Comparator<CourseRec>() {
 			@Override
 			public int compare(CourseRec o1, CourseRec o2) {
