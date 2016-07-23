@@ -63,10 +63,10 @@ public class Settings {
 		settings.put(STATUS_DATA_FNAME, "statuses.txt");
 		settings.put(COURSERA_URL1, "https://www.coursera.org/maestro/api/topic/list?full=1");
 		settings.put(COURSERA_URL2,
-				"https://www.coursera.org/api/courses.v1?fields=description," +
-				"categories,partnerIds,v2Details,partners.v1(name,description)" +
-				",v2Details.v1(onDemandSessions)&includes=partnerIds,v2Details" +
-				",v2Details.v1(onDemandSessions)&q=search");
+				"https://www.coursera.org/api/courses.v1?fields=primaryLanguages,description,"
+						+ "categories,partnerIds,v2Details,partners.v1(name,description)"
+						+ ",v2Details.v1(onDemandSessions)&includes=partnerIds,v2Details"
+						+ ",v2Details.v1(onDemandSessions)&q=search&primaryLanguages=en,de");
 //		settings.put(COURSERA_URL2,
 //				"https://www.coursera.org/api/courses.v1?fields=categories,description,display," +
 //				"instructorIds,partnerIds,primaryLanguages,workload,partners.v1(homeLink,name," +

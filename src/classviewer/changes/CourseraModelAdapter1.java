@@ -14,6 +14,7 @@ import classviewer.model.CourseRec;
 import classviewer.model.DescRec;
 import classviewer.model.OffRec;
 import classviewer.model.Source;
+import classviewer.model.Status;
 
 public class CourseraModelAdapter1 implements CourseraModelAdapter {
 
@@ -24,18 +25,68 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 	private HashMap<String, String> uniIdsByShortName = new HashMap<String, String>();
 	private HashMap<String, HashMap<String, Object>> categories = new HashMap<String, HashMap<String, Object>>();
 	private HashMap<String, HashMap<String, Object>> courses = new HashMap<String, HashMap<String, Object>>();
+	private HashMap<String, Long> catCounts = new HashMap<String, Long>();
 
 	@SuppressWarnings("unchecked")
 	public void load(String courseraUrl) throws IOException {
-		URL url = new URL(courseraUrl);
+		// Coursera has a limit of 1000 courses per query, but over 1500
+		// classes at the time of this writing. We will use categories as
+		// additional argument to split the whole thing into multiple requests.
+		universities.clear();
+		uniIdsByShortName.clear();
+		categories.clear();
+		courses.clear();
+		catCounts.clear();
+		
+		// We'll start with a empty category list.
+		loadWithParams(courseraUrl, 5, null);
+		for (String cat : categories.keySet()) {
+			Long count = (Long) categories.get(cat).get("count");
+			if (count == null) {
+				System.err.println("Category " + cat + " has no count");
+				continue;
+			}
+			catCounts.put(cat, count);
+		}
+		System.out.println("After first pass have " + catCounts.size()
+				+ " categories.");
+		long total = (Long) ((HashMap<String, Object>) json.get("paging"))
+				.get("total");
+		System.out.println("Paging says " + total + " classes");
+		System.out.println("The whole thing " + this);
+		
+		// Now do them all for real.
+		for (String cat : catCounts.keySet()) {
+			int count = catCounts.get(cat).intValue();
+			System.out.println("Loading " + count + " of " + cat);
+			loadWithParams(courseraUrl, count, cat);
+			if (categories.size() != catCounts.size()) {
+				System.err.println("Looks like we added new category?");
+			}
+		}
+		System.out.println("Done loading 1. Got " + this);
+		long missing = total - courses.size();
+		if (missing > 0) 
+			loadWithParams(courseraUrl + "&certificates=VerifiedCert&start=0", 1000, null);
+		missing = total - courses.size();
+		System.out.println("Done loading 2. Got " + this);
+		System.out.println("Still missing " + missing + " classes.");
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void loadWithParams(String courseraUrl, int limit, String category)
+			throws IOException {
+		String urlStr = courseraUrl + "&limit=" + limit;
+		if (category != null) {
+			urlStr += "&categories=" + category;
+		}
+		URL url = new URL(urlStr);
 		InputStream stream = url.openStream();
 		InputStreamReader reader = new InputStreamReader(stream);
 		this.json = (HashMap<String, Object>) JsonParser.parse(reader);
 		stream.close();
 
 		// Extract all universities and categories.
-		universities.clear();
-		uniIdsByShortName.clear();
 		HashMap<String, Object> map = (HashMap<String, Object>) json
 				.get("linked");
 		ArrayList<Object> list = (ArrayList<Object>) map.get("partners.v1");
@@ -45,7 +96,6 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 			universities.put(id, map);
 			uniIdsByShortName.put((String) map.get("shortName"), id);
 		}
-		categories.clear();
 		map = (HashMap<String, Object>) json.get("paging");
 		map = (HashMap<String, Object>) map.get("facets");
 		map = (HashMap<String, Object>) map.get("categories");
@@ -57,7 +107,6 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 
 		// Extract courses.
 		list = (ArrayList<Object>) json.get("elements");
-		courses.clear();
 		for (Object o : list) {
 			map = (HashMap<String, Object>) o;
 			courses.put(String.valueOf(map.get("id")), map);
@@ -81,6 +130,12 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 			}
 			sessions.add(o);
 		}
+	}
+	
+	@Override
+	public String toString() {
+		return categories.size() + " categories, " + universities.size()
+				+ " universities, and " + courses.size() + " courses";
 	}
 
 	public ArrayList<Change> collectChanges(CourseModel model) {
@@ -139,7 +194,7 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 			boolean selfStudy = lst == null || lst.isEmpty();
 			CourseRec record = new CourseRec(Source.COURSERA, id,
 					(String) map.get("slug"), (String) map.get("name"),
-					(String) map.get("description"), null, null, null, selfStudy);
+					(String) map.get("description"), null, null, getLanguage(map), selfStudy);
 			if (lst != null) {
 				for (HashMap<String, Object> mp : lst) {
 					OffRec off = makeOffering(mp);
@@ -198,6 +253,9 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 		nv = (String) map.get("description");
 		if (Change.fieldChanged(rec.getDescription(), nv))
 			list.add(CourseChange.setDescription(rec, nv));
+		nv = getLanguage(map);
+		if (Change.fieldChanged(rec.getLanguage(), nv))
+			list.add(CourseChange.setLanguage(rec, nv));
 
 		// Categories
 		ArrayList<String> incoming = (ArrayList<String>) map.get("categories");
@@ -225,7 +283,9 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 			newIds.add((String) o.get("id"));
 		for (OffRec or : rec.getOfferings()) {
 			if (!newIds.contains(or.getId())) {
-				list.add(OfferingChange.delete(or));
+				if (or.getStatus() == Status.UNKNOWN
+						|| or.getStatus() == Status.NO)
+					list.add(OfferingChange.delete(or));
 			} else {
 				HashMap<String, Object> mp = null;
 				for (HashMap<String, Object> o : lst) {
@@ -249,6 +309,15 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 				}
 			}
 		}
+	}
+
+	private String getLanguage(HashMap<String, Object> map) {
+		@SuppressWarnings("unchecked")
+		ArrayList<String> langs = (ArrayList<String>) map.get("primaryLanguages");
+		if (langs == null || langs.isEmpty()) return null;
+		if (langs.size() > 1)
+			System.err.println("Multiple primary languages " + map);
+		return langs.get(0);
 	}
 
 	private boolean newEnough(OffRec off) {

@@ -1,6 +1,8 @@
 package classviewer.changes;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
@@ -58,6 +60,8 @@ public final class CourseChange {
 			b.append(" by ").append(record.getInstructor());
 		if (!categories.isEmpty())
 			b.append(" ").append(categories);
+		if (record.getLanguage() != null)
+			b.append(" in ").append(record.getLanguage());
 		b.append("</b><br/>");
 		boolean first = true;
 		if (!record.getOfferings().isEmpty()) {
@@ -106,13 +110,17 @@ public final class CourseChange {
 		StringBuffer b = new StringBuffer("<html><b>Drop class: ");
 		b.append(record.getName()).append("[").append(record.getStatus()).append("]<br/>");
 		b.append("From ").append(CourseRec.idSet(record.getUniversities()));
+		if (record.getLanguage() != null)
+			b.append(" in ").append(record.getLanguage());
 		if (record.getInstructor() != null && !record.getInstructor().isEmpty())
 			b.append(" by ").append(record.getInstructor());
 		b.append("</b><br/>");
 		boolean first = true;
 		if (!record.getOfferings().isEmpty()) {
 			b.append("Sessions:");
-			for (OffRec or : record.getOfferings()) {
+			ArrayList<OffRec> all = new ArrayList<OffRec>(record.getOfferings());
+			Collections.sort(all);
+			for (OffRec or : all) {
 				if (!first) 
 					b.append(",");
 				else

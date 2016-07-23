@@ -10,7 +10,7 @@ import classviewer.changes.HttpHelper;
  * 
  * @author TK
  */
-public class OffRec implements Linked {
+public class OffRec implements Linked, Comparable<OffRec> {
 	public static final int SELF_PACE_DURATION = -1;
 	public static SimpleDateFormat dformat = new SimpleDateFormat("dd MMM yyyy");
 
@@ -162,5 +162,16 @@ public class OffRec implements Linked {
 		if (home != null)
 			str += "<br/><a href=\"" + home + "\">" + home + "</a>";
 		return str;
+	}
+
+	@Override
+	public int compareTo(OffRec o) {
+		if (start == null) {
+			if (o.getStart() == null) return 0;
+			return 1;
+		}
+		if (o.getStart() == null)
+			return -1;
+		return start.compareTo(o.getStart());
 	}
 }
