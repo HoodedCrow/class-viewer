@@ -119,7 +119,10 @@ public class CalendarFrame extends NamedInternalFrame implements
 		this.drawingPanel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent event) {
-				processClick(event.getX(), event.getY());
+				if (event.getButton() == MouseEvent.BUTTON1)
+					processClick(event.getX(), event.getY(), false);
+				if (event.getButton() == MouseEvent.BUTTON3 && event.getClickCount() > 1)
+					processClick(event.getX(), event.getY(), true);
 			}
 		});
 		this.drawingPanel.addMouseMotionListener(new MouseAdapter() {
@@ -168,13 +171,13 @@ public class CalendarFrame extends NamedInternalFrame implements
 		return null;
 	}
 
-	protected void processClick(int x, int y) {
+	protected void processClick(int x, int y, boolean toKill) {
 		Block block = getBlockAt(x, y);
 		if (block == null)
 			return;
 
 		for (GraphicSelectionListener lnr : selectionListeners)
-			lnr.offeringClicked(block.offering);
+			lnr.offeringClicked(block.offering, toKill);
 	}
 
 	/** Get all blocks from the model. This should be called once */

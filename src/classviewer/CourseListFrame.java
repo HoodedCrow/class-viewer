@@ -88,12 +88,23 @@ public class CourseListFrame extends NamedInternalFrame implements
 	}
 
 	@Override
-	public void offeringClicked(OffRec offering) {
+	public void offeringClicked(OffRec offering, boolean toKill) {
 		CourseRec course = offering.getCourse();
 		int idx = courseModel.getFilteredCourses().indexOf(course);
 		idx = table.convertRowIndexToView(idx);
 		table.getSelectionModel().setSelectionInterval(idx, idx);
 		table.scrollRectToVisible(table.getCellRect(idx, 0, true));
+		
+		if (toKill && offering.getStatus() != Status.NO) {
+			offering.setStatus(Status.NO);
+			try {
+				courseModel.saveStatusFile();
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(null,
+						"Error saving status file: " + e);
+			}
+			courseModel.fireCourseStatusChanged(offering.getCourse());
+		}
 	}
 
 	@Override

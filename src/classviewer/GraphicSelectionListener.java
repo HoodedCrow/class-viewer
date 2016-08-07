@@ -8,5 +8,5 @@ import classviewer.model.OffRec;
  * @author TK
  */
 public interface GraphicSelectionListener {
-	public void offeringClicked(OffRec offering);
+	public void offeringClicked(OffRec offering, boolean toKill);
 }
