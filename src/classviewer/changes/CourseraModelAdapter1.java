@@ -25,7 +25,6 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 	private HashMap<String, String> uniIdsByShortName = new HashMap<String, String>();
 	private HashMap<String, HashMap<String, Object>> categories = new HashMap<String, HashMap<String, Object>>();
 	private HashMap<String, HashMap<String, Object>> courses = new HashMap<String, HashMap<String, Object>>();
-	private HashMap<String, Long> catCounts = new HashMap<String, Long>();
 
 	@SuppressWarnings("unchecked")
 	public void load(String courseraUrl) throws IOException {
@@ -36,50 +35,47 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 		uniIdsByShortName.clear();
 		categories.clear();
 		courses.clear();
-		catCounts.clear();
 		
-		// We'll start with a empty category list.
-		loadWithParams(courseraUrl, 5, null);
-		for (String cat : categories.keySet()) {
-			Long count = (Long) categories.get(cat).get("count");
-			if (count == null) {
-				System.err.println("Category " + cat + " has no count");
-				continue;
-			}
-			catCounts.put(cat, count);
-		}
-		System.out.println("After first pass have " + catCounts.size()
-				+ " categories.");
+		// Page size limit is 1000.
+		long pageSize = 100;
+		long start = 0;
+		loadWithParams(courseraUrl, pageSize, start);
 		long total = (Long) ((HashMap<String, Object>) json.get("paging"))
 				.get("total");
 		System.out.println("Paging says " + total + " classes");
 		System.out.println("The whole thing " + this);
 		
-		// Now do them all for real.
-		for (String cat : catCounts.keySet()) {
-			int count = catCounts.get(cat).intValue();
-			System.out.println("Loading " + count + " of " + cat);
-			loadWithParams(courseraUrl, count, cat);
-			if (categories.size() != catCounts.size()) {
-				System.err.println("Looks like we added new category?");
-			}
+		// Now the rest of them.
+		start = pageSize;
+		while (start < total) {
+			long chunk = Math.min(pageSize, total-start);
+			System.out.println("Loading " + chunk + " starting at " + start);
+			loadWithParams(courseraUrl, chunk, start);
+			start += chunk;
 		}
 		System.out.println("Done loading 1. Got " + this);
 		long missing = total - courses.size();
-		if (missing > 0) 
-			loadWithParams(courseraUrl + "&certificates=VerifiedCert&start=0", 1000, null);
-		missing = total - courses.size();
-		System.out.println("Done loading 2. Got " + this);
+		//if (missing > 0) 
+		//	loadWithParams(courseraUrl + "&certificates=VerifiedCert&start=0", 1000, null);
+		//missing = total - courses.size();
+		//System.out.println("Done loading 2. Got " + this);
 		System.out.println("Still missing " + missing + " classes.");
+		
+		for (HashMap<String, Object> crs : courses.values()) {
+			ArrayList<String> lst = (ArrayList<String>) crs.get("categories");
+			if (lst == null) continue;
+			for (String name : lst) {
+				if (!categories.containsKey(name)) {
+					categories.put(name, null);
+				}
+			}
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void loadWithParams(String courseraUrl, int limit, String category)
+	private void loadWithParams(String courseraUrl, long limit, long start)
 			throws IOException {
-		String urlStr = courseraUrl + "&limit=" + limit;
-		if (category != null) {
-			urlStr += "&categories=" + category;
-		}
+		String urlStr = courseraUrl + "&limit=" + limit + "&start=" + start;
 		URL url = new URL(urlStr);
 		InputStream stream = url.openStream();
 		InputStreamReader reader = new InputStreamReader(stream);
@@ -99,11 +95,12 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 		map = (HashMap<String, Object>) json.get("paging");
 		map = (HashMap<String, Object>) map.get("facets");
 		map = (HashMap<String, Object>) map.get("categories");
+		if (map != null) {
 		list = (ArrayList<Object>) map.get("facetEntries");
 		for (Object o : list) {
 			map = (HashMap<String, Object>) o;
 			categories.put((String) map.get("id"), map);
-		}
+		}}
 
 		// Extract courses.
 		list = (ArrayList<Object>) json.get("elements");
@@ -214,6 +211,10 @@ public class CourseraModelAdapter1 implements CourseraModelAdapter {
 
 	private void diffDesc(int what, ArrayList<Change> list, DescRec rec,
 			HashMap<String, Object> map) {
+		if (map == null) {
+			System.out.println("Category '" + rec.getId() + "' is used but no longer listed");
+			return;
+		}
 		// Name or description changed?
 		String b = (String) map.get("name");
 		if (Change.fieldChanged(rec.getName(), b)) {
