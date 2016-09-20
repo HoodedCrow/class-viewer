@@ -120,6 +120,7 @@ public class EdxModelAdapter {
 			}
 
 			String courseCode = ((String) attrs.get("course_number")).trim();
+			courseCode = makeIdSafe(courseCode);
 			ArrayList<HashMap<String, Object>> offerings = courses
 					.get(courseCode);
 			if (offerings == null) {
@@ -135,6 +136,7 @@ public class EdxModelAdapter {
 	 * safe to appear in XML attribute.
 	 */
 	public static String makeIdSafe(String s) {
+		s = s.replaceAll("•", "");
 		s = s.replaceAll(" ", "");
 		s = s.replaceAll("&", "-");
 		return s;
