@@ -5,6 +5,7 @@ import java.util.Date;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
 import classviewer.model.OffRec;
+import classviewer.model.Status;
 
 public final class OfferingChange {
 	private static void appendCourse(StringBuffer b, CourseRec record) {
@@ -55,7 +56,12 @@ public final class OfferingChange {
 
 			@Override
 			public void apply(CourseModel model) {
+				// Add first to avoid exception in setStatus.
 				course.addOffering(offering);
+				Status sc = course.getStatus();
+				if (sc == Status.NO || sc == Status.DONE
+						|| sc == Status.AUDITED || sc == Status.CHAIN)
+					offering.setStatus(Status.NO);
 			}
 		};
 		StringBuffer b = new StringBuffer("<html><b>New offerring");
