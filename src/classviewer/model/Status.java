@@ -8,14 +8,15 @@ package classviewer.model;
 public class Status {
 	public static final Status UNKNOWN = new Status('U', "unknown", 5);
 	public static final Status YES = new Status('Y', "yes", 3);
-	public static final Status NO = new Status('N', "no", 6);
+	public static final Status NO = new Status('N', "no", 7);
 	public static final Status MAYBE = new Status('M', "maybe", 4);
 	public static final Status REGISTERED = new Status('R', "registered", 0);
 	public static final Status AUDITED = new Status('A', "audited", 2);
 	public static final Status DONE = new Status('D', "done", 1);
+	public static final Status CHAIN = new Status('C', "chain", 6);
 
 	private static final Status[] allValues = { UNKNOWN, YES, NO, MAYBE,
-			REGISTERED, AUDITED, DONE };
+			REGISTERED, AUDITED, DONE, CHAIN };
 
 	private char value;
 	private String name;
@@ -51,6 +52,8 @@ public class Status {
 			return AUDITED;
 		if ("r".equals(str.toLowerCase()) || "6".equals(str))
 			return REGISTERED;
+		if ("c".equals(str.toLowerCase()) || "7".equals(str))
+			return CHAIN;
 		System.err.println("Unknown status value: " + str);
 		return UNKNOWN;
 	}

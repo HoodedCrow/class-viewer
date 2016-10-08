@@ -82,10 +82,11 @@ public class CourseRec implements Named, Linked {
 			return; // to avoid deep checks
 		this.status = status;
 
-		// If course status flipped to REGISTERED or DONE, all UNKNOWN or MAYBE
-		// offerings go to NO. No need to propagate from the offering back, so
-		// use setStatusDirect.
-		if (status == Status.REGISTERED || status == Status.DONE)
+		// If course status flipped to REGISTERED, DONE, or CHAIN, all UNKNOWN
+		// or MAYBE offerings go to NO. No need to propagate from the offering
+		// back, so use setStatusDirect.
+		if (status == Status.REGISTERED || status == Status.DONE
+				|| status == Status.CHAIN)
 			for (OffRec o : offerings)
 				if (o.getStatus() == Status.UNKNOWN
 						|| o.getStatus() == Status.MAYBE)

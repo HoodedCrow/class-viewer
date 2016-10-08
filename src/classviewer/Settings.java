@@ -98,6 +98,7 @@ public class Settings {
 		settings.put(COLOR + "ACalBg", "000080");
 		settings.put(COLOR + "DCalBg", "005000");
 		settings.put(COLOR + "RCalBg", "00FF00");
+		settings.put(COLOR + "CCalBg", "FF8080");
 
 		settings.put(COLOR + "UCalFg", "000000");
 		settings.put(COLOR + "YCalFg", "001478");
@@ -106,6 +107,7 @@ public class Settings {
 		settings.put(COLOR + "ACalFg", "00FFFF");
 		settings.put(COLOR + "DCalFg", "00FF00");
 		settings.put(COLOR + "RCalFg", "005000");
+		settings.put(COLOR + "CCalFg", "800000");
 
 		settings.put(COLOR + "TodayBg", "E0A0E0");
 	}
