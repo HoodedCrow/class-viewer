@@ -21,7 +21,7 @@ public final class CourseChange {
 	public static Change add(final CourseRec record,
 			final Collection<String> categories,
 			final Collection<String> universities) {
-		Change change = new Change(record.getSource(), Change.ADD) {
+		Change change = new Change(record.getSource(), Change.ADD, record) {
 			@Override
 			public String getDescription() {
 				return (record.isSelfStudy() ? "#" : "") + "Class";
@@ -81,7 +81,7 @@ public final class CourseChange {
 	}
 
 	public static Change delete(final CourseRec record) {
-		Change change = new Change(record.getSource(), Change.DELETE) {
+		Change change = new Change(record.getSource(), Change.DELETE, record) {
 			@Override
 			public String getDescription() {
 				return (record.isSelfStudy() ? "#" : "") + "Class";
@@ -140,7 +140,7 @@ public final class CourseChange {
 
 		StringCourseChange(CourseRec record, String field, String newValue,
 				String oldValue) {
-			super(record.getSource(), field, newValue, oldValue);
+			super(record.getSource(), field, newValue, oldValue, record);
 			this.id = "[" + record.getStatus() + "]" + record.getName();
 			StringBuffer b = new StringBuffer("<html><b>Change ");
 			b.append(field).append(" for ").append(record.getName())
@@ -228,7 +228,7 @@ public final class CourseChange {
 
 		IdSetCourseChange(CourseRec record, String field,
 				Collection<String> newValue, Collection<String> oldValue) {
-			super(record.getSource(), field, newValue, oldValue);
+			super(record.getSource(), field, newValue, oldValue, record);
 			this.id = "[" + record.getStatus() + "]" + record.getName();
 			setOrder(4);
 		}

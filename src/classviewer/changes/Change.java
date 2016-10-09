@@ -17,10 +17,12 @@ public abstract class Change implements Comparable<Change> {
 	protected String type;
 	protected int order;
 	protected String toolTip = null;
+	protected Object object;
 
-	public Change(Source source, String type) {
+	public Change(Source source, String type, Object object) {
 		this.source = source;
 		this.type = type;
+		this.object = object;
 	}
 
 	public Source getSource() {
@@ -29,6 +31,10 @@ public abstract class Change implements Comparable<Change> {
 	
 	public String getType() {
 		return type;
+	}
+	
+	public Object getObject() {
+		return object;
 	}
 	
 	public Change setOrder(int order) {

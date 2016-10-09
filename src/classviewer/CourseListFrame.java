@@ -28,7 +28,7 @@ import classviewer.model.Status;
  * @author TK
  */
 public class CourseListFrame extends NamedInternalFrame implements
-		CourseModelListener, GraphicSelectionListener {
+		CourseModelListener, GraphicSelectionListener, ChangeSelectionListener {
 
 	private final String[] columnNames = { "", "", "Name" };
 	private JTable table;
@@ -86,14 +86,18 @@ public class CourseListFrame extends NamedInternalFrame implements
 		column.setMaxWidth(cw);
 		table.getColumnModel().getColumn(0).setCellEditor(cellEditor);
 	}
-
-	@Override
-	public void offeringClicked(OffRec offering, boolean toKill) {
-		CourseRec course = offering.getCourse();
+	
+	protected void selectCourse(CourseRec course) {
 		int idx = courseModel.getFilteredCourses().indexOf(course);
 		idx = table.convertRowIndexToView(idx);
 		table.getSelectionModel().setSelectionInterval(idx, idx);
 		table.scrollRectToVisible(table.getCellRect(idx, 0, true));
+	}
+
+	@Override
+	public void offeringClicked(OffRec offering, boolean toKill) {
+		CourseRec course = offering.getCourse();
+		selectCourse(course);
 		
 		if (toKill && offering.getStatus() != Status.NO) {
 			offering.setStatus(Status.NO);
@@ -105,6 +109,17 @@ public class CourseListFrame extends NamedInternalFrame implements
 			}
 			courseModel.fireCourseStatusChanged(offering.getCourse());
 		}
+	}
+
+	@Override
+	public void offeringChangeSelected(OffRec offering) {
+		selectCourse(offering.getCourse());
+		// TODO Also select the offering in the details panel.
+	}
+
+	@Override
+	public void courseChangeSelected(CourseRec course) {
+		selectCourse(course);
 	}
 
 	@Override

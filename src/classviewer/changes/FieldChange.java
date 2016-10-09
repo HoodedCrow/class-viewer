@@ -8,8 +8,9 @@ public abstract class FieldChange<T> extends Change {
 	private T newValue;
 	private T oldValue;
 
-	public FieldChange(Source source, String field, T newValue, T oldValue) {
-		super(source, Change.MODIFY);
+	public FieldChange(Source source, String field, T newValue, T oldValue,
+			Object object) {
+		super(source, Change.MODIFY, object);
 		this.field = field;
 		this.newValue = newValue;
 		this.oldValue = oldValue;

@@ -36,6 +36,8 @@ import classviewer.changes.CourseraModelAdapter;
 import classviewer.changes.CourseraModelAdapter1;
 import classviewer.changes.EdxModelAdapter;
 import classviewer.model.CourseModel;
+import classviewer.model.CourseRec;
+import classviewer.model.OffRec;
 
 /**
  * Frame for loading changes (only Coursera so far) and applying them to the
@@ -55,6 +57,7 @@ public class ChangesFrame extends NamedInternalFrame {
 	 * empty
 	 */
 	private boolean pruneDropLinkProf = false;
+	private ArrayList<ChangeSelectionListener> listeners = new ArrayList<ChangeSelectionListener>();
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public ChangesFrame(CourseModel model, final Settings settings) {
@@ -163,6 +166,32 @@ public class ChangesFrame extends NamedInternalFrame {
 					table.setToolTipText(change.getToolTip());
 				else
 					table.setToolTipText(null);
+			}
+		});
+		table.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int row = table.rowAtPoint(e.getPoint());
+				row = table.getRowSorter().convertRowIndexToModel(row);
+				Change change = changes.get(row);
+				if (change == null)
+					return;
+				Object ob = change.getObject();
+				if ((ob instanceof CourseRec) && change.getType() != Change.ADD) {
+					CourseRec cr = (CourseRec) ob;
+					for (ChangeSelectionListener lnr : listeners)
+						lnr.courseChangeSelected(cr);
+				}
+				if (ob instanceof OffRec) {
+					OffRec or = (OffRec) ob;
+					if (change.getType() == Change.ADD) {
+						for (ChangeSelectionListener lnr : listeners)
+							lnr.courseChangeSelected(or.getCourse());
+					} else {
+						for (ChangeSelectionListener lnr : listeners)
+							lnr.offeringChangeSelected(or);
+					}
+				}
 			}
 		});
 		this.add(new JScrollPane(table), BorderLayout.CENTER);
@@ -405,5 +434,9 @@ public class ChangesFrame extends NamedInternalFrame {
 			res.setForeground(Color.BLACK);
 			return res;
 		}
+	}
+
+	public void addSelectionListener(ChangeSelectionListener listener) {
+		listeners .add(listener);
 	}
 }

@@ -33,7 +33,8 @@ public final class OfferingChange {
 	}
 	
 	public static Change add(final CourseRec course, final OffRec offering) {
-		Change change = new Change(course.getSource(), Change.ADD) {
+		offering.setCourse(course);
+		Change change = new Change(course.getSource(), Change.ADD, offering) {
 			@Override
 			public String getDescription() {
 				return "Offering";
@@ -83,7 +84,7 @@ public final class OfferingChange {
 
 	public static Change delete(final OffRec offering) {
 		final CourseRec course = offering.getCourse();
-		Change change = new Change(course.getSource(), Change.DELETE) {
+		Change change = new Change(course.getSource(), Change.DELETE, offering) {
 			@Override
 			public String getDescription() {
 				return "Offering";
@@ -122,7 +123,8 @@ public final class OfferingChange {
 		private OffRec offering;
 
 		OffFieldChange(OffRec offering, String field, T newValue, T oldValue) {
-			super(offering.getCourse().getSource(), field, newValue, oldValue);
+			super(offering.getCourse().getSource(), field, newValue, oldValue,
+					offering);
 			this.offering = offering;
 			StringBuffer b = new StringBuffer("<html><b>Change ");
 			b.append(field).append("<br/>from ").append(oldValue)

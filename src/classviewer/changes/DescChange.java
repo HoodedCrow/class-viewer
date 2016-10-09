@@ -19,7 +19,7 @@ public final class DescChange {
 	public static Change add(final int what, Source source, final String id,
 			final String name, final String description) {
 		final DescRec record = new DescRec(source, id, name, description);
-		Change change = new Change(source, Change.ADD) {
+		Change change = new Change(source, Change.ADD, record) {
 			@Override
 			public String getDescription() {
 				return what == UNIVERSITY ? "University" : "Category";
@@ -52,7 +52,7 @@ public final class DescChange {
 	}
 
 	public static Change delete(final int what, final DescRec record) {
-		Change change = new Change(record.getSource(), Change.DELETE) {
+		Change change = new Change(record.getSource(), Change.DELETE, record) {
 			@Override
 			public String getDescription() {
 				return what == UNIVERSITY ? "University" : "Category";
@@ -86,7 +86,7 @@ public final class DescChange {
 
 	public static Change setName(final DescRec record, final String newName) {
 		Change change = new FieldChange<String>(record.getSource(), "Name",
-				newName, record.getName()) {
+				newName, record.getName(), record) {
 			@Override
 			public Object getTarget() {
 				return record.getId();
@@ -103,7 +103,7 @@ public final class DescChange {
 	public static Change setDescription(final DescRec record,
 			final String newDescription) {
 		Change change = new FieldChange<String>(record.getSource(),
-				"Description", newDescription, record.getDescription()) {
+				"Description", newDescription, record.getDescription(), record) {
 			@Override
 			public Object getTarget() {
 				return record.getId();
