@@ -37,7 +37,9 @@ import classviewer.changes.CourseraModelAdapter1;
 import classviewer.changes.EdxModelAdapter;
 import classviewer.model.CourseModel;
 import classviewer.model.CourseRec;
+import classviewer.model.DescRec;
 import classviewer.model.OffRec;
+import classviewer.model.Status;
 
 /**
  * Frame for loading changes (only Coursera so far) and applying them to the
@@ -306,6 +308,7 @@ public class ChangesFrame extends NamedInternalFrame {
 				}
 
 				changes = adapter.collectChanges(courseModel);
+				pruneChanges();
 				Collections.sort(changes);
 				changeSelected.clear();
 				for (int i = 0; i < changes.size(); i++)
@@ -340,6 +343,7 @@ public class ChangesFrame extends NamedInternalFrame {
 
 				changes = edx.collectChanges(courseModel,
 						settings.getInt(Settings.OLD_AGE_IN_DAYS, 3650));
+				pruneChanges();
 				Collections.sort(changes);
 				changeSelected.clear();
 				for (int i = 0; i < changes.size(); i++)
@@ -350,6 +354,35 @@ public class ChangesFrame extends NamedInternalFrame {
 			}
 		}).start();
 		wait.setVisible(true);
+	}
+	
+	protected void pruneChanges() {
+		for (int i = 0; i < changes.size(); i++) {
+			Change c = changes.get(i);
+			if (c.getType() != Change.DELETE)
+				continue;
+			boolean keep = false;
+
+			// Do not delete universities that have at least one course.
+			if (c.getObject() instanceof DescRec) {
+				DescRec dr = (DescRec) c.getObject();
+				for (CourseRec cr : courseModel.getCourses(dr.getSource())) {
+					if (cr.getUniversities().contains(dr)) {
+						keep = true;
+						break;
+					}
+				}
+			}
+
+			// Do not delete classes that are DONE or AUDITED.
+			if (c.getObject() instanceof CourseRec) {
+				Status st = ((CourseRec) c.getObject()).getStatus();
+				keep = st == Status.DONE || st == Status.AUDITED;
+			}
+
+			if (keep)
+				changes.remove(i--);
+		}
 	}
 
 	private class ChangeModel extends DefaultTableModel {
