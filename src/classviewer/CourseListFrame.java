@@ -1,16 +1,23 @@
 package classviewer;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowSorter.SortKey;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
@@ -34,6 +41,8 @@ public class CourseListFrame extends NamedInternalFrame implements
 	private JTable table;
 	private ArrayList<CourseSelectionListener> courseListeners = new ArrayList<CourseSelectionListener>();
 	private DefaultCellEditor cellEditor;
+	private JTextField searchField = new JTextField();
+	private int searchFromIdx = 0;
 
 	public CourseListFrame(CourseModel model, Settings settings) {
 		super("Courses", model);
@@ -50,7 +59,9 @@ public class CourseListFrame extends NamedInternalFrame implements
 		table.setDefaultRenderer(Status.class, new StatusCellRenderer(settings));
 		this.cellEditor = new DefaultCellEditor(new StatusComboBox(
 				Status.getAll(), settings));
-		this.add(new JScrollPane(table));
+		this.setLayout(new BorderLayout());
+		this.add(new JScrollPane(table), BorderLayout.CENTER);
+		this.add(searchField, BorderLayout.SOUTH);
 
 		table.getSelectionModel().addListSelectionListener(
 				new ListSelectionListener() {
@@ -68,7 +79,39 @@ public class CourseListFrame extends NamedInternalFrame implements
 							lnr.courseSelected(selection);
 					}
 				});
+		searchField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				searchByName(searchField.getText());
+			}
 
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				searchByName(searchField.getText());
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				// Paranoia.
+				throw new RuntimeException(
+						"Plain text components do not fire these events");
+			}
+		});
+		searchField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				int c = e.getKeyCode();
+				if (c == KeyEvent.VK_ESCAPE) {
+					e.consume();
+					searchField.setText("");
+				}
+				if (c == KeyEvent.VK_DOWN) {
+					e.consume();
+					searchFromIdx++;
+					searchByName(searchField.getText());
+				}
+			}
+		});
 		setColumnWidth();
 	}
 
@@ -85,6 +128,31 @@ public class CourseListFrame extends NamedInternalFrame implements
 		column.setWidth(cw);
 		column.setMaxWidth(cw);
 		table.getColumnModel().getColumn(0).setCellEditor(cellEditor);
+	}
+	
+	protected void searchByName(String mask) {
+		if (mask.isEmpty()) {
+			searchFromIdx = 0;
+			return;
+		}
+		try {
+			Pattern p = Pattern.compile(mask);
+			ArrayList<CourseRec> all = courseModel.getFilteredCourses();
+			for (int i = searchFromIdx; i < all.size(); i++) {
+				CourseRec cr = all.get(i);
+				if (p.matcher(cr.getName()).find()) {
+					selectCourse(cr);
+					searchFromIdx = i;
+					return;
+				}
+			}
+			// If not found, restart from the top. This goes recursively once.
+			if (searchFromIdx > 0) {
+				searchFromIdx = 0;
+				searchByName(mask);
+			}
+		} catch (Exception e) {
+		}
 	}
 	
 	protected void selectCourse(CourseRec course) {
