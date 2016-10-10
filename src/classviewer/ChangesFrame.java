@@ -101,6 +101,9 @@ public class ChangesFrame extends NamedInternalFrame {
 		but = new JButton("Deselect all");
 		but.addActionListener(new SelectListener(false));
 		buttons.add(but);
+		but = new JButton("Deselect dels");
+		but.addActionListener(new DeselectDeletesListener());
+		buttons.add(but);
 		but = new JButton("Apply selected");
 		but.addActionListener(new ActionListener() {
 			@Override
@@ -261,6 +264,17 @@ public class ChangesFrame extends NamedInternalFrame {
 		public void actionPerformed(ActionEvent e) {
 			for (int i = 0; i < changeSelected.size(); i++)
 				changeSelected.set(i, value);
+			table.repaint();
+		}
+	}
+
+	/** Deselect all DELETE changes. */
+	private class DeselectDeletesListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			for (int i = 0; i < changeSelected.size(); i++)
+				if (changes.get(i).getType() == Change.DELETE)
+					changeSelected.set(i, false);
 			table.repaint();
 		}
 	}
