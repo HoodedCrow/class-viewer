@@ -57,10 +57,11 @@ public final class OfferingChange {
 
 			@Override
 			public void apply(CourseModel model) {
-				// Does class already have a MAYBE or REGISTERED offering?
+				// Does class already have a YES, MAYBE, or REGISTERED offering?
 				boolean alreadyHas = false;
 				for (OffRec or : course.getOfferings()) {
 					if (or.getStatus() == Status.MAYBE
+							|| or.getStatus() == Status.YES
 							|| or.getStatus() == Status.REGISTERED) {
 						alreadyHas = true;
 						break;
